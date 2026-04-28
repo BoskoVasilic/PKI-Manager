@@ -24,8 +24,8 @@ interface DashboardConfig {
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css'],
+  templateUrl: './dashboard.html',
+  styleUrls: ['./dashboard.css'],
 })
 export class DashboardComponent implements OnInit {
   userEmail = '';
