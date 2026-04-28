@@ -24,8 +24,7 @@ interface DashboardConfig {
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.css'],
+  templateUrl: './dashboard.html'
 })
 export class DashboardComponent implements OnInit {
   userEmail = '';
@@ -158,4 +157,22 @@ export class DashboardComponent implements OnInit {
       this.userRole = 'USER';
     }
   }
+
+  getRoleBadgeClass(): string {
+    const map: Record<string, string> = {
+        gold:  'bg-yellow-400/10 text-yellow-400 border border-yellow-400/25',
+        blue:  'bg-blue-400/10  text-blue-400  border border-blue-400/25',
+        green: 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/25',
+    };
+    return map[this.config.roleColor] ?? '';
+}
+
+getIconWrapClass(): string {
+    const map: Record<string, string> = {
+        gold:  'bg-yellow-400/10 text-yellow-400',
+        blue:  'bg-blue-400/10  text-blue-400',
+        green: 'bg-emerald-400/10 text-emerald-400',
+    };
+    return map[this.config.roleColor] ?? '';
+}
 }

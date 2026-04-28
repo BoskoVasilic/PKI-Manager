@@ -8,8 +8,7 @@ import { AuthService } from '../../services/auth.service';
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './login.html',
-  styleUrls: ['./login.css'],
+  templateUrl: './login.html'
 })
 export class LoginComponent {
   email = '';

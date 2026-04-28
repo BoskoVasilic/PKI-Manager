@@ -1,35 +1,43 @@
-<div class="shell">
+<div class="flex min-h-screen bg-[#0b0b18] text-[#e8e8f0] font-['DM_Sans',sans-serif]">
 
   <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-top">
-      <div class="brand">
-        <div class="brand-icon">
+  <aside class="w-[260px] shrink-0 flex flex-col bg-white/[0.02] border-r border-white/[0.06] px-4 py-6 sticky top-0 h-screen overflow-y-auto">
+    <div class="flex-1">
+
+      <!-- Brand -->
+      <div class="flex items-center gap-2.5 px-2 mb-7">
+        <div class="w-[34px] h-[34px] bg-[#6c63ff]/15 border border-[#6c63ff]/30 rounded-lg grid place-items-center text-[#8b83ff]">
           <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
             <path d="M8 16 L16 8 L24 16 L16 24 Z" fill="none" stroke="currentColor" stroke-width="2.5"/>
             <circle cx="16" cy="16" r="3" fill="currentColor"/>
           </svg>
         </div>
-        <span class="brand-name">PKI System</span>
+        <span class="font-['Syne'] font-bold text-base tracking-[-0.02em] text-white">PKI System</span>
       </div>
 
-      <div class="user-card">
-        <div class="avatar">{{ userName.charAt(0).toUpperCase() }}</div>
-        <div class="user-info">
-          <span class="user-name">{{ userName }}</span>
-          <span class="user-email">{{ userEmail }}</span>
+      <!-- User card -->
+      <div class="flex items-center gap-2.5 p-3 bg-white/[0.04] border border-white/[0.07] rounded-xl mb-6 flex-wrap">
+        <div class="w-[34px] h-[34px] rounded-full grid place-items-center font-bold text-sm text-white shrink-0"
+             style="background: linear-gradient(135deg, #6c63ff, #a78bfa)">
+          {{ userName.charAt(0).toUpperCase() }}
         </div>
-        <span class="role-badge" [ngClass]="'role-' + config.roleColor">
+        <div class="flex-1 min-w-0">
+          <span class="block text-[0.82rem] font-medium text-white truncate">{{ userName }}</span>
+          <span class="block text-[0.72rem] text-white/35 truncate">{{ userEmail }}</span>
+        </div>
+        <span class="text-[0.65rem] font-semibold px-2 py-0.5 rounded-full uppercase tracking-[0.06em] whitespace-nowrap"
+              [class]="getRoleBadgeClass()">
           {{ config.roleLabel }}
         </span>
       </div>
     </div>
 
-    <nav class="nav">
+    <!-- Nav -->
+    <nav class="flex flex-col gap-1 flex-1">
       @for (item of config.navItems; track item.label) {
-        <a class="nav-item" [routerLink]="item.route" routerLinkActive="active">
-          <div class="nav-icon">
-            <!-- cert icon -->
+        <a [routerLink]="item.route" routerLinkActive="!bg-[#6c63ff]/12 !text-[#a5b4fc]"
+           class="flex items-center gap-2.5 px-3 py-2.5 rounded-[9px] no-underline text-white/50 text-sm transition-all duration-150 hover:bg-white/5 hover:text-white/85 cursor-pointer">
+          <div class="w-[18px] shrink-0 flex">
             @if (item.icon === 'cert') {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <rect x="3" y="3" width="18" height="18" rx="3"/>
@@ -37,17 +45,14 @@
                 <circle cx="17" cy="16" r="2.5"/>
               </svg>
             }
-            <!-- list icon -->
             @if (item.icon === 'list') {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
                 <circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none"/>
                 <circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none"/>
                 <circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none"/>
               </svg>
             }
-            <!-- users icon -->
             @if (item.icon === 'users') {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -55,14 +60,12 @@
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
             }
-            <!-- revoke icon -->
             @if (item.icon === 'revoke') {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <circle cx="12" cy="12" r="9"/>
                 <path d="M9 9l6 6M15 9l-6 6"/>
               </svg>
             }
-            <!-- upload icon -->
             @if (item.icon === 'upload') {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -70,7 +73,6 @@
                 <line x1="12" y1="3" x2="12" y2="15"/>
               </svg>
             }
-            <!-- download icon -->
             @if (item.icon === 'download') {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -79,15 +81,19 @@
               </svg>
             }
           </div>
-          <span class="nav-label">{{ item.label }}</span>
+          <span class="flex-1">{{ item.label }}</span>
           @if (item.tag) {
-            <span class="nav-tag">{{ item.tag }}</span>
+            <span class="text-[0.62rem] font-medium bg-[#6c63ff]/15 text-[#a5b4fc] px-1.5 py-0.5 rounded whitespace-nowrap">
+              {{ item.tag }}
+            </span>
           }
         </a>
       }
     </nav>
 
-    <button class="logout-btn" (click)="logout()">
+    <!-- Logout -->
+    <button (click)="logout()"
+            class="flex items-center gap-2.5 px-3 py-2.5 mt-4 w-full rounded-[9px] border-none bg-transparent text-white/30 text-sm font-['DM_Sans'] cursor-pointer transition-all duration-150 hover:bg-red-500/8 hover:text-red-400">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
         <polyline points="16 17 21 12 16 7"/>
@@ -97,24 +103,35 @@
     </button>
   </aside>
 
-  <!-- Main content -->
-  <main class="main">
-    <header class="page-header">
+  <!-- Main -->
+  <main class="flex-1 min-w-0 px-10 py-10 pb-12">
+
+    <!-- Page header -->
+    <header class="flex items-start justify-between mb-10 gap-4 flex-wrap">
       <div>
-        <h1>Welcome back, <span class="highlight">{{ userName }}</span></h1>
-        <p class="subline">{{ config.greeting }} · PKI Infrastructure</p>
+        <h1 class="font-['Syne'] text-[clamp(1.5rem,3vw,2.1rem)] font-bold tracking-[-0.04em] text-white leading-[1.15]">
+          Welcome back, <span class="text-[#8b83ff]">{{ userName }}</span>
+        </h1>
+        <p class="mt-1.5 text-white/35 text-[0.9rem]">{{ config.greeting }} · PKI Infrastructure</p>
       </div>
-      <div class="header-badge" [ngClass]="'badge-' + config.roleColor">
+      <span class="px-4 py-1.5 rounded-full text-[0.78rem] font-semibold uppercase tracking-[0.08em] shrink-0"
+            [class]="getRoleBadgeClass()">
         {{ config.roleLabel }}
-      </div>
+      </span>
     </header>
 
-    <!-- Quick action cards -->
-    <section class="cards-grid">
+    <!-- Cards grid -->
+    <section class="grid gap-4 mb-8" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
       @for (item of config.navItems; track item.label) {
-        <a class="action-card" [routerLink]="item.route">
-          <div class="card-icon-wrap" [ngClass]="'icon-' + config.roleColor">
-            <!-- cert icon -->
+        <a [routerLink]="item.route"
+           class="group relative flex flex-col gap-3 p-[1.4rem] bg-white/[0.03] border border-white/[0.07] rounded-2xl no-underline text-inherit transition-all duration-200 cursor-pointer overflow-hidden hover:border-[#6c63ff]/30 hover:-translate-y-0.5">
+
+          <!-- hover glow -->
+          <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+               style="background: radial-gradient(circle at top left, rgba(108,99,255,0.06), transparent 70%)"></div>
+
+          <!-- icon -->
+          <div class="w-11 h-11 rounded-[10px] grid place-items-center shrink-0" [class]="getIconWrapClass()">
             @if (item.icon === 'cert') {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <rect x="3" y="3" width="18" height="18" rx="3"/>
@@ -124,8 +141,7 @@
             }
             @if (item.icon === 'list') {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/>
+                <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
                 <circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none"/>
                 <circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none"/>
                 <circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none"/>
@@ -159,14 +175,21 @@
               </svg>
             }
           </div>
-          <div class="card-body">
-            <h3>{{ item.label }}</h3>
-            <p>{{ item.description }}</p>
+
+          <!-- text -->
+          <div>
+            <h3 class="font-['Syne'] text-[0.95rem] font-semibold text-white mb-1">{{ item.label }}</h3>
+            <p class="text-[0.82rem] text-white/40 leading-relaxed">{{ item.description }}</p>
           </div>
+
           @if (item.tag) {
-            <span class="card-tag">{{ item.tag }}</span>
+            <span class="self-start text-[0.65rem] font-medium bg-[#6c63ff]/12 text-[#a5b4fc] px-1.5 py-0.5 rounded">
+              {{ item.tag }}
+            </span>
           }
-          <div class="card-arrow">
+
+          <!-- arrow -->
+          <div class="absolute top-5 right-5 text-white/20 transition-all duration-200 group-hover:text-[#8b83ff] group-hover:translate-x-0.5">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
@@ -176,25 +199,25 @@
     </section>
 
     <!-- Info strip -->
-    <section class="info-strip">
-      <div class="info-item">
-        <span class="info-label">Session</span>
-        <span class="info-value status-active">● Active</span>
+    <section class="flex items-center flex-wrap gap-3 bg-white/[0.02] border border-white/[0.06] rounded-xl px-6 py-4">
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[0.7rem] text-white/30 uppercase tracking-[0.07em]">Session</span>
+        <span class="text-[0.82rem] font-medium text-emerald-400">● Active</span>
       </div>
-      <div class="info-divider"></div>
-      <div class="info-item">
-        <span class="info-label">Protocol</span>
-        <span class="info-value">HTTPS / JWT</span>
+      <div class="w-px h-7 bg-white/[0.08] mx-4"></div>
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[0.7rem] text-white/30 uppercase tracking-[0.07em]">Protocol</span>
+        <span class="text-[0.82rem] font-medium text-white/75">HTTPS / JWT</span>
       </div>
-      <div class="info-divider"></div>
-      <div class="info-item">
-        <span class="info-label">Role</span>
-        <span class="info-value">{{ config.roleLabel }}</span>
+      <div class="w-px h-7 bg-white/[0.08] mx-4"></div>
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[0.7rem] text-white/30 uppercase tracking-[0.07em]">Role</span>
+        <span class="text-[0.82rem] font-medium text-white/75">{{ config.roleLabel }}</span>
       </div>
-      <div class="info-divider"></div>
-      <div class="info-item">
-        <span class="info-label">Standard</span>
-        <span class="info-value">X.509 v3</span>
+      <div class="w-px h-7 bg-white/[0.08] mx-4"></div>
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[0.7rem] text-white/30 uppercase tracking-[0.07em]">Standard</span>
+        <span class="text-[0.82rem] font-medium text-white/75">X.509 v3</span>
       </div>
     </section>
 
