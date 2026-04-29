@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { CertificateService, Certificate } from '../../services/certificate.service';
 
 @Component({
@@ -14,7 +15,10 @@ export class CertificatesComponent implements OnInit {
   isLoading = signal(true);
   error = signal('');
 
-  constructor(private certService: CertificateService) {}
+  constructor(
+    private certService: CertificateService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.certService.getMyCertificates().subscribe({
@@ -27,6 +31,10 @@ export class CertificatesComponent implements OnInit {
         this.isLoading.set(false);
       }
     });
+  }
+
+  goBack(): void {
+    this.router.navigate(['/dashboard']);
   }
 
   selectCert(cert: Certificate): void {

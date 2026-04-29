@@ -10,9 +10,6 @@ export const routes: Routes = [
     path: 'dashboard',
     component: DashboardComponent,
     canActivate: [authGuard],
-    children: [
-      { path: '', pathMatch: 'full', redirectTo: '' },
-    ]
   },
   {
     path: 'certificates',
