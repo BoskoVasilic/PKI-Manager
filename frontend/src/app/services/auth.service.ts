@@ -16,7 +16,7 @@ export interface LoginResponse {
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly API_URL = 'http://localhost:8080/api';
+  private readonly API_URL = 'http://localhost:8081/api';
   private readonly TOKEN_KEY = 'access_token';
 
   constructor(private http: HttpClient, private router: Router) {}
