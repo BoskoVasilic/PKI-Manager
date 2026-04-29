@@ -5,6 +5,7 @@ import com.tim12.pk_infrastructure.repository.UserRepository;
 import com.tim12.pk_infrastructure.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(email, password)
             );
         } catch (AuthenticationException e) {
-            throw new RuntimeException("Invalid email or password");
+            throw new BadCredentialsException("Invalid email or password");
         }
 
         User user = userRepository.findByEmail(email)
