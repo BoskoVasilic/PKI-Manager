@@ -49,7 +49,7 @@ public class AdminService {
 
         tokenRepo.save(at);
 
-        emailService.sendActivationEmail(user.getEmail(), "http://localhost:8081/api/auth/activate-ca?token=" + token);
+        emailService.sendActivationEmail(user.getEmail(), "http://localhost:4200/activate?token=" + token);
 
         return userRepo.findByEmail(request.getEmail())
                 .map(u -> new CreatedCaUserDTO(u.getId(), u.getEmail(), u.getFirstName(), u.getLastName(),
