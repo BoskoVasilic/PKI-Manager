@@ -1,0 +1,206 @@
+<div class="min-h-screen bg-[#0b0b18] flex items-start justify-center px-4 py-10 font-['DM_Sans',sans-serif] text-[#e8e8f0]"
+     style="background-image: radial-gradient(ellipse at 20% 30%, rgba(108,99,255,0.07) 0%, transparent 55%), radial-gradient(ellipse at 80% 70%, rgba(99,179,255,0.04) 0%, transparent 50%)">
+
+  <div class="w-full max-w-[680px] bg-white/[0.03] border border-white/[0.07] rounded-2xl p-10 shadow-[0_0_0_1px_rgba(108,99,255,0.08),0_32px_64px_rgba(0,0,0,0.4)]">
+
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-7">
+      <div class="w-12 h-12 bg-[#6c63ff]/15 border border-[#6c63ff]/30 rounded-xl grid place-items-center text-[#a78bfa] shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="font-['Syne'] text-[1.4rem] font-bold text-white tracking-tight leading-tight m-0">Issue Certificate</h1>
+        <p class="text-[0.82rem] text-white/35 m-0 mt-0.5">Create a new certificate for your organization</p>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl text-[0.85rem] mb-5 bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 leading-snug"
+         *ngIf="successMessage">
+      <svg class="shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      {{ successMessage }}
+    </div>
+    <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl text-[0.85rem] mb-5 bg-red-500/10 border border-red-500/25 text-red-300 leading-snug"
+         *ngIf="errorMessage">
+      <svg class="shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+      <!-- Section: Subject Information -->
+      <div class="text-[0.68rem] font-bold tracking-[0.12em] text-[#6c63ff] uppercase mt-0 mb-3.5 pb-2 border-b border-[#6c63ff]/20">
+        Subject Information
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+        <!-- Common Name -->
+        <div class="flex flex-col gap-1.5 mb-4">
+          <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="commonName">Common Name (CN)</label>
+          <input id="commonName"
+                 class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 placeholder-white/20 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans']"
+                 [class.border-red-500/60]="hasError('commonName')"
+                 formControlName="commonName" placeholder="e.g. My Server CA" autocomplete="off"/>
+          <span class="text-[0.75rem] text-red-400" *ngIf="hasError('commonName')">Common name is required</span>
+        </div>
+
+        <!-- Email -->
+        <div class="flex flex-col gap-1.5 mb-4">
+          <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="email">Email (E)</label>
+          <input id="email" type="email"
+                 class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 placeholder-white/20 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans']"
+                 [class.border-red-500/60]="hasError('email')"
+                 formControlName="email" placeholder="admin@org.com" autocomplete="off"/>
+          <span class="text-[0.75rem] text-red-400" *ngIf="hasError('email')">Valid email is required</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+        <!-- Organization -->
+        <div class="flex flex-col gap-1.5 mb-4">
+          <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="organization">Organization (O)</label>
+          <input id="organization"
+                 class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 placeholder-white/20 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans']"
+                 [class.border-red-500/60]="hasError('organization')"
+                 formControlName="organization" placeholder="e.g. Acme Corp" autocomplete="off"/>
+          <span class="text-[0.75rem] text-red-400" *ngIf="hasError('organization')">Organization is required</span>
+        </div>
+
+        <!-- Org Unit -->
+        <div class="flex flex-col gap-1.5 mb-4">
+          <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="organizationalUnit">Org. Unit (OU)</label>
+          <input id="organizationalUnit"
+                 class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 placeholder-white/20 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans']"
+                 formControlName="organizationalUnit" placeholder="e.g. IT Department" autocomplete="off"/>
+        </div>
+      </div>
+
+      <!-- Country -->
+      <div class="flex flex-col gap-1.5 mb-4 max-w-[160px] max-sm:max-w-full">
+        <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="country">Country (C)</label>
+        <input id="country"
+               class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 placeholder-white/20 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans'] uppercase"
+               [class.border-red-500/60]="hasError('country')"
+               formControlName="country" placeholder="RS" maxlength="2" autocomplete="off"/>
+        <span class="text-[0.75rem] text-red-400" *ngIf="hasError('country')">2-letter country code required (e.g. RS)</span>
+      </div>
+
+      <!-- Section: Validity Period -->
+      <div class="text-[0.68rem] font-bold tracking-[0.12em] text-[#6c63ff] uppercase mt-6 mb-3.5 pb-2 border-b border-[#6c63ff]/20">
+        Validity Period
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+        <div class="flex flex-col gap-1.5 mb-4">
+          <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="validFrom">Valid From</label>
+          <input id="validFrom" type="date"
+                 class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans'] [color-scheme:dark]"
+                 [class.border-red-500/60]="hasError('validFrom')"
+                 formControlName="validFrom"/>
+          <span class="text-[0.75rem] text-red-400" *ngIf="hasError('validFrom')">Start date is required</span>
+        </div>
+
+        <div class="flex flex-col gap-1.5 mb-4">
+          <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="validTo">Valid To</label>
+          <input id="validTo" type="date"
+                 class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans'] [color-scheme:dark]"
+                 [class.border-red-500/60]="hasError('validTo')"
+                 formControlName="validTo"/>
+          <span class="text-[0.75rem] text-red-400" *ngIf="hasError('validTo')">End date is required</span>
+        </div>
+      </div>
+
+      <!-- Section: Issuer -->
+      <div class="text-[0.68rem] font-bold tracking-[0.12em] text-[#6c63ff] uppercase mt-6 mb-3.5 pb-2 border-b border-[#6c63ff]/20">
+        Issuer
+      </div>
+
+      <div class="flex flex-col gap-1.5 mb-4">
+        <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="issuerSerialNumber">Issuing CA Certificate</label>
+        <div class="relative">
+          <select id="issuerSerialNumber"
+                  class="appearance-none bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 pr-10 text-white text-[0.9rem] outline-none transition-all duration-200 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans'] cursor-pointer"
+                  [class.border-red-500/60]="hasError('issuerSerialNumber')"
+                  formControlName="issuerSerialNumber">
+            <option value="" class="bg-[#0b0b18]">
+              {{ isLoadingIssuers ? 'Loading issuers...' : 'Select an issuer certificate' }}
+            </option>
+            <option *ngFor="let issuer of issuers" [value]="issuer.serialNumber" class="bg-[#0b0b18]">
+              {{ issuer.commonName }} — {{ issuer.organization }} ({{ issuer.type }})
+            </option>
+          </select>
+          <svg class="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none"
+               xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
+        <span class="text-[0.75rem] text-red-400" *ngIf="hasError('issuerSerialNumber')">Please select an issuer</span>
+      </div>
+
+      <!-- Section: Extensions -->
+      <div class="text-[0.68rem] font-bold tracking-[0.12em] text-[#6c63ff] uppercase mt-6 mb-3.5 pb-2 border-b border-[#6c63ff]/20">
+        Extensions
+      </div>
+
+      <!-- CA Checkbox -->
+      <label class="flex items-start gap-3 p-3.5 rounded-xl border border-white/[0.07] bg-white/[0.02] cursor-pointer transition-all duration-200 hover:border-[#6c63ff]/40 hover:bg-[#6c63ff]/5 mb-5">
+        <input type="checkbox" class="hidden" formControlName="isCA"/>
+        <span class="w-[18px] h-[18px] rounded-[5px] border-2 border-white/25 shrink-0 mt-0.5 transition-all duration-200 relative flex-none
+                     [&:has(~_input:checked)]:bg-[#6c63ff] [&:has(~_input:checked)]:border-[#6c63ff]"
+              [class.bg-\[\#6c63ff\]]="form.get('isCA')?.value"
+              [class.border-\[\#6c63ff\]]="form.get('isCA')?.value"
+              [class.border-white\/25]="!form.get('isCA')?.value">
+          <svg *ngIf="form.get('isCA')?.value" class="absolute inset-0 m-auto" width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <polyline points="1.5,5 4,7.5 8.5,2" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="flex flex-col gap-0.5">
+          <strong class="text-[0.88rem] text-white font-semibold">CA Certificate</strong>
+          <small class="text-[0.75rem] text-white/35">Enable BasicConstraints with cA=true (intermediate/sub-CA)</small>
+        </span>
+      </label>
+
+      <!-- Key Usages -->
+      <div class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase mb-2.5">Key Usages</div>
+      <div class="flex flex-wrap gap-2 mb-7">
+        <label class="flex items-center gap-2 px-3.5 py-[7px] rounded-full border cursor-pointer select-none text-[0.8rem] transition-all duration-150"
+               *ngFor="let ku of KEY_USAGES"
+               [class.border-white\/10]="!isKeyUsageSelected(ku.value)"
+               [class.bg-white\/[0.03]]="!isKeyUsageSelected(ku.value)"
+               [class.text-white\/50]="!isKeyUsageSelected(ku.value)"
+               [class.border-\[\#6c63ff\]\/70]="isKeyUsageSelected(ku.value)"
+               [class.bg-\[\#6c63ff\]\/15]="isKeyUsageSelected(ku.value)"
+               [class.text-\[\#a5b4fc\]]="isKeyUsageSelected(ku.value)"
+               (click)="toggleKeyUsage(ku.value)">
+          <span class="w-1.5 h-1.5 rounded-full flex-none"
+                [class.bg-white\/30]="!isKeyUsageSelected(ku.value)"
+                [class.bg-\[\#a5b4fc\]]="isKeyUsageSelected(ku.value)"></span>
+          {{ ku.label }}
+        </label>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit"
+              class="w-full py-3.5 bg-[#6c63ff] border-none rounded-xl text-white font-['Syne'] font-semibold text-[0.95rem] tracking-wide shadow-[0_4px_20px_rgba(108,99,255,0.3)] cursor-pointer transition-all duration-200 hover:bg-[#7c74ff] hover:-translate-y-px hover:shadow-[0_6px_24px_rgba(108,99,255,0.45)] active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2.5"
+              [disabled]="isLoading">
+        <ng-container *ngIf="!isLoading">Issue Certificate</ng-container>
+        <ng-container *ngIf="isLoading">
+          <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0"></span>
+          <span>Issuing...</span>
+        </ng-container>
+      </button>
+
+    </form>
+  </div>
+</div>
