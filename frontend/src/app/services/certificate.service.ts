@@ -101,7 +101,7 @@ export class CertificateService {
   }
 
   getAvailableIssuers(): Observable<CertificateDto[]> {
-    return this.http.get<CertificateDto[]>(`${this.API_URL}/issuers`);
+    return this.http.get<CertificateDto[]>(`${this.API_URL}/my/issuers`);
   }
 
   getAvailableIssuersAdmin(): Observable<CertificateData[]> {
