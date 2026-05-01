@@ -161,46 +161,56 @@
       </div>
 
       <!-- Section: Extensions -->
-      <div class="text-[0.68rem] font-bold tracking-[0.12em] text-[#6c63ff] uppercase mt-6 mb-3.5 pb-2 border-b border-[#6c63ff]/20">
-        Extensions
-      </div>
+<div class="text-[0.68rem] font-bold tracking-[0.12em] text-[#6c63ff] uppercase mt-6 mb-3.5 pb-2 border-b border-[#6c63ff]/20">
+  Extensions
+</div>
 
-      <!-- CA Checkbox -->
-      <label class="flex items-start gap-3 p-3.5 rounded-xl border border-white/[0.07] bg-white/[0.02] cursor-pointer transition-all duration-200 hover:border-[#6c63ff]/40 hover:bg-[#6c63ff]/5 mb-5">
-        <input type="checkbox" class="hidden" formControlName="isCA"/>
-        <span class="w-[18px] h-[18px] rounded-[5px] border-2 border-white/25 shrink-0 mt-0.5 transition-all duration-200 relative flex-none
-                     [&:has(~_input:checked)]:bg-[#6c63ff] [&:has(~_input:checked)]:border-[#6c63ff]"
-              [class.bg-\[\#6c63ff\]]="form.get('isCA')?.value"
-              [class.border-\[\#6c63ff\]]="form.get('isCA')?.value"
-              [class.border-white\/25]="!form.get('isCA')?.value">
-          <svg *ngIf="form.get('isCA')?.value" class="absolute inset-0 m-auto" width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <polyline points="1.5,5 4,7.5 8.5,2" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </span>
-        <span class="flex flex-col gap-0.5">
-          <strong class="text-[0.88rem] text-white font-semibold">CA Certificate</strong>
-          <small class="text-[0.75rem] text-white/35">Enable BasicConstraints with cA=true (intermediate/sub-CA)</small>
-        </span>
-      </label>
+<div class="grid grid-cols-2 gap-3 mb-7 max-sm:grid-cols-1">
 
-      <!-- Key Usages -->
-      <div class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase mb-2.5">Key Usages</div>
-      <div class="flex flex-wrap gap-2 mb-7">
-        <label class="flex items-center gap-2 px-3.5 py-[7px] rounded-full border cursor-pointer select-none text-[0.8rem] transition-all duration-150"
-               *ngFor="let ku of KEY_USAGES"
-               [class.border-white\/10]="!isKeyUsageSelected(ku.value)"
-               [class.bg-white\/[0.03]]="!isKeyUsageSelected(ku.value)"
-               [class.text-white\/50]="!isKeyUsageSelected(ku.value)"
-               [class.border-\[\#6c63ff\]\/70]="isKeyUsageSelected(ku.value)"
-               [class.bg-\[\#6c63ff\]\/15]="isKeyUsageSelected(ku.value)"
-               [class.text-\[\#a5b4fc\]]="isKeyUsageSelected(ku.value)"
-               (click)="toggleKeyUsage(ku.value)">
-          <span class="w-1.5 h-1.5 rounded-full flex-none"
-                [class.bg-white\/30]="!isKeyUsageSelected(ku.value)"
-                [class.bg-\[\#a5b4fc\]]="isKeyUsageSelected(ku.value)"></span>
-          {{ ku.label }}
-        </label>
-      </div>
+  <!-- BasicConstraints -->
+  <button
+    type="button"
+    (click)="form.get('isCA')?.setValue(!form.get('isCA')?.value)"
+    class="flex items-center gap-3 text-left px-3 py-2 rounded-lg border transition-all duration-150"
+    [class.border-emerald-400]="form.get('isCA')?.value"
+    [class.bg-emerald-400\/10]="form.get('isCA')?.value"
+    [class.text-emerald-300]="form.get('isCA')?.value"
+    [class.border-white\/10]="!form.get('isCA')?.value"
+    [class.bg-white\/[0.03]]="!form.get('isCA')?.value"
+    [class.text-white\/60]="!form.get('isCA')?.value">
+
+    <span class="w-4 h-4 rounded border flex items-center justify-center"
+          [class.border-emerald-400]="form.get('isCA')?.value"
+          [class.border-white\/30]="!form.get('isCA')?.value">
+      <span *ngIf="form.get('isCA')?.value" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+    </span>
+
+    BasicConstraints (cA=true)
+  </button>
+
+  <!-- All other extensions (your "key usages") -->
+  <button
+    type="button"
+    *ngFor="let ext of KEY_USAGES"
+    (click)="toggleKeyUsage(ext.value)"
+    class="flex items-center gap-3 text-left px-3 py-2 rounded-lg border transition-all duration-150"
+    [class.border-emerald-400]="isKeyUsageSelected(ext.value)"
+    [class.bg-emerald-400\/10]="isKeyUsageSelected(ext.value)"
+    [class.text-emerald-300]="isKeyUsageSelected(ext.value)"
+    [class.border-white\/10]="!isKeyUsageSelected(ext.value)"
+    [class.bg-white\/[0.03]]="!isKeyUsageSelected(ext.value)"
+    [class.text-white\/60]="!isKeyUsageSelected(ext.value)">
+
+    <span class="w-4 h-4 rounded border flex items-center justify-center"
+          [class.border-emerald-400]="isKeyUsageSelected(ext.value)"
+          [class.border-white\/30]="!isKeyUsageSelected(ext.value)">
+      <span *ngIf="isKeyUsageSelected(ext.value)" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+    </span>
+
+    {{ ext.label }}
+  </button>
+
+</div>
 
       <!-- Submit -->
       <button type="submit"

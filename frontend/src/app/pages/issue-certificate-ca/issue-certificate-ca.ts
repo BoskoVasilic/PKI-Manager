@@ -20,14 +20,11 @@ export class IssueCertificateComponent implements OnInit {
   errorMessage = '';
 
   readonly KEY_USAGES = [
-    { value: 'DIGITAL_SIGNATURE', label: 'Digital Signature' },
-    { value: 'KEY_CERT_SIGN', label: 'Key Cert Sign' },
-    { value: 'CRL_SIGN', label: 'CRL Sign' },
-    { value: 'KEY_ENCIPHERMENT', label: 'Key Encipherment' },
-    { value: 'DATA_ENCIPHERMENT', label: 'Data Encipherment' },
-    { value: 'KEY_AGREEMENT', label: 'Key Agreement' },
-    { value: 'NON_REPUDIATION', label: 'Non Repudiation' },
-  ];
+  { value: 'KEY_CERT_SIGN', label: 'keyCertSign' },
+  { value: 'CRL_SIGN', label: 'cRLSign' },
+  { value: 'DIGITAL_SIGNATURE', label: 'digitalSignature' },
+  { value: 'KEY_ENCIPHERMENT', label: 'keyEncipherment' },
+];
 
   constructor(
     private fb: FormBuilder,
