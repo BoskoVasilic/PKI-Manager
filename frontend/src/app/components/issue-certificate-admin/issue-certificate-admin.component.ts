@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import {Router} from '@angular/router';
 import {CertificateData, CertificateService} from '../../services/certificate.service';
 import {FormsModule} from '@angular/forms';
-import {DatePipe, NgClass, NgForOf, NgIf, Location} from '@angular/common';
+import {DatePipe, NgClass, Location} from '@angular/common';
 
 interface CertForm {
   type: 'ROOT' | 'INTERMEDIATE' | 'END_ENTITY' | '';
@@ -28,9 +28,7 @@ interface CertForm {
   selector: 'app-issue-certificate-admin',
   imports: [
     FormsModule,
-    NgIf,
     NgClass,
-    NgForOf,
     DatePipe
   ],
   templateUrl: './issue-certificate-admin.component.html',
@@ -70,17 +68,14 @@ export class IssueCertificateAdminComponent {
     {
       value: 'ROOT',
       label: 'Root CA',
-      desc: 'Samopotpisani, vrh lanca poverenja'
     },
     {
       value: 'INTERMEDIATE',
       label: 'Intermediate CA',
-      desc: 'Posredni CA, potpisuje ga Root ili drugi Intermediate'
     },
     {
       value: 'END_ENTITY',
       label: 'End-Entity',
-      desc: 'Krajnji korisnik, uređaj ili server'
     }
   ];
 
@@ -102,7 +97,6 @@ export class IssueCertificateAdminComponent {
   }
 
   onTypeChange(): void {
-    // Reset issuer kad se promeni tip
     this.form.issuerSerialNumber = '';
     this.selectedIssuer = null;
 
@@ -117,7 +111,6 @@ export class IssueCertificateAdminComponent {
 
   onIssuerChange(issuer: CertificateData): void {
     this.selectedIssuer = issuer;
-    // Ograniči datum isteka na max datum issuera
     if (this.form.validTo > issuer.validTo) {
       this.form.validTo = issuer.validTo.split('T')[0];
     }

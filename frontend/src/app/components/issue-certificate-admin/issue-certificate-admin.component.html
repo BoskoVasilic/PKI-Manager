@@ -4,11 +4,12 @@
   <header class="border-b border-gray-800 bg-gray-900/60 backdrop-blur-sm sticky top-0 z-40">
     <div class="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
       <button (click)="goBack()"
-              class="text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-2 text-xs tracking-widest uppercase">
+              class="text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-2 text-xs
+              tracking-widest uppercase cursor-pointer">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
-        Nazad
+        Back
       </button>
       <span class="text-gray-700">|</span>
       <div class="flex items-center gap-2">
@@ -18,34 +19,36 @@
                   d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
         </div>
-        <span class="text-xs text-gray-400 tracking-widest uppercase">Novi Sertifikat</span>
+        <span class="text-xs text-gray-400 tracking-widest uppercase">New Certificate</span>
       </div>
     </div>
   </header>
 
   <div class="flex-1 max-w-5xl mx-auto w-full px-6 py-10">
     <div class="mb-8">
-      <h1 class="text-2xl font-bold text-white tracking-tight">Izdavanje sertifikata</h1>
-      <p class="text-sm text-gray-500 mt-1">Administrator · Svi tipovi sertifikata</p>
+      <h1 class="text-2xl font-bold text-white tracking-tight">Issue Certificate</h1>
+      <p class="text-sm text-gray-500 mt-1">Administrator · All certificate types</p>
     </div>
 
     <!-- Alert -->
-    <div *ngIf="errorMessage"
-         class="mb-6 flex items-start gap-3 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-      <svg class="w-4 h-4 text-red-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span class="text-sm text-red-400">{{ errorMessage }}</span>
-    </div>
+    @if (errorMessage) {
+      <div class="mb-6 flex items-start gap-3 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+        <svg class="w-4 h-4 text-red-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-sm text-red-400">{{ errorMessage }}</span>
+      </div>
+    }
 
-    <div *ngIf="successMessage"
-         class="mb-6 flex items-start gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
-      <svg class="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-      </svg>
-      <span class="text-sm text-emerald-400">{{ successMessage }}</span>
-    </div>
+    @if (successMessage) {
+      <div class="mb-6 flex items-start gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+        <svg class="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <span class="text-sm text-emerald-400">{{ successMessage }}</span>
+      </div>
+    }
 
     <form (ngSubmit)="onSubmit()" #certForm="ngForm">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -55,74 +58,81 @@
 
           <!-- Certificate type -->
           <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
-            <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Tip sertifikata</h2>
+            <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Certificate type</h2>
             <div class="space-y-2">
-              <label *ngFor="let opt of certTypeOptions"
-                     class="flex items-start gap-3 p-3 rounded border cursor-pointer transition-all"
-                     [ngClass]="form.type === opt.value
-                  ? 'border-emerald-500/50 bg-emerald-500/5'
-                  : 'border-gray-800 hover:border-gray-700'">
-                <input type="radio" [(ngModel)]="form.type" name="type" [value]="opt.value"
-                       (change)="onTypeChange()" class="mt-0.5 accent-emerald-500" required />
-                <div>
-                  <p class="text-sm text-gray-200">{{ opt.label }}</p>
-                  <p class="text-xs text-gray-600 mt-0.5">{{ opt.desc }}</p>
-                </div>
-              </label>
+              @for (opt of certTypeOptions; track opt.value) {
+                <label
+                  class="flex items-start gap-3 p-3 rounded border cursor-pointer transition-all"
+                  [ngClass]="form.type === opt.value
+                ? 'border-emerald-500/50 bg-emerald-500/5'
+                : 'border-gray-800 hover:border-gray-700'">
+                  <input type="radio" [(ngModel)]="form.type" name="type" [value]="opt.value"
+                         (change)="onTypeChange()" class="mt-0.5 accent-emerald-500" required />
+                  <div>
+                    <p class="text-sm text-gray-200">{{ opt.label }}</p>
+                  </div>
+                </label>
+              }
             </div>
           </div>
 
           <!-- Issuer selection (hidden for ROOT) -->
-          <div *ngIf="form.type !== 'ROOT'" class="bg-gray-900 border border-gray-800 rounded-lg p-5">
-            <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Izdavač (CA)</h2>
+          @if (form.type !== 'ROOT') {
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
+              <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Issuer (CA)</h2>
 
-            <div *ngIf="issuers.length === 0" class="text-xs text-yellow-500/70 italic">
-              Nema dostupnih CA sertifikata.
-            </div>
-
-            <div *ngIf="issuers.length > 0" class="space-y-2 max-h-64 overflow-y-auto pr-1">
-              <label *ngFor="let issuer of issuers"
-                     class="flex items-start gap-3 p-3 rounded border cursor-pointer transition-all block"
-                     [ngClass]="form.issuerSerialNumber === issuer.serialNumber
+              <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                @for (issuer of issuers; track issuer.serialNumber) {
+                  <label
+                    class="flex items-start gap-3 p-3 rounded border cursor-pointer transition-all block"
+                    [ngClass]="form.issuerSerialNumber === issuer.serialNumber
                   ? 'border-emerald-500/50 bg-emerald-500/5'
                   : 'border-gray-800 hover:border-gray-700'">
-                <input type="radio" [(ngModel)]="form.issuerSerialNumber" name="issuer"
-                       [value]="issuer.serialNumber" (change)="onIssuerChange(issuer)"
-                       class="mt-1 accent-emerald-500" required />
-                <div class="min-w-0">
-                  <p class="text-sm text-gray-200 truncate">{{ issuer.commonName }}</p>
-                  <p class="text-xs text-gray-600 truncate">{{ issuer.organization }}</p>
-                  <div class="flex items-center gap-2 mt-1">
-                    <span [ngClass]="getTypeClass(issuer.type)"
-                          class="text-xs px-1.5 py-0.5 rounded border tracking-widest uppercase">{{ issuer.type }}</span>
-                    <span class="text-xs text-gray-600">do {{ issuer.validTo | date:'dd.MM.yy' }}</span>
+                    <input type="radio" [(ngModel)]="form.issuerSerialNumber" name="issuer"
+                           [value]="issuer.serialNumber" (change)="onIssuerChange(issuer)"
+                           class="mt-1 accent-emerald-500" required />
+                    <div class="min-w-0">
+                      <p class="text-sm text-gray-200 truncate">{{ issuer.commonName }}</p>
+                      <p class="text-xs text-gray-600 truncate">{{ issuer.organization }}</p>
+                      <div class="flex items-center gap-2 mt-1">
+                        <span [ngClass]="getTypeClass(issuer.type)"
+                              class="text-xs px-1.5 py-0.5 rounded border tracking-widest uppercase">{{ issuer.type }}</span>
+                        <span class="text-xs text-gray-600">until {{ issuer.validTo | date:'dd.MM.yy' }}</span>
+                      </div>
+                    </div>
+                  </label>
+                } @empty {
+                  <div class="text-xs text-yellow-500/70 italic">
+                    No CA certificates available.
                   </div>
-                </div>
-              </label>
+                }
+              </div>
             </div>
-          </div>
+          }
 
           <!-- Validity dates -->
           <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
-            <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Period važenja</h2>
+            <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Validity period</h2>
             <div class="space-y-3">
               <div>
-                <label class="text-xs text-gray-500 block mb-1">Datum početka</label>
+                <label class="text-xs text-gray-500 block mb-1">Start date</label>
                 <input type="date" [(ngModel)]="form.validFrom" name="validFrom"
                        [min]="today" [max]="selectedIssuer?.validTo"
                        class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 px-3 py-2 focus:outline-none focus:border-emerald-500/50 transition-colors"
                        required />
               </div>
               <div>
-                <label class="text-xs text-gray-500 block mb-1">Datum isteka</label>
+                <label class="text-xs text-gray-500 block mb-1">End date</label>
                 <input type="date" [(ngModel)]="form.validTo" name="validTo"
                        [min]="form.validFrom || today" [max]="selectedIssuer?.validTo"
                        class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 px-3 py-2 focus:outline-none focus:border-emerald-500/50 transition-colors"
                        required />
               </div>
-              <p *ngIf="selectedIssuer" class="text-xs text-gray-600 italic">
-                Ograničeno trajanjem issuera: {{ selectedIssuer.validTo | date:'dd.MM.yyyy' }}
-              </p>
+              @if (selectedIssuer) {
+                <p class="text-xs text-gray-600 italic">
+                  Limited by issuer validity: {{ selectedIssuer.validTo | date:'dd.MM.yyyy' }}
+                </p>
+              }
             </div>
           </div>
         </div>
@@ -130,7 +140,7 @@
         <!-- Right panel: Subject fields -->
         <div class="lg:col-span-2">
           <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
-            <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-6">Podaci o vlasniku (X500Name)</h2>
+            <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-6">Subject details (X500Name)</h2>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
@@ -140,7 +150,7 @@
                   Common Name (CN) <span class="text-red-500">*</span>
                 </label>
                 <input type="text" [(ngModel)]="form.commonName" name="commonName"
-                       placeholder="npr. Root CA, John Doe, server.example.com"
+                       placeholder="e.g. Root CA, John Doe, server.example.com"
                        class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-colors"
                        required />
               </div>
@@ -148,38 +158,38 @@
               <!-- O -->
               <div>
                 <label class="text-xs text-gray-500 block mb-1">
-                  Organizacija (O) <span class="text-red-500">*</span>
+                  Organization (O) <span class="text-red-500">*</span>
                 </label>
                 <input type="text" [(ngModel)]="form.organization" name="organization"
-                       placeholder="npr. Acme Corp"
+                       placeholder="e.g. Acme Corp"
                        class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-colors"
                        required />
               </div>
 
               <!-- OU -->
               <div>
-                <label class="text-xs text-gray-500 block mb-1">Org. Jedinica (OU)</label>
+                <label class="text-xs text-gray-500 block mb-1">Organization Unit (OU)</label>
                 <input type="text" [(ngModel)]="form.organizationUnit" name="organizationUnit"
-                       placeholder="npr. IT Department"
+                       placeholder="e.g. IT Department"
                        class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-colors" />
               </div>
 
               <!-- C -->
               <div>
                 <label class="text-xs text-gray-500 block mb-1">
-                  Država (C) <span class="text-red-500">*</span>
+                  Country (C) <span class="text-red-500">*</span>
                 </label>
                 <select [(ngModel)]="form.country" name="country"
                         class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-colors"
                         required>
-                  <option value="">Izaberi državu...</option>
-                  <option value="RS">RS - Srbija</option>
-                  <option value="US">US - Sjedinjene Države</option>
-                  <option value="DE">DE - Nemačka</option>
-                  <option value="GB">GB - Velika Britanija</option>
-                  <option value="FR">FR - Francuska</option>
-                  <option value="HR">HR - Hrvatska</option>
-                  <option value="BA">BA - Bosna i Hercegovina</option>
+                  <option value="">Select a country...</option>
+                  <option value="RS">RS - Serbia</option>
+                  <option value="US">US - United States</option>
+                  <option value="DE">DE - Germany</option>
+                  <option value="GB">GB - United Kingdom</option>
+                  <option value="FR">FR - France</option>
+                  <option value="HR">HR - Croatia</option>
+                  <option value="BA">BA - Bosnia and Herzegovina</option>
                 </select>
               </div>
 
@@ -187,14 +197,14 @@
               <div>
                 <label class="text-xs text-gray-500 block mb-1">Email (E)</label>
                 <input type="email" [(ngModel)]="form.email" name="email"
-                       placeholder="npr. admin@example.com"
+                       placeholder="e.g. admin@example.com"
                        class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-colors" />
               </div>
             </div>
 
             <!-- Extensions section -->
             <div class="mt-6 pt-5 border-t border-gray-800">
-              <h3 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Ekstenzije</h3>
+              <h3 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Extensions</h3>
               <div class="grid grid-cols-2 gap-3">
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" [(ngModel)]="form.extensions.keyCertSign"
@@ -233,7 +243,7 @@
 
             <!-- Preview -->
             <div class="mt-6 pt-5 border-t border-gray-800">
-              <h3 class="text-xs text-gray-500 tracking-widest uppercase mb-3">Preview X500Name</h3>
+              <h3 class="text-xs text-gray-500 tracking-widest uppercase mb-3">X500Name Preview</h3>
               <div class="bg-gray-950 rounded px-4 py-3 font-mono text-xs text-emerald-400 break-all">
                 {{ getX500Preview() }}
               </div>
@@ -244,19 +254,21 @@
           <div class="mt-5 flex items-center justify-end gap-4">
             <button type="button" (click)="goBack()"
                     class="px-5 py-2.5 text-xs tracking-widest uppercase text-gray-500 hover:text-gray-300 transition-colors cursor-pointer">
-              Otkaži
+              Cancel
             </button>
             <button type="submit" [disabled]="certForm.invalid || isLoading"
                     class="flex items-center gap-2 px-6 py-2.5 text-xs tracking-widest uppercase bg-emerald-600
                     cursor-pointer hover:bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed text-white
                     rounded transition-colors">
-              <svg *ngIf="isLoading" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                </path>
-              </svg>
-              {{ isLoading ? 'Generisanje...' : 'Izdaj Sertifikat' }}
+              @if (isLoading) {
+                <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+              }
+              {{ isLoading ? 'Generating...' : 'Issue Certificate' }}
             </button>
           </div>
         </div>
