@@ -48,7 +48,7 @@ public class CertificateService {
     private final OrganizatioRepository   orgRepo;
     private final KeyStoreReader          keyStoreReader;
     private final KeyStoreWriter          keyStoreWriter;
-    private final KeyEncryptionService    keyEncryptionService;   // NEW
+    private final KeyEncryptionService    keyEncryptionService;
 
     @Value("${pki.keystore.dir}")
     private String keystoreDir;
@@ -152,7 +152,6 @@ public class CertificateService {
                 .type(requestedType)
                 .status(CertificateStatus.ACTIVE)
                 .certificatePem(toPem(signedCert))
-                .encryptedPrivateKey(privateKeyToPem(subjectKeyPair.getPrivate())) // TODO: encrypt before storing
                 .owner(caller)
                 .build();
 
@@ -288,6 +287,7 @@ public class CertificateService {
                 .revoked(false)
                 .status(CertificateStatus.ACTIVE)
                 .issuingOrg(subjectOrg)
+                .owner(userRepository.findByEmail(req.getEmail()).get())
                 .build();
 
         return certificateRepository.save(certData);

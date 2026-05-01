@@ -76,10 +76,13 @@ export class CertificateService {
     return this.http.get<CertificateDto>(`${this.API_URL}/my/${serialNumber}`);
   }
 
+  revokeMyCertificate(serialNumber: string, reason: string): Observable<void> {
+    return this.http.put<void>(`${this.API_URL}/my/${serialNumber}/revoke`, { reason });
+  }
+  
   autogenerate(request: CsrRequest): Observable<CsrResponse> {
     return this.http.post<CsrResponse>(`${this.API_URL}/csr/autogenerate`, request);
   }
-
   uploadCsr(request: CsrUploadRequest): Observable<CsrResponse> {
     return this.http.post<CsrResponse>(`${this.API_URL}/csr/upload`, request);
   }
