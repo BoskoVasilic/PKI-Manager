@@ -1,4 +1,3 @@
-<!-- admin-certificates.component.html -->
 <div class="min-h-screen bg-gray-950 text-gray-100 font-mono">
   <header class="border-b border-gray-800 bg-gray-900/60 backdrop-blur-sm sticky top-0 z-40">
   <div class="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
@@ -7,7 +6,7 @@
       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
-      Nazad
+      Back
     </button>
     <span class="text-gray-700">|</span>
     <div class="flex items-center gap-2">
@@ -17,7 +16,7 @@
                 d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
         </svg>
       </div>
-      <span class="text-xs text-gray-400 tracking-widest uppercase">Svi sertifikati</span>
+      <span class="text-xs text-gray-400 tracking-widest uppercase">All certificates</span>
     </div>
   </div>
   </header>
@@ -27,28 +26,28 @@
     <!-- Page title + actions -->
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-10">
       <div>
-        <p class="text-xs text-emerald-400 tracking-widest uppercase mb-2">Administrator · Sve organizacije</p>
-        <h1 class="text-3xl font-bold text-white tracking-tight">Sertifikati</h1>
-        <p class="text-sm text-gray-500 mt-1">Pregled svih sertifikata u sistemu</p>
+        <p class="text-xs text-emerald-400 tracking-widest uppercase mb-2">Administrator · All organizations</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Certificates</h1>
+        <p class="text-sm text-gray-500 mt-1">Overview of all certificates in the system</p>
       </div>
     </div>
 
     <!-- Stats row -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
       <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-        <p class="text-xs text-gray-500 tracking-widest uppercase mb-1">Ukupno</p>
+        <p class="text-xs text-gray-500 tracking-widest uppercase mb-1">Total</p>
         <p class="text-2xl font-bold text-white">{{ certificates.length }}</p>
       </div>
       <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-        <p class="text-xs text-emerald-500 tracking-widest uppercase mb-1">Aktivni</p>
+        <p class="text-xs text-emerald-500 tracking-widest uppercase mb-1">Active</p>
         <p class="text-2xl font-bold text-emerald-400">{{ activeCertCount }}</p>
       </div>
       <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-        <p class="text-xs text-yellow-500 tracking-widest uppercase mb-1">Istekli</p>
+        <p class="text-xs text-yellow-500 tracking-widest uppercase mb-1">Expired</p>
         <p class="text-2xl font-bold text-yellow-400">{{ expiredCertCount }}</p>
       </div>
       <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
-        <p class="text-xs text-red-500 tracking-widest uppercase mb-1">Povučeni</p>
+        <p class="text-xs text-red-500 tracking-widest uppercase mb-1">Revoked</p>
         <p class="text-2xl font-bold text-red-400">{{ revokedCertCount }}</p>
       </div>
     </div>
@@ -61,22 +60,22 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0" />
         </svg>
-        <input [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()" placeholder="Pretraži CN, organizaciju..."
+        <input [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()" placeholder="Search CN, organization..."
                class="w-full bg-gray-900 border border-gray-800 rounded text-sm text-gray-300 placeholder-gray-600 pl-9 pr-4 py-2 focus:outline-none focus:border-emerald-500/50 transition-colors" />
       </div>
       <select [(ngModel)]="typeFilter" (ngModelChange)="applyFilters()"
               class="bg-gray-900 border border-gray-800 rounded text-sm text-gray-400 px-3 py-2 focus:outline-none focus:border-emerald-500/50 transition-colors">
-        <option value="">Svi tipovi</option>
+        <option value="">All types</option>
         <option value="ROOT">Root CA</option>
         <option value="INTERMEDIATE">Intermediate</option>
         <option value="END_ENTITY">End-Entity</option>
       </select>
       <select [(ngModel)]="statusFilter" (ngModelChange)="applyFilters()"
               class="bg-gray-900 border border-gray-800 rounded text-sm text-gray-400 px-3 py-2 focus:outline-none focus:border-emerald-500/50 transition-colors">
-        <option value="">Svi statusi</option>
-        <option value="active">Aktivan</option>
-        <option value="expired">Istekao</option>
-        <option value="revoked">Povučen</option>
+        <option value="">All statuses</option>
+        <option value="active">Active</option>
+        <option value="expired">Expired</option>
+        <option value="revoked">Revoked</option>
       </select>
     </div>
 
@@ -87,82 +86,89 @@
           <thead>
           <tr class="border-b border-gray-800 text-left">
             <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Status</th>
-            <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Tip</th>
+            <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Type</th>
             <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Common Name</th>
-            <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Organizacija</th>
-            <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Važi od</th>
-            <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Važi do</th>
+            <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Organization</th>
+            <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Valid from</th>
+            <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Valid to</th>
             <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Serial</th>
-            <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Akcije</th>
+            <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">Actions</th>
           </tr>
           </thead>
           <tbody>
-          <tr *ngFor="let cert of filteredCertificates; trackBy: trackById"
-              class="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors group">
+          @for (cert of filteredCertificates; track cert.id) {
+            <tr class="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors group">
 
-            <!-- Status -->
-            <td class="px-4 py-3">
-                <span [ngClass]="getStatusClass(cert)"
-                      class="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border">
-                  <span class="w-1.5 h-1.5 rounded-full" [ngClass]="getStatusDotClass(cert)"></span>
-                  {{ getStatusLabel(cert) }}
-                </span>
-            </td>
+              <!-- Status -->
+              <td class="px-4 py-3">
+              <span [ngClass]="getStatusClass(cert)"
+                    class="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border">
+                <span class="w-1.5 h-1.5 rounded-full" [ngClass]="getStatusDotClass(cert)"></span>
+                {{ getStatusLabel(cert) }}
+              </span>
+              </td>
 
-            <!-- Tip -->
-            <td class="px-4 py-3">
-                <span [ngClass]="getTypeClass(cert.type)"
-                      class="text-xs px-2 py-0.5 rounded border tracking-widest uppercase">
-                  {{ cert.type }}
-                </span>
-            </td>
+              <!-- Tip -->
+              <td class="px-4 py-3">
+              <span [ngClass]="getTypeClass(cert.type)"
+                    class="text-xs px-2 py-0.5 rounded border tracking-widest uppercase">
+                {{ cert.type }}
+              </span>
+              </td>
 
-            <!-- CN -->
-            <td class="px-4 py-3 text-gray-300 font-medium">{{ cert.commonName }}</td>
+              <!-- CN -->
+              <td class="px-4 py-3 text-gray-300 font-medium">{{ cert.commonName }}</td>
 
-            <!-- Org -->
-            <td class="px-4 py-3 text-gray-500 text-xs">{{ cert.organization }}</td>
+              <!-- Org -->
+              <td class="px-4 py-3 text-gray-500 text-xs">{{ cert.organization }}</td>
 
-            <!-- Dates -->
-            <td class="px-4 py-3 text-gray-500 text-xs">{{ cert.validFrom | date:'dd.MM.yyyy' }}</td>
-            <td class="px-4 py-3 text-xs" [ngClass]="isExpired(cert) ? 'text-red-400' : 'text-gray-500'">
-              {{ cert.validTo | date:'dd.MM.yyyy' }}
-            </td>
+              <!-- Dates -->
+              <td class="px-4 py-3 text-gray-500 text-xs">{{ cert.validFrom | date:'dd.MM.yyyy' }}</td>
+              <td class="px-4 py-3 text-xs" [ngClass]="isExpired(cert) ? 'text-red-400' : 'text-gray-500'">
+                {{ cert.validTo | date:'dd.MM.yyyy' }}
+              </td>
 
-            <!-- Serial -->
-            <td class="px-4 py-3 text-gray-600 text-xs font-mono">
-              {{ cert.serialNumber | slice:0:12 }}...
-            </td>
+              <!-- Serial -->
+              <td class="px-4 py-3 text-gray-600 text-xs font-mono">
+                {{ cert.serialNumber | slice:0:12 }}...
+              </td>
 
-            <!-- Actions -->
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button (click)="viewCertificate(cert)"
-                        class="text-xs text-gray-500 hover:text-emerald-400 transition-colors" title="Detalji">
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </button>
-                <button *ngIf="!cert.revoked" (click)="revokeCertificate(cert)"
-                        class="text-xs text-gray-500 hover:text-red-400 transition-colors" title="Povuci">
-                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                  </svg>
-                </button>
-              </div>
-            </td>
-          </tr>
+              <!-- Actions -->
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button (click)="viewCertificate(cert)"
+                          class="text-xs text-gray-500 hover:text-emerald-400 transition-colors" title="Details">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  @if (!cert.revoked) {
+                    <button (click)="revokeCertificate(cert)"
+                            class="text-xs text-gray-500 hover:text-red-400 transition-colors" title="Revoke">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                      </svg>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+
 
           <!-- Empty state -->
-          <tr *ngIf="filteredCertificates.length === 0">
-            <td colspan="8" class="px-4 py-16 text-center text-gray-600 text-sm">
-              Nema pronađenih sertifikata
-            </td>
-          </tr>
+          @if (filteredCertificates.length === 0) {
+            <tr>
+              <td colspan="8" class="px-4 py-16 text-center text-gray-600 text-sm">
+                No certificates found
+              </td>
+            </tr>
+          }
+
           </tbody>
         </table>
       </div>
@@ -170,64 +176,71 @@
   </div>
 
   <!-- Detail Modal -->
-  <div *ngIf="selectedCert" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" (click)="selectedCert = null"></div>
-    <div class="relative bg-gray-900 border border-gray-700 rounded-xl w-full max-w-lg shadow-2xl">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-800">
-        <h2 class="text-sm font-bold tracking-widest uppercase text-white">Detalji sertifikata</h2>
-        <button (click)="selectedCert = null" class="text-gray-600 hover:text-gray-300 transition-colors">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      <div class="px-6 py-5 space-y-3">
-        <div *ngFor="let field of getCertFields(selectedCert)" class="flex justify-between items-start gap-4">
-          <span class="text-xs text-gray-500 tracking-widest uppercase shrink-0">{{ field.label }}</span>
-          <span class="text-sm text-gray-300 text-right font-mono break-all">{{ field.value }}</span>
+  @if (selectedCert) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" (click)="selectedCert = null"></div>
+      <div class="relative bg-gray-900 border border-gray-700 rounded-xl w-full max-w-lg shadow-2xl">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+          <h2 class="text-sm font-bold tracking-widest uppercase text-white">Detalji sertifikata</h2>
+          <button (click)="selectedCert = null" class="text-gray-600 hover:text-gray-300 transition-colors">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="px-6 py-5 space-y-3">
+          @for (field of getCertFields(selectedCert); track $index) {
+            <div class="flex justify-between items-start gap-4">
+              <span class="text-xs text-gray-500 tracking-widest uppercase shrink-0">{{ field.label }}</span>
+              <span class="text-sm text-gray-300 text-right font-mono break-all">{{ field.value }}</span>
+            </div>
+          }
         </div>
       </div>
     </div>
-  </div>
+  }
 
   <!-- Revoke Modal -->
-  <div *ngIf="revokeTarget" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" (click)="revokeTarget = null"></div>
-    <div class="relative bg-gray-900 border border-red-900/50 rounded-xl w-full max-w-md shadow-2xl">
-      <div class="px-6 py-5">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
-            <svg class="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
+  @if (revokeTarget) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" (click)="revokeTarget = null"></div>
+      <div class="relative bg-gray-900 border border-red-900/50 rounded-xl w-full max-w-md shadow-2xl">
+        <div class="px-6 py-5">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+              <svg class="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h2 class="text-sm font-bold tracking-widest uppercase text-white">Povlačenje sertifikata</h2>
           </div>
-          <h2 class="text-sm font-bold tracking-widest uppercase text-white">Povlačenje sertifikata</h2>
-        </div>
-        <p class="text-sm text-gray-400 mb-4">Izaberite razlog povlačenja za <span class="text-white font-medium">{{
-            revokeTarget.commonName }}</span>:</p>
-        <select [(ngModel)]="revokeReason"
-                class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 px-3 py-2 mb-4 focus:outline-none focus:border-red-500/50 transition-colors">
-          <option value="">Izaberite razlog...</option>
-          <option value="UNSPECIFIED">Unspecified</option>
-          <option value="KEY_COMPROMISE">Key Compromise</option>
-          <option value="CA_COMPROMISE">CA Compromise</option>
-          <option value="AFFILIATION_CHANGED">Affiliation Changed</option>
-          <option value="SUPERSEDED">Superseded</option>
-          <option value="CESSATION_OF_OPERATION">Cessation of Operation</option>
-          <option value="PRIVILEGE_WITHDRAWN">Privilege Withdrawn</option>
-        </select>
-        <div class="flex gap-3 justify-end">
-          <button (click)="revokeTarget = null"
-                  class="px-4 py-2 text-xs tracking-widest uppercase text-gray-500 hover:text-gray-300 transition-colors">
-            Otkaži
-          </button>
-          <button (click)="confirmRevoke()" [disabled]="!revokeReason"
-                  class="px-4 py-2 text-xs tracking-widest uppercase bg-red-700 hover:bg-red-600 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded transition-colors">
-            Potvrdi povlačenje
-          </button>
+          <p class="text-sm text-gray-400 mb-4">Izaberite razlog povlačenja za <span class="text-white font-medium">{{
+              revokeTarget.commonName }}</span>:</p>
+          <select [(ngModel)]="revokeReason"
+                  class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 px-3 py-2 mb-4 focus:outline-none focus:border-red-500/50 transition-colors">
+            <option value="">Izaberite razlog...</option>
+            <option value="UNSPECIFIED">Unspecified</option>
+            <option value="KEY_COMPROMISE">Key Compromise</option>
+            <option value="CA_COMPROMISE">CA Compromise</option>
+            <option value="AFFILIATION_CHANGED">Affiliation Changed</option>
+            <option value="SUPERSEDED">Superseded</option>
+            <option value="CESSATION_OF_OPERATION">Cessation of Operation</option>
+            <option value="PRIVILEGE_WITHDRAWN">Privilege Withdrawn</option>
+          </select>
+          <div class="flex gap-3 justify-end">
+            <button (click)="revokeTarget = null"
+                    class="px-4 py-2 text-xs tracking-widest uppercase text-gray-500 hover:text-gray-300 transition-colors">
+              Otkaži
+            </button>
+            <button (click)="confirmRevoke()" [disabled]="!revokeReason"
+                    class="px-4 py-2 text-xs tracking-widest uppercase bg-red-700 hover:bg-red-600 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded transition-colors">
+              Potvrdi povlačenje
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  }
+
 </div>
