@@ -34,10 +34,7 @@ import java.io.*;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -287,7 +284,7 @@ public class CertificateService {
                 .revoked(false)
                 .status(CertificateStatus.ACTIVE)
                 .issuingOrg(subjectOrg)
-                .owner(userRepository.findByEmail(req.getEmail()).get())
+                .owner(Objects.equals(req.getType().toString(), "ROOT") ? null : userRepository.findByEmail(req.getEmail()).get())
                 .build();
 
         return certificateRepository.save(certData);
