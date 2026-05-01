@@ -34,11 +34,10 @@ export interface CertificateDto {
 
 @Injectable({ providedIn: 'root' })
 export class CertificateService {
-  private readonly API_URL = 'http://localhost:8080/api/certificates';
+  private readonly API_URL = 'http://localhost:8081/api/certificates';
 
   constructor(private http: HttpClient) {}
 
-  // End-user
   getMyCertificates(): Observable<CertificateDto[]> {
     return this.http.get<CertificateDto[]>(`${this.API_URL}/my`);
   }
@@ -47,7 +46,6 @@ export class CertificateService {
     return this.http.get<CertificateDto>(`${this.API_URL}/my/${serialNumber}`);
   }
 
-  // CA user
   issueCertificate(request: IssueCertificateRequest): Observable<CertificateDto> {
     return this.http.post<CertificateDto>(`${this.API_URL}/issue`, request);
   }

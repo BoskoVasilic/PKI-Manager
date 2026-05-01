@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login';
 import { DashboardComponent } from './pages/dashboard/dashboard';
-import { IssueCertificateComponent } from './pages/issue-certificate/issue-certificate';
+import { IssueCertificateComponent } from './pages/issue-certificate-ca/issue-certificate-ca';
 import { CertificatesComponent } from './pages/certificates/certificates';
 import { authGuard } from './guards/auth.guard';
 import {ChangePasswordComponent} from './components/change-password/change-password.component';

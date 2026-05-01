@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CertificateService, CertificateResponse, IssueCertificateRequest } from '../../services/certificate.service';
+import { CertificateService, CertificateDto, IssueCertificateRequest } from '../../services/certificate.service';
 
 @Component({
   selector: 'app-issue-certificate',
@@ -12,7 +12,7 @@ import { CertificateService, CertificateResponse, IssueCertificateRequest } from
 })
 export class IssueCertificateComponent implements OnInit {
   form!: FormGroup;
-  issuers: CertificateResponse[] = [];
+  issuers: CertificateDto[] = [];
   isLoading = false;
   isLoadingIssuers = true;
   successMessage = '';
@@ -52,7 +52,7 @@ export class IssueCertificateComponent implements OnInit {
       validFrom: [today, Validators.required],
       validTo: [nextYear, Validators.required],
       issuerSerialNumber: ['', Validators.required],
-      isCA: [false],
+      isCa: [false],
       keyUsages: this.fb.array([]),
     });
   }
@@ -109,8 +109,9 @@ export class IssueCertificateComponent implements OnInit {
       validFrom: val.validFrom,
       validTo: val.validTo,
       issuerSerialNumber: val.issuerSerialNumber,
+      type: val.isCa ? 'INTERMEDIATE' : 'END_ENTITY',
       keyUsages: val.keyUsages,
-      isCA: val.isCA,
+      isCa: val.isCa,
     };
 
     this.certService.issueCertificate(request).subscribe({
