@@ -23,12 +23,12 @@ export const routes: Routes = [
     path: 'dashboard',
     component: DashboardComponent,
     canActivate: [authGuard],
-    children: [
-      {
-        path: 'issue-certificate',
-        component: IssueCertificateComponent,
-      },
-    ],
+  },
+
+  {
+    path: 'certificates/issue',
+    component: IssueCertificateComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'certificates',

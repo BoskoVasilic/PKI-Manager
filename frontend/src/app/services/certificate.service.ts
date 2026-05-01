@@ -101,19 +101,19 @@ export class CertificateService {
   }
 
   getAvailableIssuers(): Observable<CertificateDto[]> {
-    return this.http.get<CertificateDto[]>(`${this.API_URL}/issuers`);
+    return this.http.get<CertificateDto[]>(`${this.API_URL}/my/issuers`);
   }
 
-  getAvailableIssuerss(): Observable<CertificateData[]> {
-    return this.http.get<CertificateData[]>(`${this.API_URL}/certificates/issuers`);
+  getAvailableIssuersAdmin(): Observable<CertificateData[]> {
+    return this.http.get<CertificateData[]>(`${this.API_URL}/issuers`);
   }
 
-  issueCertificates(payload: any): Observable<CertificateData> {
-    return this.http.post<CertificateData>(`${this.API_URL}/certificates`, payload);
+  issueCertificateAdmin(payload: any): Observable<CertificateData> {
+    return this.http.post<CertificateData>(`${this.API_URL}`, payload);
   }
 
   getAllCertificates(): Observable<CertificateData[]> {
-    return this.http.get<CertificateData[]>(`${this.API_URL}/certificates`);
+    return this.http.get<CertificateData[]>(`${this.API_URL}`);
   }
 
   getCertificate(serialNumber: string): Observable<CertificateData> {

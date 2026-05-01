@@ -10,7 +10,6 @@ public class PkInfrastructureApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(PkInfrastructureApplication.class, args);
 		System.out.println("PK Infrastructure Service is running...");
-		System.out.println(new BCryptPasswordEncoder().encode("password"));
 	}
 
 }
