@@ -17,6 +17,22 @@ export interface Certificate {
   revocationReason: string | null;
 }
 
+export interface CertificateData {
+  id: number;
+  serialNumber: string;
+  alias: string;
+  commonName: string;
+  organization: string;
+  organizationUnit: string;
+  country: string;
+  email: string;
+  validFrom: string;
+  validTo: string;
+  type: 'ROOT' | 'INTERMEDIATE' | 'END_ENTITY';
+  issuerSerialNumber: string | null;
+  revoked: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CertificateService {
   private readonly API_URL = 'http://localhost:8081/api';
@@ -29,5 +45,25 @@ export class CertificateService {
 
   getCertificateBySerial(serialNumber: string): Observable<Certificate> {
     return this.http.get<Certificate>(`${this.API_URL}/certificates/my/${serialNumber}`);
+  }
+
+  getAvailableIssuers(): Observable<CertificateData[]> {
+    return this.http.get<CertificateData[]>(`${this.API_URL}/certificates/issuers`);
+  }
+
+  issueCertificate(payload: any): Observable<CertificateData> {
+    return this.http.post<CertificateData>(`${this.API_URL}/certificates`, payload);
+  }
+
+  getAllCertificates(): Observable<CertificateData[]> {
+    return this.http.get<CertificateData[]>(`${this.API_URL}/certificates`);
+  }
+
+  getCertificate(serialNumber: string): Observable<CertificateData> {
+    return this.http.get<CertificateData>(`${this.API_URL}/certificates/${serialNumber}`);
+  }
+
+  revokeCertificate(serialNumber: string, reason: string): Observable<void> {
+    return this.http.put<void>(`${this.API_URL}/certificates/${serialNumber}/revoke`, { reason });
   }
 }

@@ -34,21 +34,21 @@ export class DashboardComponent implements OnInit {
 
   private readonly roleConfigs: Record<UserRole, DashboardConfig> = {
     ADMIN: {
-      roleLabel: 'Administrator',
+      roleLabel: 'Admin',
       roleColor: 'gold',
       greeting: 'Full system access',
       navItems: [
         {
           label: 'Issue Certificate',
           icon: 'cert',
-          route: '/certificates/issue',
+          route: '/admin/issue-certificate',
           description: 'Issue Root, Intermediate or End-Entity certificates',
           tag: 'Root / Intermediate / EE',
         },
         {
           label: 'All Certificates',
           icon: 'list',
-          route: '/certificates',
+          route: '/admin/certificates',
           description: 'View, download or revoke any certificate in the system',
         },
         {
@@ -56,7 +56,6 @@ export class DashboardComponent implements OnInit {
           icon: 'users',
           route: '/admin/ca-users',
           description: 'Add new organizations and CA users',
-          tag: 'Func. 2',
         },
         {
           label: 'Revocation (CRL)',
