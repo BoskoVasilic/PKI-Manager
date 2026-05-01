@@ -56,8 +56,8 @@
         <!-- Table header -->
         <div class="grid grid-cols-[2fr_1.5fr_1fr_1fr] gap-4 px-5 py-3 border-b border-white/[0.06]">
           <span class="text-[0.7rem] font-semibold text-white/30 uppercase tracking-[0.08em]">Subject</span>
-          <span class="text-[0.7rem] font-semibold text-white/30 uppercase tracking-[0.08em]">Issued by</span>
-          <span class="text-[0.7rem] font-semibold text-white/30 uppercase tracking-[0.08em]">Expires</span>
+          <span class="text-[0.7rem] font-semibold text-white/30 uppercase tracking-[0.08em]">Valid until</span>
+          <span class="text-[0.7rem] font-semibold text-white/30 uppercase tracking-[0.08em]">Type</span>
           <span class="text-[0.7rem] font-semibold text-white/30 uppercase tracking-[0.08em]">Status</span>
         </div>
 
@@ -69,22 +69,25 @@
             <button
               (click)="selectCert(cert)"
               class="w-full grid grid-cols-[2fr_1.5fr_1fr_1fr] gap-4 px-5 py-4 text-left transition-colors duration-150 hover:bg-white/[0.03] cursor-pointer border-none bg-transparent"
-              [class.bg-white/[0.04]]="selected()?.serialNumber === cert.serialNumber">
+              [class.bg-white\/\[0\.04\]]="selected()?.serialNumber === cert.serialNumber">
 
               <!-- Subject -->
               <div class="flex flex-col gap-0.5 min-w-0">
-                <span class="text-sm font-medium text-white truncate">{{ cert.subjectCN }}</span>
+                <span class="text-sm font-medium text-white truncate">{{ cert.commonName }}</span>
                 <span class="text-xs text-white/30 font-mono truncate">{{ cert.serialNumber }}</span>
               </div>
 
-              <!-- Issuer -->
+              <!-- Valid until -->
               <div class="flex items-center min-w-0">
-                <span class="text-sm text-white/55 truncate">{{ cert.issuerCN }}</span>
+                <span class="text-sm text-white/55">{{ formatDate(cert.validTo) }}</span>
               </div>
 
-              <!-- Expires -->
+              <!-- Type -->
               <div class="flex items-center">
-                <span class="text-sm text-white/55">{{ formatDate(cert.validTo) }}</span>
+                <span class="text-[0.7rem] font-semibold px-2.5 py-1 rounded-full uppercase tracking-[0.06em]
+                             bg-blue-400/10 text-blue-400 border border-blue-400/25">
+                  {{ cert.type }}
+                </span>
               </div>
 
               <!-- Status -->
@@ -96,21 +99,21 @@
               </div>
             </button>
 
-            <!-- Detail panel (expanded) -->
+            <!-- Detail panel -->
             @if (selected()?.serialNumber === cert.serialNumber) {
               <div class="px-5 pb-5 pt-2 border-t border-white/[0.06] bg-white/[0.015]">
                 <div class="grid grid-cols-2 gap-x-10 gap-y-4 sm:grid-cols-3">
 
                   @for (field of [
-                    {label: 'Common Name',   value: cert.subjectCN},
-                    {label: 'Organization',  value: cert.subjectO},
-                    {label: 'Org. Unit',     value: cert.subjectOU},
-                    {label: 'Country',       value: cert.subjectC},
-                    {label: 'Email',         value: cert.subjectEmail},
-                    {label: 'Issuer CN',     value: cert.issuerCN},
-                    {label: 'Valid From',    value: formatDate(cert.validFrom)},
-                    {label: 'Valid To',      value: formatDate(cert.validTo)},
-                    {label: 'Serial Number', value: cert.serialNumber}
+                    {label: 'Common Name',      value: cert.commonName},
+                    {label: 'Organization',     value: cert.organization},
+                    {label: 'Org. Unit',        value: cert.organizationUnit},
+                    {label: 'Country',          value: cert.country},
+                    {label: 'Email',            value: cert.email},
+                    {label: 'Issuer Serial',    value: cert.issuerSerialNumber},
+                    {label: 'Valid From',       value: formatDate(cert.validFrom)},
+                    {label: 'Valid To',         value: formatDate(cert.validTo)},
+                    {label: 'Serial Number',    value: cert.serialNumber}
                   ]; track field.label) {
                     <div class="flex flex-col gap-1">
                       <span class="text-[0.68rem] text-white/30 uppercase tracking-[0.07em] font-medium">{{ field.label }}</span>
@@ -118,10 +121,10 @@
                     </div>
                   }
 
-                  @if (cert.status === 'REVOKED') {
+                  @if (cert.revoked) {
                     <div class="col-span-full flex flex-col gap-1">
-                      <span class="text-[0.68rem] text-white/30 uppercase tracking-[0.07em] font-medium">Revocation Reason</span>
-                      <span class="text-[0.85rem] text-red-400">{{ cert.revocationReason || 'unspecified' }}</span>
+                      <span class="text-[0.68rem] text-white/30 uppercase tracking-[0.07em] font-medium">Status</span>
+                      <span class="text-[0.85rem] text-red-400">Revoked</span>
                     </div>
                   }
                 </div>

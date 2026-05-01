@@ -86,7 +86,6 @@ export class IssueCertificateComponent implements OnInit {
     }
   }
 
-  // ── isCA toggle (mirrors admin onTypeChange) ──────────────────────────────
 
   onIsCAChange(value: boolean): void {
     this.form.get('isCA')?.setValue(value);
@@ -100,7 +99,6 @@ export class IssueCertificateComponent implements OnInit {
     }
   }
 
-  // ── Key usage helpers ─────────────────────────────────────────────────────
 
   get keyUsagesArray(): FormArray {
     return this.form.get('keyUsages') as FormArray;
@@ -120,7 +118,6 @@ export class IssueCertificateComponent implements OnInit {
     return this.keyUsagesArray.controls.some(c => c.value === value);
   }
 
-  // ── X500Name preview (mirrors admin's getX500Preview) ────────────────────
 
   getX500Preview(): string {
     const v = this.form.getRawValue();
@@ -133,7 +130,6 @@ export class IssueCertificateComponent implements OnInit {
     return parts.length > 0 ? parts.join(', ') : 'CN=..., O=..., C=...';
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────
 
   onSubmit(): void {
     if (this.form.invalid) {
