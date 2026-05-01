@@ -29,8 +29,8 @@ public class User {
     @Column(nullable = false)
     private String lastName;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "organization_id", referencedColumnName = "id")
+    @ManyToOne
+    @JoinColumn(name = "organization_id")
     private Organization organization;
 
     @Enumerated(EnumType.STRING)

@@ -86,12 +86,10 @@ export class CertificateService {
     return this.http.get<CertificateDto>(`${this.API_URL}/my/${serialNumber}`);
   }
 
-  /** Feature 6/8 — server generates key pair, signs cert, returns private key ONCE */
   autogenerate(request: CsrRequest): Observable<CsrResponse> {
     return this.http.post<CsrResponse>(`${this.API_URL}/csr/autogenerate`, request);
   }
 
-  /** Feature 8 — user uploads their own CSR PEM, server signs and returns cert */
   uploadCsr(request: CsrUploadRequest): Observable<CsrResponse> {
     return this.http.post<CsrResponse>(`${this.API_URL}/csr/upload`, request);
   }

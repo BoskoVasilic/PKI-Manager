@@ -301,7 +301,7 @@ public class CertificateService {
         return dtos;
     }
 
-    private Organization getOrCreateOrg(String orgName) {
+    public Organization getOrCreateOrg(String orgName) {
         return orgRepo.findByName(orgName).orElseGet(() -> {
 
             String rawPassword       = keyEncryptionService.generateRandomPassword();

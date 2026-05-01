@@ -12,7 +12,9 @@ import com.tim12.pk_infrastructure.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,10 +26,17 @@ public class AdminService {
     private final OrganizatioRepository orgRepo;
     private final UserRepository userRepo;
     private final EmailService emailService;
+    private final CertificateService certificateService;
 
     public CreatedCaUserDTO createCaUser(CreateCaUserDTO request) {
-        Organization org = orgRepo.findByName(request.getOrganizationName())
-                .orElseGet(() -> orgRepo.save(new Organization(request.getOrganizationName())));
+        Organization org = null;
+        if(request.getOrganizationId() != null) {
+            org = orgRepo.findById(request.getOrganizationId())
+                    .orElseThrow(() -> new RuntimeException("Organization not found"));
+        }else{
+            org = certificateService.getOrCreateOrg(request.getOrganizationName());
+        }
+
 
         User user = new User();
         user.setEmail(request.getEmail());
