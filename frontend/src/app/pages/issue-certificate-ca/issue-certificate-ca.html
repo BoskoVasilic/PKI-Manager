@@ -115,8 +115,8 @@
                            (change)="onIssuerChange(issuer.serialNumber)"
                            class="mt-1 accent-emerald-500" />
                     <div class="min-w-0">
-                      <p class="text-sm text-gray-200 truncate">{{ issuer.subjectCN }}</p>
-                      <p class="text-xs text-gray-600 truncate">{{ issuer.subjectO }}</p>
+                      <p class="text-sm text-gray-200 truncate">{{ issuer.commonName }}</p>
+                      <p class="text-xs text-gray-600 truncate">{{ issuer.organization }}</p>
                       <div class="flex items-center gap-2 mt-1">
                         <span class="text-xs px-1.5 py-0.5 rounded border tracking-widest uppercase
                                      text-blue-400 border-blue-500/30 bg-blue-500/10">{{ issuer.type }}</span>
