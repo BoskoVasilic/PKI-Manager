@@ -1,5 +1,6 @@
 package com.tim12.pk_infrastructure.model;
 
+import com.tim12.pk_infrastructure.model.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,8 +29,9 @@ public class User {
     @Column(nullable = false)
     private String lastName;
 
-    @Column(nullable = false)
-    private String organization;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "organization_id", referencedColumnName = "id")
+    private Organization organization;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -46,8 +48,4 @@ public class User {
     // Random string encrypted with the user's public key, used during account activation
     @Column(columnDefinition = "TEXT")
     private String activationChallenge;
-
-    public enum Role {
-        ADMIN, CA_USER, USER
-    }
 }

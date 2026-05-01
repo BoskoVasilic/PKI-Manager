@@ -2,7 +2,22 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-export interface Certificate {
+export interface IssueCertificateRequest {
+  commonName: string;
+  organization: string;
+  organizationalUnit: string;
+  country: string;
+  email: string;
+  validFrom: string;
+  validTo: string;
+  issuerSerialNumber: string;
+  type: string;
+  keyUsages: string[];
+  isCa: boolean;
+  pathLengthConstraint?: number;
+}
+
+export interface CertificateDto {
   serialNumber: string;
   subjectCN: string;
   subjectO: string;
@@ -40,20 +55,34 @@ export interface CsrResponse {
   certificatePem: string;
   privateKeyPem?: string; // only present for autogenerate
   message: string;
+export interface CertificateData {
+  id: number;
+  serialNumber: string;
+  alias: string;
+  commonName: string;
+  organization: string;
+  organizationUnit: string;
+  country: string;
+  email: string;
+  validFrom: string;
+  validTo: string;
+  type: 'ROOT' | 'INTERMEDIATE' | 'END_ENTITY';
+  issuerSerialNumber: string | null;
+  revoked: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
 export class CertificateService {
-  private readonly API_URL = 'http://localhost:8081/api';
+  private readonly API_URL = 'http://localhost:8081/api/certificates';
 
   constructor(private http: HttpClient) {}
 
-  getMyCertificates(): Observable<Certificate[]> {
-    return this.http.get<Certificate[]>(`${this.API_URL}/certificates/my`);
+  getMyCertificates(): Observable<CertificateDto[]> {
+    return this.http.get<CertificateDto[]>(`${this.API_URL}/my`);
   }
 
-  getCertificateBySerial(serialNumber: string): Observable<Certificate> {
-    return this.http.get<Certificate>(`${this.API_URL}/certificates/my/${serialNumber}`);
+  getCertificateBySerial(serialNumber: string): Observable<CertificateDto> {
+    return this.http.get<CertificateDto>(`${this.API_URL}/my/${serialNumber}`);
   }
 
   /** Feature 6/8 — server generates key pair, signs cert, returns private key ONCE */
@@ -64,5 +93,33 @@ export class CertificateService {
   /** Feature 8 — user uploads their own CSR PEM, server signs and returns cert */
   uploadCsr(request: CsrUploadRequest): Observable<CsrResponse> {
     return this.http.post<CsrResponse>(`${this.API_URL}/csr/upload`, request);
+  }
+}
+  issueCertificate(request: IssueCertificateRequest): Observable<CertificateDto> {
+    return this.http.post<CertificateDto>(`${this.API_URL}/issue`, request);
+  }
+
+  getAvailableIssuers(): Observable<CertificateDto[]> {
+    return this.http.get<CertificateDto[]>(`${this.API_URL}/issuers`);
+  }
+
+  getAvailableIssuers(): Observable<CertificateData[]> {
+    return this.http.get<CertificateData[]>(`${this.API_URL}/certificates/issuers`);
+  }
+
+  issueCertificate(payload: any): Observable<CertificateData> {
+    return this.http.post<CertificateData>(`${this.API_URL}/certificates`, payload);
+  }
+
+  getAllCertificates(): Observable<CertificateData[]> {
+    return this.http.get<CertificateData[]>(`${this.API_URL}/certificates`);
+  }
+
+  getCertificate(serialNumber: string): Observable<CertificateData> {
+    return this.http.get<CertificateData>(`${this.API_URL}/certificates/${serialNumber}`);
+  }
+
+  revokeCertificate(serialNumber: string, reason: string): Observable<void> {
+    return this.http.put<void>(`${this.API_URL}/certificates/${serialNumber}/revoke`, { reason });
   }
 }
