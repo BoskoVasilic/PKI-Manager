@@ -4,7 +4,8 @@
   <header class="border-b border-gray-800 bg-gray-900/60 backdrop-blur-sm sticky top-0 z-40">
     <div class="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
       <button (click)="goBack()"
-              class="text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-2 text-xs tracking-widest uppercase">
+              class="text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-2 text-xs
+              tracking-widest uppercase cursor-pointer">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
@@ -175,11 +176,14 @@
           <!-- Submit -->
           <div class="flex items-center justify-end gap-4 pt-2">
             <button type="button" (click)="goBack()"
-                    class="px-5 py-2.5 text-xs tracking-widest uppercase text-gray-500 hover:text-gray-300 transition-colors">
+                    class="px-5 py-2.5 text-xs tracking-widest uppercase text-gray-500 hover:text-gray-300
+                    transition-colors cursor-pointer">
               Otkaži
             </button>
             <button type="submit" [disabled]="caForm.invalid || isLoading"
-                    class="flex items-center gap-2 px-6 py-2.5 text-xs tracking-widest uppercase bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded transition-colors">
+                    class="flex items-center gap-2 px-6 py-2.5 text-xs tracking-widest uppercase bg-blue-600
+                    hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed text-white
+                    rounded transition-colors cursor-pointer">
               @if (isLoading) {
                 <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

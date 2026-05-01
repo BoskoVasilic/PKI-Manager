@@ -1,7 +1,7 @@
 import {ChangeDetectorRef, Component} from '@angular/core';
 import {Router} from '@angular/router';
 import {FormsModule} from '@angular/forms';
-import {NgClass} from '@angular/common';
+import {NgClass, Location } from '@angular/common';
 import {UserService} from '../../services/user.service';
 
 interface Organization {
@@ -38,6 +38,7 @@ export class CaUserRegisterComponent {
     private userService: UserService,
     private router: Router,
     private ref: ChangeDetectorRef,
+    private location: Location
   ) {}
 
   ngOnInit(): void {
@@ -91,6 +92,6 @@ export class CaUserRegisterComponent {
   }
 
   goBack(): void {
-    this.router.navigate(['/admin/certificates']);
+    this.location.back();
   }
 }

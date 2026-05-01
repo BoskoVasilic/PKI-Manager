@@ -5,11 +5,16 @@ import { CertificatesComponent } from './pages/certificates/certificates';
 import { authGuard } from './guards/auth.guard';
 import {ChangePasswordComponent} from './components/change-password/change-password.component';
 import {CaUserRegisterComponent} from './components/ca-user-register/ca-user-register.component';
+import {AuthService} from './services/auth.service';
+import {IssueCertificateAdminComponent} from './components/issue-certificate-admin/issue-certificate-admin.component';
+import {AdminCertificatesViewComponent} from './components/admin-certificates-view/admin-certificates-view.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'activate', component: ChangePasswordComponent },
-  { path: 'admin/register-ca', component: CaUserRegisterComponent}
+  { path: 'admin/ca-users', component: CaUserRegisterComponent, canActivate: [authGuard] },
+  { path: 'admin/issue-certificate', component: IssueCertificateAdminComponent, canActivate: [authGuard] },
+  { path: 'admin/certificates', component: AdminCertificatesViewComponent, canActivate: [authGuard] },
   {
     path: 'dashboard',
     component: DashboardComponent,
