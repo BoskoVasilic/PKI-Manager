@@ -117,11 +117,23 @@
                     <div class="min-w-0">
                       <p class="text-sm text-gray-200 truncate">{{ issuer.commonName }}</p>
                       <p class="text-xs text-gray-600 truncate">{{ issuer.organization }}</p>
-                      <div class="flex items-center gap-2 mt-1">
-                        <span class="text-xs px-1.5 py-0.5 rounded border tracking-widest uppercase
-                                     text-blue-400 border-blue-500/30 bg-blue-500/10">{{ issuer.type }}</span>
-                        <span class="text-xs text-gray-600">until {{ issuer.validTo | date:'dd.MM.yy' }}</span>
+                      @if (issuer.organizationUnit) {
+                        <p class="text-xs text-gray-700 truncate">{{ issuer.organizationUnit }}</p>
+                      }
+                      <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <span class="text-xs px-1.5 py-0.5 rounded border tracking-widest uppercase"
+                              [class]="issuer.type === 'ROOT'
+                                ? 'text-purple-400 border-purple-500/30 bg-purple-500/10'
+                                : 'text-blue-400 border-blue-500/30 bg-blue-500/10'">
+                          {{ issuer.type }}
+                        </span>
+                        <span class="text-xs text-gray-600">{{ issuer.country }}</span>
+                        <span class="text-xs text-gray-700">·</span>
+                        <span class="text-xs text-gray-600">until {{ issuer.validTo | date:'dd.MM.yyyy' }}</span>
                       </div>
+                      @if (issuer.serialNumber) {
+                        <p class="text-[10px] text-gray-700 font-mono mt-1 truncate">{{ issuer.serialNumber }}</p>
+                      }
                     </div>
                   </label>
                 } @empty {

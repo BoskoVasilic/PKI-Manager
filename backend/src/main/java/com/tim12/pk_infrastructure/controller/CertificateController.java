@@ -33,6 +33,7 @@ public class CertificateController {
         } catch (IllegalArgumentException | SecurityException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
+            System.out.println("\n\nError issuing certificate: " + e.getMessage());
             return ResponseEntity.internalServerError().body(Map.of("message", "Internal error"));
         }
     }
