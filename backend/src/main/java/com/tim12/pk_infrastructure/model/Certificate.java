@@ -1,13 +1,19 @@
 package com.tim12.pk_infrastructure.model;
 
+import com.tim12.pk_infrastructure.model.enums.CertificateStatus;
+import com.tim12.pk_infrastructure.model.enums.CertificateType;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Table(name = "certificates")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Certificate {
 
     @Id
@@ -17,38 +23,41 @@ public class Certificate {
     @Column(unique = true, nullable = false)
     private String serialNumber;
 
-    // Subject polja
+    @Column(nullable = false)
+    private String alias;
+
+    @Column(nullable = false)
     private String subjectCN;
     private String subjectO;
     private String subjectOU;
     private String subjectC;
     private String subjectEmail;
 
-    // Issuer
     private String issuerCN;
     private String issuerSerialNumber;
 
-    private LocalDateTime validFrom;
-    private LocalDateTime validTo;
+    private Date validFrom;
+    private Date validTo;
 
     @Enumerated(EnumType.STRING)
     private CertificateType type;
 
-    @Enumerated(EnumType.STRING)
-    private CertificateStatus status;
+    private boolean revoked;
 
     @Column(columnDefinition = "TEXT")
     private String certificatePem;
 
-    // Za feature #7 (tvoj kolega) - encrypted private key
     @Column(columnDefinition = "TEXT")
     private String encryptedPrivateKey;
 
-    // Razlog i datum povlacenja
     private String revocationReason;
-    private LocalDateTime revokedAt;
+    private Date revokedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private User owner;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "organization_id", referencedColumnName = "id")
+    private Organization issuingOrg;
 }
