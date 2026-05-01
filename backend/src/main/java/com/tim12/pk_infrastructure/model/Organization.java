@@ -18,12 +18,13 @@ public class Organization {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String name;
 
-//    private String keyStoreFileName;
-//
-//    private String keyStorePassword;
+    private String keyStoreFileName;
+
+    @Column(columnDefinition = "TEXT")
+    private String keyStorePassword;
 
     public Organization(String name) {
         this.name = name;
