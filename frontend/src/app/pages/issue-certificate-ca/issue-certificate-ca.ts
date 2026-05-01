@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CertificateService, CertificateDto, IssueCertificateRequest } from '../../services/certificate.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-issue-certificate',
@@ -31,7 +32,9 @@ export class IssueCertificateComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private certService: CertificateService,
-    private router: Router
+    private router: Router,
+    private authService: AuthService
+
   ) {}
 
   ngOnInit(): void {
@@ -42,17 +45,18 @@ export class IssueCertificateComponent implements OnInit {
   private buildForm(): void {
     const today = new Date().toISOString().split('T')[0];
     const nextYear = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const organizationName = this.authService.getCurrentUserOrganization();
 
     this.form = this.fb.group({
       commonName: ['', [Validators.required, Validators.maxLength(64)]],
-      organization: ['', [Validators.required, Validators.maxLength(64)]],
+      organization: [{ value: organizationName, disabled: true }, [Validators.required, Validators.maxLength(64)]],      
       organizationalUnit: ['', Validators.maxLength(64)],
       country: ['', [Validators.required, Validators.pattern(/^[A-Z]{2}$/)]],
       email: ['', [Validators.required, Validators.email]],
       validFrom: [today, Validators.required],
       validTo: [nextYear, Validators.required],
       issuerSerialNumber: ['', Validators.required],
-      isCa: [false],
+      isCA: [false],
       keyUsages: this.fb.array([]),
     });
   }
@@ -61,13 +65,15 @@ export class IssueCertificateComponent implements OnInit {
     this.isLoadingIssuers = true;
     this.certService.getAvailableIssuers().subscribe({
       next: (issuers) => {
-        this.issuers = issuers;
-        this.isLoadingIssuers = false;
-      },
-      error: () => {
-        this.errorMessage = 'Failed to load available issuers.';
-        this.isLoadingIssuers = false;
-      },
+      console.log('ISSUERS:', issuers);
+      this.issuers = issuers;
+      this.isLoadingIssuers = false;
+    },
+    error: (err) => {
+      console.error('ISSUER ERROR:', err);
+      this.errorMessage = 'Failed to load available issuers.';
+      this.isLoadingIssuers = false;
+    },
     });
   }
 
@@ -99,7 +105,7 @@ export class IssueCertificateComponent implements OnInit {
     this.successMessage = '';
     this.errorMessage = '';
 
-    const val = this.form.value;
+    const val = this.form.getRawValue();
     const request: IssueCertificateRequest = {
       commonName: val.commonName,
       organization: val.organization,
@@ -109,9 +115,9 @@ export class IssueCertificateComponent implements OnInit {
       validFrom: val.validFrom,
       validTo: val.validTo,
       issuerSerialNumber: val.issuerSerialNumber,
-      type: val.isCa ? 'INTERMEDIATE' : 'END_ENTITY',
+      type: val.isCA ? 'INTERMEDIATE' : 'END_ENTITY',
       keyUsages: val.keyUsages,
-      isCa: val.isCa,
+      isCa: val.isCA,
     };
 
     this.certService.issueCertificate(request).subscribe({

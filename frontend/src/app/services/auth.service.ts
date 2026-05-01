@@ -58,4 +58,20 @@ export class AuthService {
       return null;
     }
   }
+
+  getCurrentUserOrganization(): string {
+  const token = this.getToken();
+  if (!token) return '';
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const org = payload.organization;
+
+    if (!org) return '';
+    if (typeof org === 'string') return org;
+    return org.name || '';
+  } catch {
+    return '';
+  }
+}
 }
