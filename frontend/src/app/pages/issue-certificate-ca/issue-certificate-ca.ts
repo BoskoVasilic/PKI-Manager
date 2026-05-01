@@ -58,8 +58,6 @@ export class IssueCertificateComponent implements OnInit {
       validFrom:           [this.today, Validators.required],
       validTo:             [nextYear, Validators.required],
       issuerSerialNumber:  ['', Validators.required],
-      // isCA drives type: true → INTERMEDIATE, false → END_ENTITY
-      // mirrors admin's onTypeChange() which auto-sets keyCertSign + basicConstraintsCA
       isCA:                [false],
       keyUsages:           this.fb.array([]),
     });
@@ -80,7 +78,6 @@ export class IssueCertificateComponent implements OnInit {
     });
   }
 
-  // ── Issuer selection ──────────────────────────────────────────────────────
 
   onIssuerChange(serialNumber: string): void {
     this.selectedIssuer = this.issuers.find(i => i.serialNumber === serialNumber) ?? null;
