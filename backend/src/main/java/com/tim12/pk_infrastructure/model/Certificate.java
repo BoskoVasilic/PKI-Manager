@@ -7,50 +7,48 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "certificates")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Certificate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true, nullable = false)
     private String serialNumber;
 
-    @Column(nullable = false)
-    private String commonName;
+    // Subject polja
+    private String subjectCN;
+    private String subjectO;
+    private String subjectOU;
+    private String subjectC;
+    private String subjectEmail;
 
-    private String organization;
-    private String organizationalUnit;
-    private String country;
-    private String email;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private CertificateType type;
-
-    @Column(columnDefinition = "TEXT")
-    private String certificatePem;
-
-    @Column(columnDefinition = "TEXT")
-    private String encryptedPrivateKey;
-
+    // Issuer
+    private String issuerCN;
     private String issuerSerialNumber;
 
     private LocalDateTime validFrom;
     private LocalDateTime validTo;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean revoked = false;
+    @Enumerated(EnumType.STRING)
+    private CertificateType type;
 
+    @Enumerated(EnumType.STRING)
+    private CertificateStatus status;
+
+    @Column(columnDefinition = "TEXT")
+    private String certificatePem;
+
+    // Za feature #7 (tvoj kolega) - encrypted private key
+    @Column(columnDefinition = "TEXT")
+    private String encryptedPrivateKey;
+
+    // Razlog i datum povlacenja
     private String revocationReason;
     private LocalDateTime revokedAt;
 
-    private String ownerOrganization;
-    private Long ownerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
 }

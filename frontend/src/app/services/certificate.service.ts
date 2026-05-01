@@ -8,38 +8,51 @@ export interface IssueCertificateRequest {
   organizationalUnit: string;
   country: string;
   email: string;
-  validFrom: string;       // ISO date string
-  validTo: string;         // ISO date string
-  issuerSerialNumber: string;
-  keyUsages: string[];     // e.g. ['KEY_CERT_SIGN', 'CRL_SIGN']
-  isCA: boolean;
-}
-
-export interface CertificateResponse {
-  serialNumber: string;
-  commonName: string;
-  organization: string;
-  issuerCommonName: string;
   validFrom: string;
   validTo: string;
-  type: string;            // ROOT, INTERMEDIATE, END_ENTITY
-  status: string;          // VALID, REVOKED
-  pemEncoded?: string;
+  issuerSerialNumber: string;
+  type: string;
+  keyUsages: string[];
+  isCa: boolean;
+  pathLengthConstraint?: number;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+export interface CertificateDto {
+  serialNumber: string;
+  subjectCN: string;
+  subjectO: string;
+  subjectOU: string;
+  subjectC: string;
+  subjectEmail: string;
+  issuerCN: string;
+  validFrom: string;
+  validTo: string;
+  type: 'ROOT' | 'INTERMEDIATE' | 'END_ENTITY';
+  status: 'ACTIVE' | 'REVOKED';
+  revocationReason: string | null;
+}
+
+@Injectable({ providedIn: 'root' })
 export class CertificateService {
   private readonly API_URL = 'http://localhost:8080/api/certificates';
 
   constructor(private http: HttpClient) {}
 
-  issueCertificate(request: IssueCertificateRequest): Observable<CertificateResponse> {
-    return this.http.post<CertificateResponse>(`${this.API_URL}/issue`, request);
+  // End-user
+  getMyCertificates(): Observable<CertificateDto[]> {
+    return this.http.get<CertificateDto[]>(`${this.API_URL}/my`);
   }
 
-  getAvailableIssuers(): Observable<CertificateResponse[]> {
-    return this.http.get<CertificateResponse[]>(`${this.API_URL}/issuers`);
+  getCertificateBySerial(serialNumber: string): Observable<CertificateDto> {
+    return this.http.get<CertificateDto>(`${this.API_URL}/my/${serialNumber}`);
+  }
+
+  // CA user
+  issueCertificate(request: IssueCertificateRequest): Observable<CertificateDto> {
+    return this.http.post<CertificateDto>(`${this.API_URL}/issue`, request);
+  }
+
+  getAvailableIssuers(): Observable<CertificateDto[]> {
+    return this.http.get<CertificateDto[]>(`${this.API_URL}/issuers`);
   }
 }

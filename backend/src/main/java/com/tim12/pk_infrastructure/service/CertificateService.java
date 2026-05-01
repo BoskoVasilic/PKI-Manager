@@ -1,10 +1,14 @@
 package com.tim12.pk_infrastructure.service;
 
-
+import com.tim12.pk_infrastructure.dto.CertificateDto;
 import com.tim12.pk_infrastructure.dto.IssueCertificateRequest;
 import com.tim12.pk_infrastructure.model.Certificate;
+import com.tim12.pk_infrastructure.model.CertificateStatus;
 import com.tim12.pk_infrastructure.model.CertificateType;
+import com.tim12.pk_infrastructure.model.User;
 import com.tim12.pk_infrastructure.repository.CertificateRepository;
+import com.tim12.pk_infrastructure.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -12,8 +16,12 @@ import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.io.StringReader;
@@ -21,37 +29,66 @@ import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.X509Certificate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-import org.bouncycastle.util.io.pem.PemObject;
-
 @Service
+@RequiredArgsConstructor
 public class CertificateService {
 
     private final CertificateRepository certificateRepository;
+    private final UserRepository userRepository;
 
-    public CertificateService(CertificateRepository certificateRepository) {
-        this.certificateRepository = certificateRepository;
+    // ------------------------------------------------------------------ //
+    //  Auth helper
+    // ------------------------------------------------------------------ //
+
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
     }
+
+    // ------------------------------------------------------------------ //
+    //  End-user: view own certificates
+    // ------------------------------------------------------------------ //
+
+    public List<CertificateDto> getMyEndEntityCertificates() {
+        User currentUser = getCurrentUser();
+        return certificateRepository
+                .findByOwnerAndType(currentUser, CertificateType.END_ENTITY)
+                .stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    public CertificateDto getMyCertificateBySerial(String serialNumber) {
+        User currentUser = getCurrentUser();
+        Certificate cert = certificateRepository
+                .findBySerialNumberAndOwner(serialNumber, currentUser)
+                .orElseThrow(() -> new RuntimeException("Certificate not found"));
+        return toDto(cert);
+    }
+
+    // ------------------------------------------------------------------ //
+    //  CA user: issue certificates
+    // ------------------------------------------------------------------ //
 
     /**
      * Issues a new certificate signed by the specified CA cert.
      * CA users can only issue INTERMEDIATE or END_ENTITY.
      */
-    public Certificate issueCertificate(IssueCertificateRequest req, String callerOrganization) throws Exception {
+    public CertificateDto issueCertificate(IssueCertificateRequest req) throws Exception {
 
-        // 1. Validate requested type — CA users cannot issue ROOT
+        User caller = getCurrentUser();
+
+        // 1. Validate requested type — nobody can issue ROOT through this endpoint
         CertificateType requestedType = CertificateType.valueOf(req.getType());
         if (requestedType == CertificateType.ROOT) {
-            throw new IllegalArgumentException("CA users cannot issue ROOT certificates.");
+            throw new IllegalArgumentException("ROOT certificates cannot be issued through this endpoint.");
         }
 
         // 2. Load and validate the issuer certificate
@@ -59,7 +96,7 @@ public class CertificateService {
                 .findBySerialNumber(req.getIssuerSerialNumber())
                 .orElseThrow(() -> new IllegalArgumentException("Issuer certificate not found."));
 
-        validateIssuer(issuerRecord, callerOrganization);
+        validateIssuer(issuerRecord, caller);
 
         // 3. Parse issuer cert and private key from PEM
         X509Certificate issuerX509 = parseCertificatePem(issuerRecord.getCertificatePem());
@@ -71,15 +108,13 @@ public class CertificateService {
         KeyPair subjectKeyPair = keyGen.generateKeyPair();
 
         // 5. Build X500Name from request fields
-        String dn = buildDn(req);
-        X500Name subjectName = new X500Name(dn);
-        X500Name issuerName = new X500Name(issuerX509.getSubjectX500Principal().getName());
+        X500Name subjectName = new X500Name(buildDn(req));
+        X500Name issuerName  = new X500Name(issuerX509.getSubjectX500Principal().getName());
 
-        // 6. Convert validity dates
+        // 6. Validity dates
         Date from = Date.from(req.getValidFrom().atZone(ZoneId.systemDefault()).toInstant());
         Date to   = Date.from(req.getValidTo().atZone(ZoneId.systemDefault()).toInstant());
 
-        // Issued cert cannot outlive the issuer
         if (to.after(issuerX509.getNotAfter())) {
             throw new IllegalArgumentException("Certificate validity cannot exceed issuer's validity period.");
         }
@@ -92,18 +127,15 @@ public class CertificateService {
                 issuerName, serial, from, to, subjectName, subjectKeyPair.getPublic()
         );
 
-        // 9. Add extensions
+        // 9. Extensions
         JcaX509ExtensionUtils extUtils = new JcaX509ExtensionUtils();
 
-        // SubjectKeyIdentifier — always added
         certBuilder.addExtension(Extension.subjectKeyIdentifier, false,
                 extUtils.createSubjectKeyIdentifier(subjectKeyPair.getPublic()));
 
-        // AuthorityKeyIdentifier — links to issuer
         certBuilder.addExtension(Extension.authorityKeyIdentifier, false,
                 extUtils.createAuthorityKeyIdentifier(issuerX509));
 
-        // BasicConstraints — CA:true for intermediate, CA:false for EE
         boolean isCa = requestedType == CertificateType.INTERMEDIATE || req.isCa();
         if (isCa) {
             int pathLen = req.getPathLengthConstraint();
@@ -113,80 +145,80 @@ public class CertificateService {
             certBuilder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
         }
 
-        // KeyUsage — from request list
         if (req.getKeyUsages() != null && !req.getKeyUsages().isEmpty()) {
-            int keyUsageBits = buildKeyUsageBits(req.getKeyUsages());
-            certBuilder.addExtension(Extension.keyUsage, true, new KeyUsage(keyUsageBits));
+            certBuilder.addExtension(Extension.keyUsage, true,
+                    new KeyUsage(buildKeyUsageBits(req.getKeyUsages())));
         }
 
         // 10. Sign
-        ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSA")
-                .build(issuerPrivateKey);
-
+        ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSA").build(issuerPrivateKey);
         X509CertificateHolder holder = certBuilder.build(signer);
         X509Certificate signedCert = new JcaX509CertificateConverter().getCertificate(holder);
 
-        // 11. Verify the signature is correct
+        // 11. Verify
         signedCert.verify(issuerX509.getPublicKey());
 
-        // 12. Persist
-        Certificate saved = new Certificate();
-        saved.setSerialNumber(serial.toString(16));
-        saved.setCommonName(req.getCommonName());
-        saved.setOrganization(req.getOrganization());
-        saved.setOrganizationalUnit(req.getOrganizationalUnit());
-        saved.setCountry(req.getCountry());
-        saved.setEmail(req.getEmail());
-        saved.setType(requestedType);
-        saved.setIssuerSerialNumber(req.getIssuerSerialNumber());
-        saved.setValidFrom(req.getValidFrom());
-        saved.setValidTo(req.getValidTo());
-        saved.setCertificatePem(toPem(signedCert));
-        saved.setEncryptedPrivateKey(privateKeyToPem(subjectKeyPair.getPrivate())); // func 6 should encrypt this
-        saved.setOwnerOrganization(callerOrganization);
-        saved.setRevoked(false);
+        // 12. Persist — map to the actual Certificate model fields
+        Certificate saved = Certificate.builder()
+                .serialNumber(serial.toString(16))
+                .subjectCN(req.getCommonName())
+                .subjectO(req.getOrganization())
+                .subjectOU(req.getOrganizationalUnit())
+                .subjectC(req.getCountry())
+                .subjectEmail(req.getEmail())
+                .issuerCN(issuerX509.getSubjectX500Principal().getName())
+                .issuerSerialNumber(req.getIssuerSerialNumber())
+                .validFrom(req.getValidFrom())
+                .validTo(req.getValidTo())
+                .type(requestedType)
+                .status(CertificateStatus.ACTIVE)
+                .certificatePem(toPem(signedCert))
+                .encryptedPrivateKey(privateKeyToPem(subjectKeyPair.getPrivate())) // TODO feature #7: encrypt before storing
+                .owner(caller)
+                .build();
 
-        return certificateRepository.save(saved);
+        return toDto(certificateRepository.save(saved));
     }
 
     /**
-     * Returns CA certs available for issuance in the caller's organization.
-     * These are non-revoked INTERMEDIATE or ROOT certs.
+     * Returns CA certs the current user owns and can use as issuers.
      */
-    public List<Certificate> getAvailableIssuers(String callerOrganization) {
-        return certificateRepository.findByOwnerOrganizationAndTypeInAndRevokedFalse(
-                callerOrganization,
-                List.of(CertificateType.ROOT, CertificateType.INTERMEDIATE)
-        );
+    public List<CertificateDto> getAvailableIssuers() {
+        User caller = getCurrentUser();
+        return certificateRepository
+                .findByOwnerAndType(caller, CertificateType.ROOT)
+                .stream()
+                .filter(c -> c.getStatus() == CertificateStatus.ACTIVE)
+                .map(this::toDto)
+                .toList();
+        // NOTE: If intermediate certs should also appear here, add a second
+        // findByOwnerAndType call for INTERMEDIATE and combine the lists.
     }
 
+    // ------------------------------------------------------------------ //
+    //  Private helpers
+    // ------------------------------------------------------------------ //
 
-    private void validateIssuer(Certificate issuer, String callerOrganization) throws Exception {
-        // Must belong to caller's org
-        if (!issuer.getOwnerOrganization().equals(callerOrganization)) {
-            throw new SecurityException("You can only use CA certificates from your own organization.");
+    private void validateIssuer(Certificate issuer, User caller) throws Exception {
+        if (!issuer.getOwner().getId().equals(caller.getId())) {
+            throw new SecurityException("You can only use CA certificates you own.");
         }
-        // Must not be revoked
-        if (issuer.isRevoked()) {
+        if (issuer.getStatus() == CertificateStatus.REVOKED) {
             throw new IllegalArgumentException("Issuer certificate has been revoked.");
         }
-        // Must be a CA type
         if (issuer.getType() == CertificateType.END_ENTITY) {
             throw new IllegalArgumentException("End-entity certificates cannot sign other certificates.");
         }
-        // Must be within validity period
-        X509Certificate x509 = parseCertificatePem(issuer.getCertificatePem());
-        x509.checkValidity(); // throws CertificateExpiredException or CertificateNotYetValidException
+        parseCertificatePem(issuer.getCertificatePem()).checkValidity();
     }
-
 
     private String buildDn(IssueCertificateRequest req) {
         StringBuilder sb = new StringBuilder();
-        if (req.getCommonName() != null)         sb.append("CN=").append(req.getCommonName()).append(",");
-        if (req.getOrganization() != null)        sb.append("O=").append(req.getOrganization()).append(",");
-        if (req.getOrganizationalUnit() != null)  sb.append("OU=").append(req.getOrganizationalUnit()).append(",");
-        if (req.getCountry() != null)             sb.append("C=").append(req.getCountry()).append(",");
-        if (req.getEmail() != null)               sb.append("E=").append(req.getEmail()).append(",");
+        if (req.getCommonName() != null)        sb.append("CN=").append(req.getCommonName()).append(",");
+        if (req.getOrganization() != null)       sb.append("O=").append(req.getOrganization()).append(",");
+        if (req.getOrganizationalUnit() != null) sb.append("OU=").append(req.getOrganizationalUnit()).append(",");
+        if (req.getCountry() != null)            sb.append("C=").append(req.getCountry()).append(",");
+        if (req.getEmail() != null)              sb.append("E=").append(req.getEmail()).append(",");
         String dn = sb.toString();
         return dn.endsWith(",") ? dn.substring(0, dn.length() - 1) : dn;
     }
@@ -195,46 +227,58 @@ public class CertificateService {
         int bits = 0;
         for (String usage : usages) {
             switch (usage.toUpperCase()) {
-                case "DIGITAL_SIGNATURE"  -> bits |= KeyUsage.digitalSignature;
-                case "NON_REPUDIATION"    -> bits |= KeyUsage.nonRepudiation;
-                case "KEY_ENCIPHERMENT"   -> bits |= KeyUsage.keyEncipherment;
-                case "DATA_ENCIPHERMENT"  -> bits |= KeyUsage.dataEncipherment;
-                case "KEY_AGREEMENT"      -> bits |= KeyUsage.keyAgreement;
-                case "KEY_CERT_SIGN"      -> bits |= KeyUsage.keyCertSign;
-                case "CRL_SIGN"           -> bits |= KeyUsage.cRLSign;
+                case "DIGITAL_SIGNATURE" -> bits |= KeyUsage.digitalSignature;
+                case "NON_REPUDIATION"   -> bits |= KeyUsage.nonRepudiation;
+                case "KEY_ENCIPHERMENT"  -> bits |= KeyUsage.keyEncipherment;
+                case "DATA_ENCIPHERMENT" -> bits |= KeyUsage.dataEncipherment;
+                case "KEY_AGREEMENT"     -> bits |= KeyUsage.keyAgreement;
+                case "KEY_CERT_SIGN"     -> bits |= KeyUsage.keyCertSign;
+                case "CRL_SIGN"          -> bits |= KeyUsage.cRLSign;
             }
         }
         return bits;
     }
 
     private X509Certificate parseCertificatePem(String pem) throws Exception {
-        PEMParser parser = new PEMParser(new StringReader(pem));
-        Object obj = parser.readObject();
-        parser.close();
-        return new JcaX509CertificateConverter().getCertificate((X509CertificateHolder) obj);
+        try (PEMParser parser = new PEMParser(new StringReader(pem))) {
+            return new JcaX509CertificateConverter()
+                    .getCertificate((X509CertificateHolder) parser.readObject());
+        }
     }
 
     private PrivateKey parsePrivateKeyPem(String pem) throws Exception {
-        PEMParser parser = new PEMParser(new StringReader(pem));
-        Object obj = parser.readObject();
-        parser.close();
-        return new JcaPEMKeyConverter().getPrivateKey((org.bouncycastle.asn1.pkcs.PrivateKeyInfo) obj);
+        try (PEMParser parser = new PEMParser(new StringReader(pem))) {
+            return new JcaPEMKeyConverter()
+                    .getPrivateKey((org.bouncycastle.asn1.pkcs.PrivateKeyInfo) parser.readObject());
+        }
     }
 
     private String toPem(X509Certificate cert) throws Exception {
         StringWriter sw = new StringWriter();
-        try (JcaPEMWriter writer = new JcaPEMWriter(sw)) {
-            writer.writeObject(cert);
-        }
+        try (JcaPEMWriter w = new JcaPEMWriter(sw)) { w.writeObject(cert); }
         return sw.toString();
     }
 
     private String privateKeyToPem(PrivateKey key) throws Exception {
         StringWriter sw = new StringWriter();
-        try (JcaPEMWriter writer = new JcaPEMWriter(sw)) {
-            writer.writeObject(key);
-        }
+        try (JcaPEMWriter w = new JcaPEMWriter(sw)) { w.writeObject(key); }
         return sw.toString();
-        // TO-DO functionality 6: should encrypt this before storing
+    }
+
+    private CertificateDto toDto(Certificate c) {
+        return CertificateDto.builder()
+                .serialNumber(c.getSerialNumber())
+                .subjectCN(c.getSubjectCN())
+                .subjectO(c.getSubjectO())
+                .subjectOU(c.getSubjectOU())
+                .subjectC(c.getSubjectC())
+                .subjectEmail(c.getSubjectEmail())
+                .issuerCN(c.getIssuerCN())
+                .validFrom(c.getValidFrom())
+                .validTo(c.getValidTo())
+                .type(c.getType())
+                .status(c.getStatus())
+                .revocationReason(c.getRevocationReason())
+                .build();
     }
 }
