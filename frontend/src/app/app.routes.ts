@@ -3,6 +3,8 @@ import { LoginComponent } from './pages/login/login';
 import { DashboardComponent } from './pages/dashboard/dashboard';
 import { IssueCertificateComponent } from './pages/issue-certificate-ca/issue-certificate-ca';
 import { CertificatesComponent } from './pages/certificates/certificates';
+import { GenerateCertificateComponent } from './pages/generate-certificates/generate-certificate';
+import { UploadCsrComponent } from './pages/upload-csr/upload-csr';
 import { authGuard } from './guards/auth.guard';
 import {ChangePasswordComponent} from './components/change-password/change-password.component';
 import {CaUserRegisterComponent} from './components/ca-user-register/ca-user-register.component';
@@ -31,6 +33,16 @@ export const routes: Routes = [
   {
     path: 'certificates',
     component: CertificatesComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'certificates/generate',
+    component: GenerateCertificateComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'certificates/csr',
+    component: UploadCsrComponent,
     canActivate: [authGuard],
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' },

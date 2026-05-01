@@ -7,52 +7,54 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
+/**
+ * Writes private keys and certificates into organization JKS KeyStore files.
+ * Each organization has its own .jks file stored in the keystores/ directory.
+ * If the file does not exist yet, a new KeyStore is created automatically.
+ */
 @Component
 public class KeyStoreWriter {
 
-    private final KeyStore keyStore;
-
-    public KeyStoreWriter() {
+    /**
+     * Stores a private key + certificate into an organization's KeyStore file.
+     * Creates a new .jks file if one does not already exist for this organization.
+     *
+     * @param keyStoreFile  path to the .jks file (e.g. "keystores/MyOrg.jks")
+     * @param alias         alias for this entry (certificate serial number)
+     * @param privateKey    the private key to store
+     * @param password      password for the KeyStore and the key entry
+     * @param certificate   the X509Certificate that corresponds to this key
+     */
+    public void write(String keyStoreFile, String alias,
+                      PrivateKey privateKey, char[] password, Certificate certificate) {
         try {
-            keyStore = KeyStore.getInstance("JKS", "SUN");
-        } catch (KeyStoreException | NoSuchProviderException e) {
-            throw new RuntimeException("Nije moguće inicijalizovati KeyStoreWriter", e);
-        }
-    }
+            KeyStore ks = KeyStore.getInstance("JKS", "SUN");
 
-    public void loadKeyStore(String fileName, char[] password) {
-        try {
-            if (fileName != null) {
-                File file = new File(fileName);
-                if (file.exists()) {
-                    keyStore.load(new FileInputStream(file), password);
-                } else {
-                    keyStore.load(null, password);
+            File file = new File(keyStoreFile);
+            if (file.exists()) {
+                // Load the existing KeyStore so we don't overwrite other entries
+                try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file))) {
+                    ks.load(in, password);
                 }
             } else {
-                keyStore.load(null, password);
+                // Create parent directories if needed (e.g. keystores/)
+                file.getParentFile().mkdirs();
+                // Initialise a brand-new, empty KeyStore
+                ks.load(null, password);
             }
-        } catch (NoSuchAlgorithmException | CertificateException | IOException e) {
-            throw new RuntimeException("Greška pri učitavanju keystora: " + e.getMessage(), e);
-        }
-    }
 
-    public void saveKeyStore(String fileName, char[] password) {
-        try {
-            File file = new File(fileName);
-            file.getParentFile().mkdirs();
+            // Store the private key entry (protected by the same password)
+            ks.setKeyEntry(alias, privateKey, password, new Certificate[]{certificate});
 
-            keyStore.store(new FileOutputStream(file), password);
-        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
-            throw new RuntimeException("Greška pri snimanju keystora: " + e.getMessage(), e);
-        }
-    }
+            // Persist back to disk
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                ks.store(fos, password);
+            }
 
-    public void write(String alias, PrivateKey privateKey, char[] password, Certificate certificate) {
-        try {
-            keyStore.setKeyEntry(alias, privateKey, password, new Certificate[]{certificate});
-        } catch (KeyStoreException e) {
-            throw new RuntimeException("Greška pri upisivanju u keystore: " + e.getMessage(), e);
+        } catch (KeyStoreException | NoSuchProviderException | NoSuchAlgorithmException |
+                 CertificateException | IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Greška pri čuvanju privatnog ključa u KeyStore: " + e.getMessage(), e);
         }
     }
 }

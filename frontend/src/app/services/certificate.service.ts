@@ -32,6 +32,29 @@ export interface CertificateDto {
   revocationReason: string | null;
 }
 
+export interface CsrRequest {
+  cn: string;
+  organization?: string;
+  organizationUnit?: string;
+  country?: string;
+  email?: string;
+  caSerialNumber: string;
+  validFrom: string; // ISO-8601 LocalDateTime, e.g. "2025-06-01T00:00:00"
+  validTo: string;
+}
+
+export interface CsrUploadRequest {
+  csrPem: string;
+  caSerialNumber: string;
+  validFrom?: string;
+  validTo: string;
+}
+
+export interface CsrResponse {
+  serialNumber: string;
+  certificatePem: string;
+  privateKeyPem?: string; // only present for autogenerate
+  message: string;
 export interface CertificateData {
   id: number;
   serialNumber: string;
@@ -62,6 +85,16 @@ export class CertificateService {
     return this.http.get<CertificateDto>(`${this.API_URL}/my/${serialNumber}`);
   }
 
+  /** Feature 6/8 — server generates key pair, signs cert, returns private key ONCE */
+  autogenerate(request: CsrRequest): Observable<CsrResponse> {
+    return this.http.post<CsrResponse>(`${this.API_URL}/csr/autogenerate`, request);
+  }
+
+  /** Feature 8 — user uploads their own CSR PEM, server signs and returns cert */
+  uploadCsr(request: CsrUploadRequest): Observable<CsrResponse> {
+    return this.http.post<CsrResponse>(`${this.API_URL}/csr/upload`, request);
+  }
+}
   issueCertificate(request: IssueCertificateRequest): Observable<CertificateDto> {
     return this.http.post<CertificateDto>(`${this.API_URL}/issue`, request);
   }

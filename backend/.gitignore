@@ -37,4 +37,6 @@ out/
 .vscode/
 
 secrets
+
+keystores
 .env
