@@ -1,228 +1,333 @@
-<div class="min-h-screen bg-[#0b0b18] flex items-start justify-center px-4 py-10 font-['DM_Sans',sans-serif] text-[#e8e8f0] relative"
-     style="background-image: radial-gradient(ellipse at 20% 30%, rgba(108,99,255,0.07) 0%, transparent 55%), radial-gradient(ellipse at 80% 70%, rgba(99,179,255,0.04) 0%, transparent 50%)">
+<div class="min-h-screen bg-[#0b0b18] text-[#e8e8f0] font-['DM_Sans',sans-serif] flex flex-col">
 
-    <button
-  type="button"
-  (click)="goToDashboard()"
-  class="absolute top-6 left-6 flex items-center gap-2 text-sm text-white/40 hover:text-white transition-all duration-150">
-  <svg width="16" height="16" viewBox="0 0 24 24"
-       fill="none" stroke="currentColor" stroke-width="2">
-    <path d="M15 18l-6-6 6-6"/>
-  </svg>
-  
-  Back to Dashboard
-</button>
-
-  <div class="w-full max-w-[680px] bg-white/[0.03] border border-white/[0.07] rounded-2xl p-10 shadow-[0_0_0_1px_rgba(108,99,255,0.08),0_32px_64px_rgba(0,0,0,0.4)]">
-
-    <!-- Header -->
-    <div class="flex items-center gap-4 mb-7">
-      <div class="w-12 h-12 bg-[#6c63ff]/15 border border-[#6c63ff]/30 rounded-xl grid place-items-center text-[#a78bfa] shrink-0">
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+  <!-- Header — identical to admin -->
+  <header class="border-b border-gray-800 bg-gray-900/60 backdrop-blur-sm sticky top-0 z-40">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
+      <button (click)="goToDashboard()"
+              class="text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-2 text-xs
+              tracking-widest uppercase cursor-pointer">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
+        Back
+      </button>
+      <span class="text-gray-700">|</span>
+      <div class="flex items-center gap-2">
+        <div class="w-5 h-5 rounded bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center">
+          <svg class="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <span class="text-xs text-gray-400 tracking-widest uppercase">New Certificate</span>
       </div>
-      <div>
-        <h1 class="font-['Syne'] text-[1.4rem] font-bold text-white tracking-tight leading-tight m-0">Issue Certificate</h1>
-        <p class="text-[0.82rem] text-white/35 m-0 mt-0.5">Create a new certificate for your organization</p>
-      </div>
+    </div>
+  </header>
+
+  <div class="flex-1 max-w-5xl mx-auto w-full px-6 py-10">
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-white tracking-tight">Issue Certificate</h1>
+      <p class="text-sm text-gray-500 mt-1">CA User · Intermediate &amp; End-Entity certificates</p>
     </div>
 
     <!-- Alerts -->
-    <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl text-[0.85rem] mb-5 bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 leading-snug"
-         *ngIf="successMessage">
-      <svg class="shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="20 6 9 17 4 12"/>
-      </svg>
-      {{ successMessage }}
-    </div>
-    <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl text-[0.85rem] mb-5 bg-red-500/10 border border-red-500/25 text-red-300 leading-snug"
-         *ngIf="errorMessage">
-      <svg class="shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-      </svg>
-      {{ errorMessage }}
-    </div>
+    @if (errorMessage) {
+      <div class="mb-6 flex items-start gap-3 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+        <svg class="w-4 h-4 text-red-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-sm text-red-400">{{ errorMessage }}</span>
+      </div>
+    }
+
+    @if (successMessage) {
+      <div class="mb-6 flex items-start gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+        <svg class="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <span class="text-sm text-emerald-400">{{ successMessage }}</span>
+      </div>
+    }
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-      <!-- Section: Subject Information -->
-      <div class="text-[0.68rem] font-bold tracking-[0.12em] text-[#6c63ff] uppercase mt-0 mb-3.5 pb-2 border-b border-[#6c63ff]/20">
-        Subject Information
-      </div>
+        <!-- Left panel -->
+        <div class="lg:col-span-1 space-y-4">
 
-      <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-        <!-- Common Name -->
-        <div class="flex flex-col gap-1.5 mb-4">
-          <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="commonName">Common Name (CN)</label>
-          <input id="commonName"
-                 class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 placeholder-white/20 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans']"
-                 [class.border-red-500/60]="hasError('commonName')"
-                 formControlName="commonName" placeholder="e.g. My Server CA" autocomplete="off"/>
-          <span class="text-[0.75rem] text-red-400" *ngIf="hasError('commonName')">Common name is required</span>
+          <!-- Certificate type (simplified — no ROOT for CA users) -->
+          <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
+            <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Certificate type</h2>
+            <div class="space-y-2">
+
+              <!-- INTERMEDIATE -->
+              <label class="flex items-start gap-3 p-3 rounded border cursor-pointer transition-all"
+                     [class.border-emerald-500\/50]="form.get('isCA')?.value === true"
+                     [class.bg-emerald-500\/5]="form.get('isCA')?.value === true"
+                     [class.border-gray-800]="form.get('isCA')?.value !== true"
+                     [class.hover\:border-gray-700]="form.get('isCA')?.value !== true">
+                <input type="radio" name="certType" [value]="true"
+                       [checked]="form.get('isCA')?.value === true"
+                       (change)="onIsCAChange(true)"
+                       class="mt-0.5 accent-emerald-500" />
+                <div>
+                  <p class="text-sm text-gray-200">Intermediate CA</p>
+                  <p class="text-xs text-gray-600 mt-0.5">Can sign other certificates</p>
+                </div>
+              </label>
+
+              <!-- END_ENTITY -->
+              <label class="flex items-start gap-3 p-3 rounded border cursor-pointer transition-all"
+                     [class.border-emerald-500\/50]="form.get('isCA')?.value === false"
+                     [class.bg-emerald-500\/5]="form.get('isCA')?.value === false"
+                     [class.border-gray-800]="form.get('isCA')?.value !== false"
+                     [class.hover\:border-gray-700]="form.get('isCA')?.value !== false">
+                <input type="radio" name="certType" [value]="false"
+                       [checked]="form.get('isCA')?.value === false"
+                       (change)="onIsCAChange(false)"
+                       class="mt-0.5 accent-emerald-500" />
+                <div>
+                  <p class="text-sm text-gray-200">End-Entity</p>
+                  <p class="text-xs text-gray-600 mt-0.5">Users, servers, devices</p>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- Issuer selection -->
+          <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
+            <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Issuer (CA)</h2>
+            <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+              @if (isLoadingIssuers) {
+                <p class="text-xs text-gray-600 italic">Loading issuers…</p>
+              } @else {
+                @for (issuer of issuers; track issuer.serialNumber) {
+                  <label
+                    class="flex items-start gap-3 p-3 rounded border cursor-pointer transition-all block"
+                    [class.border-emerald-500\/50]="form.get('issuerSerialNumber')?.value === issuer.serialNumber"
+                    [class.bg-emerald-500\/5]="form.get('issuerSerialNumber')?.value === issuer.serialNumber"
+                    [class.border-gray-800]="form.get('issuerSerialNumber')?.value !== issuer.serialNumber"
+                    [class.hover\:border-gray-700]="form.get('issuerSerialNumber')?.value !== issuer.serialNumber">
+                    <input type="radio" formControlName="issuerSerialNumber"
+                           [value]="issuer.serialNumber"
+                           (change)="onIssuerChange(issuer.serialNumber)"
+                           class="mt-1 accent-emerald-500" />
+                    <div class="min-w-0">
+                      <p class="text-sm text-gray-200 truncate">{{ issuer.subjectCN }}</p>
+                      <p class="text-xs text-gray-600 truncate">{{ issuer.subjectO }}</p>
+                      <div class="flex items-center gap-2 mt-1">
+                        <span class="text-xs px-1.5 py-0.5 rounded border tracking-widest uppercase
+                                     text-blue-400 border-blue-500/30 bg-blue-500/10">{{ issuer.type }}</span>
+                        <span class="text-xs text-gray-600">until {{ issuer.validTo | date:'dd.MM.yy' }}</span>
+                      </div>
+                    </div>
+                  </label>
+                } @empty {
+                  <p class="text-xs text-yellow-500/70 italic">No CA certificates available.</p>
+                }
+              }
+            </div>
+            @if (hasError('issuerSerialNumber')) {
+              <p class="text-xs text-red-400 mt-2">Please select an issuer.</p>
+            }
+          </div>
+
+          <!-- Validity -->
+          <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
+            <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Validity period</h2>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs text-gray-500 block mb-1">Start date</label>
+                <input type="date" formControlName="validFrom"
+                       [min]="today" [max]="selectedIssuer?.validTo"
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 px-3 py-2
+                              focus:outline-none focus:border-emerald-500/50 transition-colors [color-scheme:dark]" />
+              </div>
+              <div>
+                <label class="text-xs text-gray-500 block mb-1">End date</label>
+                <input type="date" formControlName="validTo"
+                       [min]="form.value.validFrom || today" [max]="selectedIssuer?.validTo"
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 px-3 py-2
+                              focus:outline-none focus:border-emerald-500/50 transition-colors [color-scheme:dark]" />
+              </div>
+              @if (selectedIssuer) {
+                <p class="text-xs text-gray-600 italic">
+                  Limited by issuer validity: {{ selectedIssuer.validTo | date:'dd.MM.yyyy' }}
+                </p>
+              }
+            </div>
+          </div>
+
         </div>
 
-        <!-- Email -->
-        <div class="flex flex-col gap-1.5 mb-4">
-          <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="email">Email (E)</label>
-          <input id="email" type="email"
-                 class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 placeholder-white/20 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans']"
-                 [class.border-red-500/60]="hasError('email')"
-                 formControlName="email" placeholder="admin@org.com" autocomplete="off"/>
-          <span class="text-[0.75rem] text-red-400" *ngIf="hasError('email')">Valid email is required</span>
+        <!-- Right panel: Subject + Extensions + Preview -->
+        <div class="lg:col-span-2">
+          <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
+            <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-6">Subject details (X500Name)</h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <!-- CN -->
+              <div class="sm:col-span-2">
+                <label class="text-xs text-gray-500 block mb-1">
+                  Common Name (CN) <span class="text-red-500">*</span>
+                </label>
+                <input type="text" formControlName="commonName"
+                       placeholder="e.g. Intermediate CA, John Doe, server.example.com"
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300
+                              placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50
+                              transition-colors"
+                       [class.border-red-500\/40]="hasError('commonName')" />
+                @if (hasError('commonName')) {
+                  <p class="text-xs text-red-400 mt-1">Common name is required.</p>
+                }
+              </div>
+
+              <!-- O (locked to user's org) -->
+              <div>
+                <label class="text-xs text-gray-500 block mb-1">
+                  Organization (O) <span class="text-red-500">*</span>
+                </label>
+                <input type="text" formControlName="organization"
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-500
+                              px-3 py-2.5 focus:outline-none cursor-not-allowed opacity-60" readonly />
+              </div>
+
+              <!-- OU -->
+              <div>
+                <label class="text-xs text-gray-500 block mb-1">Organization Unit (OU)</label>
+                <input type="text" formControlName="organizationalUnit"
+                       placeholder="e.g. IT Department"
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300
+                              placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50
+                              transition-colors" />
+              </div>
+
+              <!-- C -->
+              <div>
+                <label class="text-xs text-gray-500 block mb-1">
+                  Country (C) <span class="text-red-500">*</span>
+                </label>
+                <input type="text" formControlName="country"
+                       placeholder="RS" maxlength="2"
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300
+                              placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50
+                              transition-colors uppercase"
+                       [class.border-red-500\/40]="hasError('country')" />
+                @if (hasError('country')) {
+                  <p class="text-xs text-red-400 mt-1">2-letter code required (e.g. RS).</p>
+                }
+              </div>
+
+              <!-- Email -->
+              <div>
+                <label class="text-xs text-gray-500 block mb-1">
+                  Email (E) <span class="text-red-500">*</span>
+                </label>
+                <input type="email" formControlName="email"
+                       placeholder="e.g. admin@example.com"
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300
+                              placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50
+                              transition-colors"
+                       [class.border-red-500\/40]="hasError('email')" />
+                @if (hasError('email')) {
+                  <p class="text-xs text-red-400 mt-1">Valid email is required.</p>
+                }
+              </div>
+
+            </div>
+
+            <!-- Extensions -->
+            <div class="mt-6 pt-5 border-t border-gray-800">
+              <h3 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Extensions</h3>
+              <div class="grid grid-cols-2 gap-3">
+
+                <!-- keyCertSign: auto-managed, shown as read-only indicator -->
+                <label class="flex items-center gap-2 opacity-60 cursor-default select-none">
+                  <input type="checkbox" class="accent-emerald-500"
+                         [checked]="form.get('isCA')?.value"
+                         disabled />
+                  <span class="text-xs text-gray-400">
+                    keyCertSign
+                    <span class="text-gray-600 ml-1">(auto)</span>
+                  </span>
+                </label>
+
+                <!-- BasicConstraints: auto-managed -->
+                <label class="flex items-center gap-2 opacity-60 cursor-default select-none">
+                  <input type="checkbox" class="accent-emerald-500"
+                         [checked]="form.get('isCA')?.value"
+                         disabled />
+                  <span class="text-xs text-gray-400">
+                    BasicConstraints (isCA)
+                    <span class="text-gray-600 ml-1">(auto)</span>
+                  </span>
+                </label>
+
+                <!-- Manual extensions -->
+                @for (ext of EXTENSIONS; track ext.key) {
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="accent-emerald-500"
+                           [checked]="isKeyUsageSelected(ext.key)"
+                           (change)="toggleKeyUsage(ext.key)"
+                           [disabled]="ext.key === 'serverAuth' && form.get('isCA')?.value" />
+                    <span class="text-xs"
+                          [class.text-gray-400]="!(ext.key === 'serverAuth' && form.get('isCA')?.value)"
+                          [class.text-gray-600]="ext.key === 'serverAuth' && form.get('isCA')?.value">
+                      {{ ext.label }}
+                    </span>
+                  </label>
+                }
+
+              </div>
+
+              <!-- Context hint -->
+              <p class="text-xs text-gray-700 mt-3 italic">
+                @if (form.get('isCA')?.value) {
+                  keyCertSign and BasicConstraints are automatically enabled for Intermediate CA certificates.
+                } @else {
+                  keyCertSign and BasicConstraints are disabled for End-Entity certificates.
+                }
+              </p>
+            </div>
+
+            <!-- X500Name preview — mirrors admin -->
+            <div class="mt-6 pt-5 border-t border-gray-800">
+              <h3 class="text-xs text-gray-500 tracking-widest uppercase mb-3">X500Name Preview</h3>
+              <div class="bg-gray-950 rounded px-4 py-3 font-mono text-xs text-emerald-400 break-all">
+                {{ getX500Preview() }}
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Actions -->
+          <div class="mt-5 flex items-center justify-end gap-4">
+            <button type="button" (click)="goToDashboard()"
+                    class="px-5 py-2.5 text-xs tracking-widest uppercase text-gray-500
+                           hover:text-gray-300 transition-colors cursor-pointer">
+              Cancel
+            </button>
+            <button type="submit" [disabled]="form.invalid || isLoading"
+                    class="flex items-center gap-2 px-6 py-2.5 text-xs tracking-widest uppercase
+                           bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30
+                           disabled:cursor-not-allowed text-white rounded transition-colors cursor-pointer">
+              @if (isLoading) {
+                <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+              }
+              {{ isLoading ? 'Generating…' : 'Issue Certificate' }}
+            </button>
+          </div>
+
         </div>
       </div>
-
-      <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-        <!-- Organization -->
-        <div class="flex flex-col gap-1.5 mb-4">
-          <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="organization">Organization (O)</label>
-          <input id="organization"
-                 class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 placeholder-white/20 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans']"
-                 [class.border-red-500/60]="hasError('organization')"
-                 formControlName="organization" placeholder="e.g. Acme Corp" autocomplete="off"/>
-          <span class="text-[0.75rem] text-red-400" *ngIf="hasError('organization')">Organization is required</span>
-        </div>
-
-        <!-- Org Unit -->
-        <div class="flex flex-col gap-1.5 mb-4">
-          <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="organizationalUnit">Org. Unit (OU)</label>
-          <input id="organizationalUnit"
-                 class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 placeholder-white/20 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans']"
-                 formControlName="organizationalUnit" placeholder="e.g. IT Department" autocomplete="off"/>
-        </div>
-      </div>
-
-      <!-- Country -->
-      <div class="flex flex-col gap-1.5 mb-4 max-w-[160px] max-sm:max-w-full">
-        <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="country">Country (C)</label>
-        <input id="country"
-               class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 placeholder-white/20 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans'] uppercase"
-               [class.border-red-500/60]="hasError('country')"
-               formControlName="country" placeholder="RS" maxlength="2" autocomplete="off"/>
-        <span class="text-[0.75rem] text-red-400" *ngIf="hasError('country')">2-letter country code required (e.g. RS)</span>
-      </div>
-
-      <!-- Section: Validity Period -->
-      <div class="text-[0.68rem] font-bold tracking-[0.12em] text-[#6c63ff] uppercase mt-6 mb-3.5 pb-2 border-b border-[#6c63ff]/20">
-        Validity Period
-      </div>
-
-      <div class="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-        <div class="flex flex-col gap-1.5 mb-4">
-          <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="validFrom">Valid From</label>
-          <input id="validFrom" type="date"
-                 class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans'] [color-scheme:dark]"
-                 [class.border-red-500/60]="hasError('validFrom')"
-                 formControlName="validFrom"/>
-          <span class="text-[0.75rem] text-red-400" *ngIf="hasError('validFrom')">Start date is required</span>
-        </div>
-
-        <div class="flex flex-col gap-1.5 mb-4">
-          <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="validTo">Valid To</label>
-          <input id="validTo" type="date"
-                 class="bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-[0.9rem] outline-none transition-all duration-200 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans'] [color-scheme:dark]"
-                 [class.border-red-500/60]="hasError('validTo')"
-                 formControlName="validTo"/>
-          <span class="text-[0.75rem] text-red-400" *ngIf="hasError('validTo')">End date is required</span>
-        </div>
-      </div>
-
-      <!-- Section: Issuer -->
-      <div class="text-[0.68rem] font-bold tracking-[0.12em] text-[#6c63ff] uppercase mt-6 mb-3.5 pb-2 border-b border-[#6c63ff]/20">
-        Issuer
-      </div>
-
-      <div class="flex flex-col gap-1.5 mb-4">
-        <label class="text-[0.68rem] font-bold tracking-[0.1em] text-white/40 uppercase" for="issuerSerialNumber">Issuing CA Certificate</label>
-        <div class="relative">
-          <select id="issuerSerialNumber"
-                  class="appearance-none bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2.5 pr-10 text-white text-[0.9rem] outline-none transition-all duration-200 focus:border-[#6c63ff]/60 focus:bg-[#6c63ff]/5 focus:shadow-[0_0_0_3px_rgba(108,99,255,0.12)] w-full box-border font-['DM_Sans'] cursor-pointer"
-                  [class.border-red-500/60]="hasError('issuerSerialNumber')"
-                  formControlName="issuerSerialNumber">
-            <option value="" class="bg-[#0b0b18]">
-              {{ isLoadingIssuers ? 'Loading issuers...' : 'Select an issuer certificate' }}
-            </option>
-            <option *ngFor="let issuer of issuers" [value]="issuer.serialNumber" class="bg-[#0b0b18]">
-              {{ issuer.serialNumber }} — {{ issuer.type }}
-            </option>
-          </select>
-          <svg class="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none"
-               xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-        </div>
-        <span class="text-[0.75rem] text-red-400" *ngIf="hasError('issuerSerialNumber')">Please select an issuer</span>
-      </div>
-
-      <!-- Section: Extensions -->
-<div class="text-[0.68rem] font-bold tracking-[0.12em] text-[#6c63ff] uppercase mt-6 mb-3.5 pb-2 border-b border-[#6c63ff]/20">
-  Extensions
-</div>
-
-<div class="grid grid-cols-2 gap-3 mb-7 max-sm:grid-cols-1">
-
-  <!-- BasicConstraints -->
-  <button
-    type="button"
-    (click)="form.get('isCA')?.setValue(!form.get('isCA')?.value)"
-    class="flex items-center gap-3 text-left px-3 py-2 rounded-lg border transition-all duration-150"
-    [class.border-emerald-400]="form.get('isCA')?.value"
-    [class.bg-emerald-400\/10]="form.get('isCA')?.value"
-    [class.text-emerald-300]="form.get('isCA')?.value"
-    [class.border-white\/10]="!form.get('isCA')?.value"
-    [class.bg-white\/[0.03]]="!form.get('isCA')?.value"
-    [class.text-white\/60]="!form.get('isCA')?.value">
-
-    <span class="w-4 h-4 rounded border flex items-center justify-center"
-          [class.border-emerald-400]="form.get('isCA')?.value"
-          [class.border-white\/30]="!form.get('isCA')?.value">
-      <span *ngIf="form.get('isCA')?.value" class="w-2 h-2 rounded-full bg-emerald-400"></span>
-    </span>
-
-    BasicConstraints (cA=true)
-  </button>
-
-  <!-- All other extensions (your "key usages") -->
-  <button
-    type="button"
-    *ngFor="let ext of KEY_USAGES"
-    (click)="toggleKeyUsage(ext.value)"
-    class="flex items-center gap-3 text-left px-3 py-2 rounded-lg border transition-all duration-150"
-    [class.border-emerald-400]="isKeyUsageSelected(ext.value)"
-    [class.bg-emerald-400\/10]="isKeyUsageSelected(ext.value)"
-    [class.text-emerald-300]="isKeyUsageSelected(ext.value)"
-    [class.border-white\/10]="!isKeyUsageSelected(ext.value)"
-    [class.bg-white\/[0.03]]="!isKeyUsageSelected(ext.value)"
-    [class.text-white\/60]="!isKeyUsageSelected(ext.value)">
-
-    <span class="w-4 h-4 rounded border flex items-center justify-center"
-          [class.border-emerald-400]="isKeyUsageSelected(ext.value)"
-          [class.border-white\/30]="!isKeyUsageSelected(ext.value)">
-      <span *ngIf="isKeyUsageSelected(ext.value)" class="w-2 h-2 rounded-full bg-emerald-400"></span>
-    </span>
-
-    {{ ext.label }}
-  </button>
-
-</div>
-
-      <!-- Submit -->
-      <button type="submit"
-              class="w-full py-3.5 bg-[#6c63ff] border-none rounded-xl text-white font-['Syne'] font-semibold text-[0.95rem] tracking-wide shadow-[0_4px_20px_rgba(108,99,255,0.3)] cursor-pointer transition-all duration-200 hover:bg-[#7c74ff] hover:-translate-y-px hover:shadow-[0_6px_24px_rgba(108,99,255,0.45)] active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2.5"
-              [disabled]="isLoading">
-        <ng-container *ngIf="!isLoading">Issue Certificate</ng-container>
-        <ng-container *ngIf="isLoading">
-          <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0"></span>
-          <span>Issuing...</span>
-        </ng-container>
-      </button>
-
     </form>
   </div>
 </div>

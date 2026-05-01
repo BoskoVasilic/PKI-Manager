@@ -14,24 +14,30 @@ import { AuthService } from '../../services/auth.service';
 export class IssueCertificateComponent implements OnInit {
   form!: FormGroup;
   issuers: CertificateDto[] = [];
+  selectedIssuer: CertificateDto | null = null;
+
   isLoading = false;
   isLoadingIssuers = true;
   successMessage = '';
   errorMessage = '';
 
-  readonly KEY_USAGES = [
-  { value: 'KEY_CERT_SIGN', label: 'keyCertSign' },
-  { value: 'CRL_SIGN', label: 'cRLSign' },
-  { value: 'DIGITAL_SIGNATURE', label: 'digitalSignature' },
-  { value: 'KEY_ENCIPHERMENT', label: 'keyEncipherment' },
-];
+  today: string = new Date().toISOString().split('T')[0];
+
+  // Extensions available to CA users.
+  // keyCertSign and basicConstraintsCA are toggled automatically based on isCA,
+  // matching the same logic as the admin form's onTypeChange().
+  readonly EXTENSIONS = [
+    { key: 'cRLSign',           label: 'cRLSign',          caOnly: false },
+    { key: 'digitalSignature',  label: 'digitalSignature', caOnly: false },
+    { key: 'keyEncipherment',   label: 'keyEncipherment',  caOnly: false },
+    { key: 'serverAuth',        label: 'serverAuth (EKU)', caOnly: false },
+  ];
 
   constructor(
     private fb: FormBuilder,
     private certService: CertificateService,
     private router: Router,
     private authService: AuthService
-
   ) {}
 
   ngOnInit(): void {
@@ -40,21 +46,22 @@ export class IssueCertificateComponent implements OnInit {
   }
 
   private buildForm(): void {
-    const today = new Date().toISOString().split('T')[0];
     const nextYear = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const organizationName = this.authService.getCurrentUserOrganization();
 
     this.form = this.fb.group({
-      commonName: ['', [Validators.required, Validators.maxLength(64)]],
-      organization: [{ value: organizationName, disabled: true }, [Validators.required, Validators.maxLength(64)]],      
-      organizationalUnit: ['', Validators.maxLength(64)],
-      country: ['', [Validators.required, Validators.pattern(/^[A-Z]{2}$/)]],
-      email: ['', [Validators.required, Validators.email]],
-      validFrom: [today, Validators.required],
-      validTo: [nextYear, Validators.required],
-      issuerSerialNumber: ['', Validators.required],
-      isCA: [false],
-      keyUsages: this.fb.array([]),
+      commonName:          ['', [Validators.required, Validators.maxLength(64)]],
+      organization:        [{ value: organizationName, disabled: true }, [Validators.required, Validators.maxLength(64)]],
+      organizationalUnit:  ['', Validators.maxLength(64)],
+      country:             ['', [Validators.required, Validators.pattern(/^[A-Z]{2}$/)]],
+      email:               ['', [Validators.required, Validators.email]],
+      validFrom:           [this.today, Validators.required],
+      validTo:             [nextYear, Validators.required],
+      issuerSerialNumber:  ['', Validators.required],
+      // isCA drives type: true → INTERMEDIATE, false → END_ENTITY
+      // mirrors admin's onTypeChange() which auto-sets keyCertSign + basicConstraintsCA
+      isCA:                [false],
+      keyUsages:           this.fb.array([]),
     });
   }
 
@@ -62,17 +69,41 @@ export class IssueCertificateComponent implements OnInit {
     this.isLoadingIssuers = true;
     this.certService.getAvailableIssuers().subscribe({
       next: (issuers) => {
-      console.log('ISSUERS:', issuers);
-      this.issuers = issuers;
-      this.isLoadingIssuers = false;
-    },
-    error: (err) => {
-      console.error('ISSUER ERROR:', err);
-      this.errorMessage = 'Failed to load available issuers.';
-      this.isLoadingIssuers = false;
-    },
+        this.issuers = issuers;
+        this.isLoadingIssuers = false;
+      },
+      error: (err) => {
+        console.error('ISSUER ERROR:', err);
+        this.errorMessage = 'Failed to load available issuers.';
+        this.isLoadingIssuers = false;
+      },
     });
   }
+
+  // ── Issuer selection ──────────────────────────────────────────────────────
+
+  onIssuerChange(serialNumber: string): void {
+    this.selectedIssuer = this.issuers.find(i => i.serialNumber === serialNumber) ?? null;
+    if (this.selectedIssuer && this.form.value.validTo > this.selectedIssuer.validTo) {
+      this.form.patchValue({ validTo: this.selectedIssuer.validTo.split('T')[0] });
+    }
+  }
+
+  // ── isCA toggle (mirrors admin onTypeChange) ──────────────────────────────
+
+  onIsCAChange(value: boolean): void {
+    this.form.get('isCA')?.setValue(value);
+    // When CA: auto-enable keyCertSign + basicConstraints; when END_ENTITY: disable both
+    // This matches admin's onTypeChange() behaviour exactly.
+    if (!value) {
+      // Remove keyCertSign from keyUsages if present
+      const arr = this.keyUsagesArray;
+      const idx = arr.controls.findIndex(c => c.value === 'KEY_CERT_SIGN');
+      if (idx >= 0) arr.removeAt(idx);
+    }
+  }
+
+  // ── Key usage helpers ─────────────────────────────────────────────────────
 
   get keyUsagesArray(): FormArray {
     return this.form.get('keyUsages') as FormArray;
@@ -92,6 +123,21 @@ export class IssueCertificateComponent implements OnInit {
     return this.keyUsagesArray.controls.some(c => c.value === value);
   }
 
+  // ── X500Name preview (mirrors admin's getX500Preview) ────────────────────
+
+  getX500Preview(): string {
+    const v = this.form.getRawValue();
+    const parts: string[] = [];
+    if (v.commonName)         parts.push(`CN=${v.commonName}`);
+    if (v.organizationalUnit) parts.push(`OU=${v.organizationalUnit}`);
+    if (v.organization)       parts.push(`O=${v.organization}`);
+    if (v.country)            parts.push(`C=${v.country}`);
+    if (v.email)              parts.push(`E=${v.email}`);
+    return parts.length > 0 ? parts.join(', ') : 'CN=..., O=..., C=...';
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -103,18 +149,26 @@ export class IssueCertificateComponent implements OnInit {
     this.errorMessage = '';
 
     const val = this.form.getRawValue();
+    const isCA: boolean = val.isCA;
+
+    // Build keyUsages: if isCA, always include KEY_CERT_SIGN (mirrors admin keyCertSign auto-set)
+    const keyUsages: string[] = [...val.keyUsages];
+    if (isCA && !keyUsages.includes('KEY_CERT_SIGN')) {
+      keyUsages.push('KEY_CERT_SIGN');
+    }
+
     const request: IssueCertificateRequest = {
-      commonName: val.commonName,
-      organization: val.organization,
-      organizationalUnit: val.organizationalUnit || '',
-      country: val.country,
-      email: val.email,
-      validFrom: val.validFrom,
-      validTo: val.validTo,
-      issuerSerialNumber: val.issuerSerialNumber,
-      type: val.isCA ? 'INTERMEDIATE' : 'END_ENTITY',
-      keyUsages: val.keyUsages,
-      isCa: val.isCA,
+      commonName:          val.commonName,
+      organization:        val.organization,
+      organizationalUnit:  val.organizationalUnit || '',
+      country:             val.country,
+      email:               val.email,
+      validFrom:           val.validFrom,
+      validTo:             val.validTo,
+      issuerSerialNumber:  val.issuerSerialNumber,
+      type:                isCA ? 'INTERMEDIATE' : 'END_ENTITY',
+      keyUsages,
+      isCa:                isCA,
     };
 
     this.certService.issueCertificate(request).subscribe({
@@ -123,6 +177,7 @@ export class IssueCertificateComponent implements OnInit {
         this.successMessage = `Certificate issued successfully. Serial: ${cert.serialNumber}`;
         this.form.reset();
         this.buildForm();
+        this.selectedIssuer = null;
       },
       error: (err) => {
         this.isLoading = false;
@@ -137,6 +192,6 @@ export class IssueCertificateComponent implements OnInit {
   }
 
   goToDashboard(): void {
-  this.router.navigate(['/dashboard']);
-}
+    this.router.navigate(['/dashboard']);
+  }
 }
