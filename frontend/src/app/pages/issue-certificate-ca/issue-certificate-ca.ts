@@ -8,7 +8,7 @@ import { CertificateService, CertificateDto, IssueCertificateRequest } from '../
   selector: 'app-issue-certificate',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './issue-certificate.html'
+  templateUrl: './issue-certificate-ca.html'
 })
 export class IssueCertificateComponent implements OnInit {
   form!: FormGroup;

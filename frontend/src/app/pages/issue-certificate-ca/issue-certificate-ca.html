@@ -136,7 +136,7 @@
               {{ isLoadingIssuers ? 'Loading issuers...' : 'Select an issuer certificate' }}
             </option>
             <option *ngFor="let issuer of issuers" [value]="issuer.serialNumber" class="bg-[#0b0b18]">
-              {{ issuer.commonName }} — {{ issuer.organization }} ({{ issuer.type }})
+              {{ issuer.serialNumber }} — {{ issuer.type }}
             </option>
           </select>
           <svg class="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none"
