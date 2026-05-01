@@ -18,18 +18,19 @@ export interface IssueCertificateRequest {
 }
 
 export interface CertificateDto {
+  id: number;
   serialNumber: string;
-  subjectCN: string;
-  subjectO: string;
-  subjectOU: string;
-  subjectC: string;
-  subjectEmail: string;
-  issuerCN: string;
+  alias: string;
+  commonName: string;      
+  organization: string;     
+  organizationUnit: string; 
+  country: string;         
+  email: string;            
   validFrom: string;
   validTo: string;
   type: 'ROOT' | 'INTERMEDIATE' | 'END_ENTITY';
-  status: 'ACTIVE' | 'REVOKED';
-  revocationReason: string | null;
+  issuerSerialNumber: string | null;
+  revoked: boolean;         
 }
 
 export interface CsrRequest {
@@ -86,10 +87,13 @@ export class CertificateService {
     return this.http.get<CertificateDto>(`${this.API_URL}/my/${serialNumber}`);
   }
 
+  revokeMyCertificate(serialNumber: string, reason: string): Observable<void> {
+    return this.http.put<void>(`${this.API_URL}/my/${serialNumber}/revoke`, { reason });
+  }
+  
   autogenerate(request: CsrRequest): Observable<CsrResponse> {
     return this.http.post<CsrResponse>(`${this.API_URL}/csr/autogenerate`, request);
   }
-
   uploadCsr(request: CsrUploadRequest): Observable<CsrResponse> {
     return this.http.post<CsrResponse>(`${this.API_URL}/csr/upload`, request);
   }

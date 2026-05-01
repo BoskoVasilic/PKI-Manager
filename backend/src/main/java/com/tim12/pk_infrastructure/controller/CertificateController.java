@@ -39,8 +39,8 @@ public class CertificateController {
 
     @GetMapping("/my/issuers")
     @PreAuthorize("hasAnyRole('CA_USER', 'ADMIN')")
-    public ResponseEntity<List<CertificateDTO>> getMyAvailableIssuers() {
-        return ResponseEntity.ok(certificateService.getMyAvailableIssuers());
+    public ResponseEntity<List<CertificateDTO>> getAllMyAvailableIssuers() {
+        return ResponseEntity.ok(certificateService.getAllMyAvailableIssuers());
     }
 
     @GetMapping("/my")

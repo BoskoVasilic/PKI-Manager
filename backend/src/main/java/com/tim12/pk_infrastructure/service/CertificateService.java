@@ -170,6 +170,18 @@ public class CertificateService {
                 .toList();
     }
 
+    public List<CertificateDTO> getAllMyAvailableIssuers() {
+        User caller = getCurrentUser();
+
+        return certificateRepository
+                .findByIssuingOrg_Name(caller.getOrganization().getName())
+                .stream()
+                .filter(c -> c.getType() == CertificateType.ROOT || c.getType() == CertificateType.INTERMEDIATE)
+                .filter(c -> c.getStatus() == CertificateStatus.ACTIVE)
+                .map(this::toDto)
+                .toList();
+    }
+
     public Certificate issueCertificate(IssueCertificateRequest req) {
 
         Organization subjectOrg = null;
