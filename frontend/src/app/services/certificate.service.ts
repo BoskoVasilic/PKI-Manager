@@ -104,11 +104,11 @@ export class CertificateService {
     return this.http.get<CertificateDto[]>(`${this.API_URL}/issuers`);
   }
 
-  getAvailableIssuers(): Observable<CertificateData[]> {
+  getAvailableIssuerss(): Observable<CertificateData[]> {
     return this.http.get<CertificateData[]>(`${this.API_URL}/certificates/issuers`);
   }
 
-  issueCertificate(payload: any): Observable<CertificateData> {
+  issueCertificates(payload: any): Observable<CertificateData> {
     return this.http.post<CertificateData>(`${this.API_URL}/certificates`, payload);
   }
 

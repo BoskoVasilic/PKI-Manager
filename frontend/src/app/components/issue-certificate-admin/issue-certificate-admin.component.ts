@@ -90,7 +90,7 @@ export class IssueCertificateAdminComponent {
   }
 
   loadIssuers(): void {
-    this.certService.getAvailableIssuers().subscribe({
+    this.certService.getAvailableIssuerss().subscribe({
       next: (issuers) => { this.issuers = issuers; },
       error: (err) => console.error('Greška pri učitavanju issuera', err)
     });
@@ -153,7 +153,7 @@ export class IssueCertificateAdminComponent {
       extensions: this.form.extensions,
     };
 
-    this.certService.issueCertificate(payload).subscribe({
+    this.certService.issueCertificates(payload).subscribe({
       next: () => {
         this.isLoading = false;
         this.successMessage = 'Sertifikat je uspešno izdat!';
