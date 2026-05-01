@@ -28,10 +28,7 @@ public class CertificateController {
             @RequestBody IssueCertificateRequest request,
             Authentication auth) {
         try {
-            String callerOrg = resolveOrganization(auth, request.getOrganization());
-            return ResponseEntity.ok(CertificateResponse.from(
-                    certificateService.issueCertificate(request, callerOrg)
-            ));
+            return ResponseEntity.ok(certificateService.issueCertificate(request));
         } catch (IllegalArgumentException | SecurityException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
@@ -41,16 +38,8 @@ public class CertificateController {
 
     @GetMapping("/issuers")
     @PreAuthorize("hasAnyRole('CA_USER', 'ADMIN')")
-    public ResponseEntity<List<CertificateResponse>> getAvailableIssuers(
-            @RequestParam(required = false) String organization,
-            Authentication auth) {
-        String callerOrg = resolveOrganization(auth, organization);
-        List<CertificateResponse> issuers = certificateService
-                .getAvailableIssuers(callerOrg)
-                .stream()
-                .map(CertificateResponse::from)
-                .toList();
-        return ResponseEntity.ok(issuers);
+    public ResponseEntity<List<CertificateDto>> getAvailableIssuers() {
+        return ResponseEntity.ok(certificateService.getAvailableIssuers());
     }
 
     @GetMapping("/my")
