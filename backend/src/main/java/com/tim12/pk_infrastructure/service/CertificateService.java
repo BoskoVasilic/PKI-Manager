@@ -161,9 +161,11 @@ public class CertificateService {
 
     public List<CertificateDTO> getMyAvailableIssuers() {
         User caller = getCurrentUser();
+
         return certificateRepository
-                .findByOwnerAndType(caller, CertificateType.ROOT)
+                .findByOwner(caller)
                 .stream()
+                .filter(c -> c.getType() == CertificateType.ROOT || c.getType() == CertificateType.INTERMEDIATE)
                 .filter(c -> c.getStatus() == CertificateStatus.ACTIVE)
                 .map(this::toDto)
                 .toList();
