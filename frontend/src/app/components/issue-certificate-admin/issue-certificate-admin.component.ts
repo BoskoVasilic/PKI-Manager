@@ -156,7 +156,7 @@ export class IssueCertificateAdminComponent {
     this.certService.issueCertificateAdmin(payload).subscribe({
       next: () => {
         this.isLoading = false;
-        this.successMessage = 'Sertifikat je uspešno izdat!';
+        this.successMessage = 'The certificate is successfully issued!';
       },
       error: (err) => {
         this.isLoading = false;
