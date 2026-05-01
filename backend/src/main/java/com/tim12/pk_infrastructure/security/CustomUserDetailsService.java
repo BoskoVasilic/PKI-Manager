@@ -28,7 +28,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.isEnabled(),
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())),
                 user.getId(),
-                user.getOrganization()
+                user.getOrganization().getName()
         );
     }
 }
