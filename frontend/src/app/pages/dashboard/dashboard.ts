@@ -74,7 +74,7 @@ export class DashboardComponent implements OnInit {
         {
           label: 'Issue Certificate',
           icon: 'cert',
-          route: '/certificates/issue',
+          route: '/dashboard/issue-certificate',
           description: 'Issue Intermediate or EE certs for your organization',
           tag: 'Intermediate / EE',
         },
