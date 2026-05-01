@@ -143,16 +143,21 @@ public class CsrService {
      * Alias in the KeyStore = certificate serial number.
      */
     private PrivateKey loadCaPrivateKey(Certificate ca) {
-        String orgName = resolveOrgName(ca.getSubjectO(), ca.getOwner());
+        String orgName;
+        if (ca.getSubjectO() != null && !ca.getSubjectO().isBlank()) {
+            orgName = ca.getSubjectO().replaceAll("[^a-zA-Z0-9._-]", "_");
+        } else if (ca.getOwner() != null) {
+            orgName = resolveOrgName(null, ca.getOwner());
+        } else {
+            orgName = "default"; // root CA created by admin
+        }
         String filePath = keystorePath(orgName);
         char[] password = keystorePassword();
 
         PrivateKey pk = keyStoreReader.readPrivateKey(filePath, ca.getSerialNumber(), password, password);
         if (pk == null) {
             throw new RuntimeException(
-                    "Privatni ključ CA sertifikata nije pronađen u KeyStore-u. " +
-                            "Fajl: " + filePath + ", alias: " + ca.getSerialNumber()
-            );
+                    "CA private key not found in KeyStore. File: " + filePath + ", alias: " + ca.getSerialNumber());
         }
         return pk;
     }
