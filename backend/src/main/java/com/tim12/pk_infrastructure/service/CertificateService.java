@@ -161,9 +161,11 @@ public class CertificateService {
 
     public List<CertificateDTO> getMyAvailableIssuers() {
         User caller = getCurrentUser();
+
         return certificateRepository
-                .findByOwnerAndType(caller, CertificateType.ROOT)
+                .findByOwner(caller)
                 .stream()
+                .filter(c -> c.getType() == CertificateType.ROOT || c.getType() == CertificateType.INTERMEDIATE)
                 .filter(c -> c.getStatus() == CertificateStatus.ACTIVE)
                 .map(this::toDto)
                 .toList();
@@ -299,7 +301,7 @@ public class CertificateService {
         return dtos;
     }
 
-    private Organization getOrCreateOrg(String orgName) {
+    public Organization getOrCreateOrg(String orgName) {
         return orgRepo.findByName(orgName).orElseGet(() -> {
 
             String rawPassword       = keyEncryptionService.generateRandomPassword();
@@ -326,25 +328,29 @@ public class CertificateService {
         if (file.exists()) return;
 
         try {
-            file.getParentFile().mkdirs();
+            File parent = file.getParentFile();
+            if (parent != null) {
+                parent.mkdirs();
+            }
             KeyStore ks = KeyStore.getInstance("JKS", "SUN");
             ks.load(null, rawPassword.toCharArray());
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 ks.store(fos, rawPassword.toCharArray());
             }
+            System.out.println("Created keystore: " + file.getAbsolutePath());
         } catch (Exception e) {
             throw new RuntimeException(
                     "Failed to initialise keystore for org '" + org.getName() + "': " + e.getMessage(), e);
         }
     }
 
-
     private String resolveKeyStorePath(Organization org) {
         if (org.getKeyStoreFileName() == null) {
             throw new RuntimeException(
                     "Organization '" + org.getName() + "' has no keystore file name set.");
         }
-        return keystoreDir + org.getKeyStoreFileName();
+
+        return new File(keystoreDir, org.getKeyStoreFileName()).getPath();
     }
 
     private char[] resolveOrgKeyStorePassword(Organization org) {

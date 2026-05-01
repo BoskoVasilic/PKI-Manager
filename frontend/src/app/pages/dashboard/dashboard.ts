@@ -10,7 +10,6 @@ interface NavItem {
   icon: string;
   route: string;
   description: string;
-  tag?: string;
 }
 
 interface DashboardConfig {
@@ -43,7 +42,6 @@ export class DashboardComponent implements OnInit {
           icon: 'cert',
           route: '/admin/issue-certificate',
           description: 'Issue Root, Intermediate or End-Entity certificates',
-          tag: 'Root / Intermediate / EE',
         },
         {
           label: 'All Certificates',
@@ -62,7 +60,6 @@ export class DashboardComponent implements OnInit {
           icon: 'revoke',
           route: '/certificates/revoked',
           description: 'View the certificate revocation list',
-          tag: 'Func. 10',
         },
       ],
     },
@@ -74,9 +71,8 @@ export class DashboardComponent implements OnInit {
         {
           label: 'Issue Certificate',
           icon: 'cert',
-          route: '/dashboard/issue-certificate',
+          route: '/certificates/issue',
           description: 'Issue Intermediate or EE certs for your organization',
-          tag: 'Intermediate / EE',
         },
         {
           label: 'My Organization Certs',
@@ -89,7 +85,6 @@ export class DashboardComponent implements OnInit {
           icon: 'download',
           route: '/certificates/download',
           description: 'Download certificates with or without private key',
-          tag: 'Func. 7',
         },
       ],
     },
@@ -103,14 +98,12 @@ export class DashboardComponent implements OnInit {
           icon: 'upload',
           route: '/certificates/csr',
           description: 'Upload a CSR file to request a certificate from a CA',
-          tag: 'Func. 8',
         },
         {
           label: 'Generate Certificate',
           icon: 'cert',
           route: '/certificates/generate',
           description: 'Auto-generate key pair and certificate via PKI',
-          tag: 'Func. 8',
         },
         {
           label: 'My Certificates',
@@ -123,7 +116,6 @@ export class DashboardComponent implements OnInit {
           icon: 'revoke',
           route: '/certificates/revoke',
           description: 'Revoke one of your certificates with an X.509 reason',
-          tag: 'Func. 10',
         },
       ],
     },
@@ -149,7 +141,6 @@ export class DashboardComponent implements OnInit {
       this.userEmail = payload.sub || payload.email || '';
       this.userName = payload.name || this.userEmail.split('@')[0] || 'User';
 
-      // Adjust this key to match whatever claim your Spring Boot JWT uses
       const role = payload.role || payload.roles?.[0] || 'USER';
       this.userRole = role.replace('ROLE_', '') as UserRole;
     } catch {
@@ -159,19 +150,19 @@ export class DashboardComponent implements OnInit {
 
   getRoleBadgeClass(): string {
     const map: Record<string, string> = {
-        gold:  'bg-yellow-400/10 text-yellow-400 border border-yellow-400/25',
-        blue:  'bg-blue-400/10  text-blue-400  border border-blue-400/25',
-        green: 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/25',
+      gold:  'bg-yellow-400/10 text-yellow-400 border border-yellow-400/25',
+      blue:  'bg-blue-400/10  text-blue-400  border border-blue-400/25',
+      green: 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/25',
     };
     return map[this.config.roleColor] ?? '';
-}
+  }
 
-getIconWrapClass(): string {
+  getIconWrapClass(): string {
     const map: Record<string, string> = {
-        gold:  'bg-yellow-400/10 text-yellow-400',
-        blue:  'bg-blue-400/10  text-blue-400',
-        green: 'bg-emerald-400/10 text-emerald-400',
+      gold:  'bg-yellow-400/10 text-yellow-400',
+      blue:  'bg-blue-400/10  text-blue-400',
+      green: 'bg-emerald-400/10 text-emerald-400',
     };
     return map[this.config.roleColor] ?? '';
-}
+  }
 }
