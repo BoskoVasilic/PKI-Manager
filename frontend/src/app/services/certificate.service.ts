@@ -2,6 +2,26 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+// Matches backend CertificateDTO exactly
+export interface CertificateDto {
+  id: number;
+  serialNumber: string;
+  alias: string;
+  commonName: string;
+  organization: string;
+  organizationUnit: string;
+  country: string;
+  email: string;
+  validFrom: string;
+  validTo: string;
+  type: 'ROOT' | 'INTERMEDIATE' | 'END_ENTITY';
+  issuerSerialNumber: string | null;
+  revoked: boolean;
+}
+
+// Alias — admin pages already use CertificateData, keep it pointing to the same shape
+export type CertificateData = CertificateDto;
+
 export interface IssueCertificateRequest {
   commonName: string;
   organization: string;
@@ -17,21 +37,6 @@ export interface IssueCertificateRequest {
   pathLengthConstraint?: number;
 }
 
-export interface CertificateDto {
-  serialNumber: string;
-  subjectCN: string;
-  subjectO: string;
-  subjectOU: string;
-  subjectC: string;
-  subjectEmail: string;
-  issuerCN: string;
-  validFrom: string;
-  validTo: string;
-  type: 'ROOT' | 'INTERMEDIATE' | 'END_ENTITY';
-  status: 'ACTIVE' | 'REVOKED';
-  revocationReason: string | null;
-}
-
 export interface CsrRequest {
   cn: string;
   organization?: string;
@@ -39,7 +44,7 @@ export interface CsrRequest {
   country?: string;
   email?: string;
   caSerialNumber: string;
-  validFrom: string; // ISO-8601 LocalDateTime, e.g. "2025-06-01T00:00:00"
+  validFrom: string;
   validTo: string;
 }
 
@@ -53,22 +58,8 @@ export interface CsrUploadRequest {
 export interface CsrResponse {
   serialNumber: string;
   certificatePem: string;
-  privateKeyPem?: string; // only present for autogenerate
+  privateKeyPem?: string;
   message: string;
-export interface CertificateData {
-  id: number;
-  serialNumber: string;
-  alias: string;
-  commonName: string;
-  organization: string;
-  organizationUnit: string;
-  country: string;
-  email: string;
-  validFrom: string;
-  validTo: string;
-  type: 'ROOT' | 'INTERMEDIATE' | 'END_ENTITY';
-  issuerSerialNumber: string | null;
-  revoked: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -85,38 +76,41 @@ export class CertificateService {
     return this.http.get<CertificateDto>(`${this.API_URL}/my/${serialNumber}`);
   }
 
-  /** Feature 6/8 — server generates key pair, signs cert, returns private key ONCE */
+  revokeMyCertificate(serialNumber: string, reason: string): Observable<void> {
+    return this.http.put<void>(`${this.API_URL}/my/${serialNumber}/revoke`, { reason });
+  }
+  
   autogenerate(request: CsrRequest): Observable<CsrResponse> {
     return this.http.post<CsrResponse>(`${this.API_URL}/csr/autogenerate`, request);
   }
-
-  /** Feature 8 — user uploads their own CSR PEM, server signs and returns cert */
   uploadCsr(request: CsrUploadRequest): Observable<CsrResponse> {
     return this.http.post<CsrResponse>(`${this.API_URL}/csr/upload`, request);
   }
-}
+
   issueCertificate(request: IssueCertificateRequest): Observable<CertificateDto> {
     return this.http.post<CertificateDto>(`${this.API_URL}/issue`, request);
   }
 
+  // CA user: issuers from their own org
   getAvailableIssuers(): Observable<CertificateDto[]> {
+    return this.http.get<CertificateDto[]>(`${this.API_URL}/my/issuers`);
+  }
+
+  // Admin: all issuers system-wide
+  getAvailableIssuersAdmin(): Observable<CertificateDto[]> {
     return this.http.get<CertificateDto[]>(`${this.API_URL}/issuers`);
   }
 
-  getAvailableIssuers(): Observable<CertificateData[]> {
-    return this.http.get<CertificateData[]>(`${this.API_URL}/certificates/issuers`);
+  issueCertificateAdmin(payload: any): Observable<CertificateDto> {
+    return this.http.post<CertificateDto>(`${this.API_URL}`, payload);
   }
 
-  issueCertificate(payload: any): Observable<CertificateData> {
-    return this.http.post<CertificateData>(`${this.API_URL}/certificates`, payload);
+  getAllCertificates(): Observable<CertificateDto[]> {
+    return this.http.get<CertificateDto[]>(`${this.API_URL}`);
   }
 
-  getAllCertificates(): Observable<CertificateData[]> {
-    return this.http.get<CertificateData[]>(`${this.API_URL}/certificates`);
-  }
-
-  getCertificate(serialNumber: string): Observable<CertificateData> {
-    return this.http.get<CertificateData>(`${this.API_URL}/certificates/${serialNumber}`);
+  getCertificate(serialNumber: string): Observable<CertificateDto> {
+    return this.http.get<CertificateDto>(`${this.API_URL}/certificates/${serialNumber}`);
   }
 
   revokeCertificate(serialNumber: string, reason: string): Observable<void> {

@@ -1,11 +1,12 @@
-package com.tim12.pk_infrastructure.dto;
+package com.tim12.pk_infrastructure.model.dtos;
 
 import com.tim12.pk_infrastructure.model.Certificate;
-import com.tim12.pk_infrastructure.model.CertificateStatus;
-import com.tim12.pk_infrastructure.model.CertificateType;
+import com.tim12.pk_infrastructure.model.enums.CertificateStatus;
+import com.tim12.pk_infrastructure.model.enums.CertificateType;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Data
 public class CertificateResponse {
@@ -21,8 +22,8 @@ public class CertificateResponse {
     private String issuerSerialNumber;
     private CertificateType type;
     private CertificateStatus status;
-    private LocalDateTime validFrom;
-    private LocalDateTime validTo;
+    private Date validFrom;
+    private Date validTo;
     private String revocationReason;
 
     public static CertificateResponse from(Certificate cert) {

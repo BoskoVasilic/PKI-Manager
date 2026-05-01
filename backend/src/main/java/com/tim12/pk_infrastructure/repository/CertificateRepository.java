@@ -3,7 +3,7 @@ package com.tim12.pk_infrastructure.repository;
 import com.tim12.pk_infrastructure.model.Certificate;
 import com.tim12.pk_infrastructure.model.enums.CertificateType;
 import com.tim12.pk_infrastructure.model.User;
-import com.tim12.pk_infrastructure.model.CertificateStatus;
+import com.tim12.pk_infrastructure.model.enums.CertificateStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.tim12.pk_infrastructure.model.User;
 import org.springframework.stereotype.Repository;

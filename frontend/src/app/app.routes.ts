@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login';
 import { DashboardComponent } from './pages/dashboard/dashboard';
 import { IssueCertificateComponent } from './pages/issue-certificate-ca/issue-certificate-ca';
-import { CertificatesComponent } from './pages/certificates/certificates';
+import { UserCertificatesViewComponent } from './components/user-certificates-view/user-certificates-view';
 import { GenerateCertificateComponent } from './pages/generate-certificates/generate-certificate';
 import { UploadCsrComponent } from './pages/upload-csr/upload-csr';
 import { authGuard } from './guards/auth.guard';
@@ -23,16 +23,16 @@ export const routes: Routes = [
     path: 'dashboard',
     component: DashboardComponent,
     canActivate: [authGuard],
-    children: [
-      {
-        path: 'issue-certificate',
-        component: IssueCertificateComponent,
-      },
-    ],
+  },
+
+  {
+    path: 'certificates/issue',
+    component: IssueCertificateComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'certificates',
-    component: CertificatesComponent,
+    component: UserCertificatesViewComponent,
     canActivate: [authGuard],
   },
   {
@@ -46,5 +46,5 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: '**', redirectTo: 'login' },
+  { path: '**', redirectTo: 'dashboard' },
 ];

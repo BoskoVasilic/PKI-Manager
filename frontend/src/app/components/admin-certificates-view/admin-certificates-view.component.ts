@@ -3,14 +3,12 @@ import {CertificateData, CertificateService} from '../../services/certificate.se
 import {AuthService} from '../../services/auth.service';
 import {Router} from '@angular/router';
 import {FormsModule} from '@angular/forms';
-import {DatePipe, NgClass, NgForOf, NgIf, SlicePipe, Location} from '@angular/common';
+import {DatePipe, NgClass, SlicePipe, Location} from '@angular/common';
 
 @Component({
   selector: 'app-admin-certificates-view',
   imports: [
     FormsModule,
-    NgIf,
-    NgForOf,
     DatePipe,
     SlicePipe,
     NgClass

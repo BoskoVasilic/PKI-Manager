@@ -49,8 +49,12 @@ export class CertificatesComponent implements OnInit {
     return new Date(validTo) < new Date();
   }
 
+  isRevoked(cert: CertificateDto): boolean {
+    return cert.revoked;
+  }
+
   statusClass(cert: CertificateDto): string {
-    if (cert.status === 'REVOKED')
+    if (cert.revoked)
       return 'bg-red-500/10 text-red-400 border border-red-500/25';
     if (this.isExpired(cert.validTo))
       return 'bg-yellow-400/10 text-yellow-400 border border-yellow-400/25';
@@ -58,7 +62,7 @@ export class CertificatesComponent implements OnInit {
   }
 
   statusLabel(cert: CertificateDto): string {
-    if (cert.status === 'REVOKED') return 'Revoked';
+    if (cert.revoked) return 'Revoked';
     if (this.isExpired(cert.validTo)) return 'Expired';
     return 'Active';
   }
