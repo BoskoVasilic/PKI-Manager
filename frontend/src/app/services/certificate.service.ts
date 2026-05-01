@@ -55,6 +55,7 @@ export interface CsrResponse {
   certificatePem: string;
   privateKeyPem?: string; // only present for autogenerate
   message: string;
+}
 export interface CertificateData {
   id: number;
   serialNumber: string;
@@ -94,7 +95,7 @@ export class CertificateService {
   uploadCsr(request: CsrUploadRequest): Observable<CsrResponse> {
     return this.http.post<CsrResponse>(`${this.API_URL}/csr/upload`, request);
   }
-}
+
   issueCertificate(request: IssueCertificateRequest): Observable<CertificateDto> {
     return this.http.post<CertificateDto>(`${this.API_URL}/issue`, request);
   }

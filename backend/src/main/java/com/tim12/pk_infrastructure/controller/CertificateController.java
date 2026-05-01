@@ -1,10 +1,9 @@
 package com.tim12.pk_infrastructure.controller;
 
-import com.tim12.pk_infrastructure.dto.CertificateDto;
 import com.tim12.pk_infrastructure.model.Certificate;
 import com.tim12.pk_infrastructure.model.dtos.CertificateDTO;
 import com.tim12.pk_infrastructure.model.dtos.IssueCertificateRequest;
-import com.tim12.pk_infrastructure.dto.CertificateResponse;
+import com.tim12.pk_infrastructure.model.dtos.IssueCertificateRequestCA;
 import com.tim12.pk_infrastructure.security.CustomUserDetails;
 import com.tim12.pk_infrastructure.service.CertificateService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,7 @@ public class CertificateController {
     @PostMapping("/issue")
     @PreAuthorize("hasAnyRole('CA_USER', 'ADMIN')")
     public ResponseEntity<?> issueCertificate(
-            @RequestBody IssueCertificateRequest request,
+            @RequestBody IssueCertificateRequestCA request,
             Authentication auth) {
         try {
             return ResponseEntity.ok(certificateService.issueCertificate(request));
@@ -38,21 +37,21 @@ public class CertificateController {
         }
     }
 
-    @GetMapping("/issuers")
+    @GetMapping("/my/issuers")
     @PreAuthorize("hasAnyRole('CA_USER', 'ADMIN')")
-    public ResponseEntity<List<CertificateDto>> getAvailableIssuers() {
-        return ResponseEntity.ok(certificateService.getAvailableIssuers());
+    public ResponseEntity<List<CertificateDTO>> getMyAvailableIssuers() {
+        return ResponseEntity.ok(certificateService.getMyAvailableIssuers());
     }
 
     @GetMapping("/my")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<CertificateDto>> getMyCertificates() {
+    public ResponseEntity<List<CertificateDTO>> getMyCertificates() {
         return ResponseEntity.ok(certificateService.getMyEndEntityCertificates());
     }
 
     @GetMapping("/my/{serialNumber}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<CertificateDto> getMyCertificate(@PathVariable String serialNumber) {
+    public ResponseEntity<CertificateDTO> getMyCertificate(@PathVariable String serialNumber) {
         return ResponseEntity.ok(certificateService.getMyCertificateBySerial(serialNumber));
     }
 

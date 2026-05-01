@@ -1,4 +1,4 @@
-package com.tim12.pk_infrastructure.dto.csr;
+package com.tim12.pk_infrastructure.model.dtos.csr;
 
 import lombok.Builder;
 import lombok.Data;

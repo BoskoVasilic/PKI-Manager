@@ -1,15 +1,15 @@
 package com.tim12.pk_infrastructure.service;
 
 import com.tim12.pk_infrastructure.certificates.CertificateGenerator;
-import com.tim12.pk_infrastructure.dto.CertificateDto;
 import com.tim12.pk_infrastructure.keystores.KeyStoreReader;
 import com.tim12.pk_infrastructure.keystores.KeyStoreWriter;
 import com.tim12.pk_infrastructure.model.*;
 import com.tim12.pk_infrastructure.model.Certificate;
 import com.tim12.pk_infrastructure.model.dtos.CertificateDTO;
 import com.tim12.pk_infrastructure.model.dtos.IssueCertificateRequest;
+import com.tim12.pk_infrastructure.model.dtos.IssueCertificateRequestCA;
 import com.tim12.pk_infrastructure.model.enums.CertificateType;
-import com.tim12.pk_infrastructure.model.CertificateStatus;
+import com.tim12.pk_infrastructure.model.enums.CertificateStatus;
 import com.tim12.pk_infrastructure.repository.CertificateRepository;
 import com.tim12.pk_infrastructure.repository.OrganizatioRepository;
 import com.tim12.pk_infrastructure.repository.UserRepository;
@@ -23,7 +23,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
@@ -70,7 +69,7 @@ public class CertificateService {
     //  End-user: view own certificates
     // ------------------------------------------------------------------ //
 
-    public List<CertificateDto> getMyEndEntityCertificates() {
+    public List<CertificateDTO> getMyEndEntityCertificates() {
         User currentUser = getCurrentUser();
         return certificateRepository
                 .findByOwnerAndType(currentUser, CertificateType.END_ENTITY)
@@ -79,7 +78,7 @@ public class CertificateService {
                 .toList();
     }
 
-    public CertificateDto getMyCertificateBySerial(String serialNumber) {
+    public CertificateDTO getMyCertificateBySerial(String serialNumber) {
         User currentUser = getCurrentUser();
         Certificate cert = certificateRepository
                 .findBySerialNumberAndOwner(serialNumber, currentUser)
@@ -95,7 +94,7 @@ public class CertificateService {
      * Issues a new certificate signed by the specified CA cert.
      * CA users can only issue INTERMEDIATE or END_ENTITY.
      */
-    public CertificateDto issueCertificate(IssueCertificateRequest req) throws Exception {
+    public CertificateDTO issueCertificate(IssueCertificateRequestCA req) throws Exception {
 
         User caller = getCurrentUser();
 
@@ -126,8 +125,8 @@ public class CertificateService {
         X500Name issuerName  = new X500Name(issuerX509.getSubjectX500Principal().getName());
 
         // 6. Validity dates
-        Date from = Date.from(req.getValidFrom().atZone(ZoneId.systemDefault()).toInstant());
-        Date to   = Date.from(req.getValidTo().atZone(ZoneId.systemDefault()).toInstant());
+        Date from = req.getValidFrom();
+        Date to   = req.getValidTo();
 
         if (to.after(issuerX509.getNotAfter())) {
             throw new IllegalArgumentException("Certificate validity cannot exceed issuer's validity period.");
@@ -194,10 +193,22 @@ public class CertificateService {
         return toDto(certificateRepository.save(saved));
     }
 
+    // build DN for CA request (IssueCertificateRequestCA uses LocalDateTime fields)
+    private String buildDn(IssueCertificateRequestCA req) {
+        StringBuilder sb = new StringBuilder();
+        if (req.getCommonName() != null)        sb.append("CN=").append(req.getCommonName()).append(",");
+        if (req.getOrganization() != null)       sb.append("O=").append(req.getOrganization()).append(",");
+        if (req.getOrganizationalUnit() != null) sb.append("OU=").append(req.getOrganizationalUnit()).append(",");
+        if (req.getCountry() != null)            sb.append("C=").append(req.getCountry()).append(",");
+        if (req.getEmail() != null)              sb.append("E=").append(req.getEmail()).append(",");
+        String dn = sb.toString();
+        return dn.endsWith(",") ? dn.substring(0, dn.length() - 1) : dn;
+    }
+
     /**
      * Returns CA certs the current user owns and can use as issuers.
      */
-    public List<CertificateDto> getAvailableIssuers() {
+    public List<CertificateDTO> getMyAvailableIssuers() {
         User caller = getCurrentUser();
         return certificateRepository
                 .findByOwnerAndType(caller, CertificateType.ROOT)
@@ -230,7 +241,7 @@ public class CertificateService {
         StringBuilder sb = new StringBuilder();
         if (req.getCommonName() != null)        sb.append("CN=").append(req.getCommonName()).append(",");
         if (req.getOrganization() != null)       sb.append("O=").append(req.getOrganization()).append(",");
-        if (req.getOrganizationalUnit() != null) sb.append("OU=").append(req.getOrganizationalUnit()).append(",");
+        if (req.getOrganizationUnit() != null) sb.append("OU=").append(req.getOrganizationUnit()).append(",");
         if (req.getCountry() != null)            sb.append("C=").append(req.getCountry()).append(",");
         if (req.getEmail() != null)              sb.append("E=").append(req.getEmail()).append(",");
         String dn = sb.toString();
@@ -279,21 +290,9 @@ public class CertificateService {
         return sw.toString();
     }
 
-    private CertificateDto toDto(Certificate c) {
-        return CertificateDto.builder()
-                .serialNumber(c.getSerialNumber())
-                .subjectCN(c.getSubjectCN())
-                .subjectO(c.getSubjectO())
-                .subjectOU(c.getSubjectOU())
-                .subjectC(c.getSubjectC())
-                .subjectEmail(c.getSubjectEmail())
-                .issuerCN(c.getIssuerCN())
-                .validFrom(c.getValidFrom())
-                .validTo(c.getValidTo())
-                .type(c.getType())
-                .revoked(c.isRevoked())
-                .revocationReason(c.getRevocationReason())
-                .build();
+    private CertificateDTO toDto(Certificate c) {
+        // reuse populateDto which builds a CertificateDTO
+        return populateDto(c);
     }
 
     private CertificateDTO populateDto(Certificate c) {
@@ -378,9 +377,7 @@ public class CertificateService {
                 ? issuer.getPrivateKey()
                 : subjectKeyPair.getPrivate();
 
-        keyStoreWriter.loadKeyStore(keystorePath, keystorePass.toCharArray());
-        keyStoreWriter.write(alias, privateKeyToStore, keystorePass.toCharArray(), x509Cert);
-        keyStoreWriter.saveKeyStore(keystorePath, keystorePass.toCharArray());
+        keyStoreWriter.write(keystorePath,alias, privateKeyToStore, keystorePass.toCharArray(), x509Cert);
 
         Organization org = null;
         if (req.getOrganization() != null && !req.getOrganization().isBlank()) {

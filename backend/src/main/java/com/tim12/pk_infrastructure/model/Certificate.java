@@ -42,6 +42,9 @@ public class Certificate {
     @Enumerated(EnumType.STRING)
     private CertificateType type;
 
+    @Enumerated(EnumType.STRING)
+    private CertificateStatus status;
+
     private boolean revoked;
 
     @Column(columnDefinition = "TEXT")

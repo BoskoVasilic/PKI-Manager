@@ -1,12 +1,13 @@
-package com.tim12.pk_infrastructure.dto;
+package com.tim12.pk_infrastructure.model.dtos;
 
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @Data
-public class IssueCertificateRequest {
+public class IssueCertificateRequestCA {
 
     // X500Name fields
     private String commonName;
@@ -16,8 +17,8 @@ public class IssueCertificateRequest {
     private String email;
 
     // Validity
-    private LocalDateTime validFrom;
-    private LocalDateTime validTo;
+    private Date validFrom;
+    private Date validTo;
 
     // Which CA cert signs this (serial number)
     private String issuerSerialNumber;

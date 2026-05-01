@@ -1,5 +1,6 @@
 package com.tim12.pk_infrastructure.keystores;
 
+import com.tim12.pk_infrastructure.model.Issuer;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 import org.springframework.stereotype.Component;
@@ -64,5 +65,32 @@ public class KeyStoreReader {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public Issuer readIssuerFromStore(String keyStoreFile, String alias, char[] password, char[] keyPass) {
+        try {
+            KeyStore ks = KeyStore.getInstance("JKS", "SUN");
+            BufferedInputStream in = new BufferedInputStream(new FileInputStream(keyStoreFile));
+            ks.load(in, password);
+
+            Certificate cert = ks.getCertificate(alias);
+            if (cert == null) {
+                throw new RuntimeException("Sertifikat sa aliasom '" + alias + "' nije pronađen u keystoru");
+            }
+
+            PrivateKey privateKey = (PrivateKey) ks.getKey(alias, keyPass);
+            if (privateKey == null) {
+                throw new RuntimeException("Privatni ključ za alias '" + alias + "' nije pronađen");
+            }
+
+            X500Name issuerName = new JcaX509CertificateHolder((X509Certificate) cert).getSubject();
+            return new Issuer(privateKey, cert.getPublicKey(), issuerName);
+
+        } catch (KeyStoreException | NoSuchAlgorithmException |
+                 CertificateException | UnrecoverableKeyException | IOException e) {
+            throw new RuntimeException("Greška pri čitanju issuera iz keystora: " + e.getMessage(), e);
+        } catch (NoSuchProviderException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
