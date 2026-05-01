@@ -3,6 +3,7 @@ package com.tim12.pk_infrastructure.controller;
 import com.tim12.pk_infrastructure.model.ActivationToken;
 import com.tim12.pk_infrastructure.model.Organization;
 import com.tim12.pk_infrastructure.model.User;
+import com.tim12.pk_infrastructure.model.dtos.ActivateRequestDTO;
 import com.tim12.pk_infrastructure.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -19,15 +20,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-//@CrossOrigin(origins = "http://localhost:4200")
 public class AuthController {
 
     private final AuthService authService;
 
     @PostMapping("/activate-ca")
-    public void activateCaUser(String token, String newPassword) {
+    public void activateCaUser(@RequestBody ActivateRequestDTO request) {
         try {
-            authService.activateCaUser(token, newPassword);
+            authService.activateCaUser(request.getToken(), request.getPassword());
         } catch (RuntimeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }

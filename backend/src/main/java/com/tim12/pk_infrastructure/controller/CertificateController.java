@@ -1,8 +1,10 @@
 package com.tim12.pk_infrastructure.controller;
 
 import com.tim12.pk_infrastructure.dto.CertificateDto;
+import com.tim12.pk_infrastructure.model.Certificate;
+import com.tim12.pk_infrastructure.model.dtos.CertificateDTO;
+import com.tim12.pk_infrastructure.model.dtos.IssueCertificateRequest;
 import com.tim12.pk_infrastructure.dto.CertificateResponse;
-import com.tim12.pk_infrastructure.dto.IssueCertificateRequest;
 import com.tim12.pk_infrastructure.security.CustomUserDetails;
 import com.tim12.pk_infrastructure.service.CertificateService;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +61,36 @@ public class CertificateController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
+    @GetMapping("/issuers")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CertificateDTO>> getAvailableIssuers() {
+        return ResponseEntity.ok(certificateService.getAvailableIssuers());
+    }
+
+    @GetMapping("/{serialNumber}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CertificateDTO> getCertificate(@PathVariable String serialNumber) {
+        return ResponseEntity.ok(certificateService.getCertificateBySerial(serialNumber));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> issueCertificate(@RequestBody IssueCertificateRequest request) {
+        try {
+            Certificate issued = certificateService.issueCertificate(request);
+            return ResponseEntity.ok(issued);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CertificateDTO>> getAllCertificates() {
+        return ResponseEntity.ok(certificateService.getAllCertificates());
+    }
+
+    record ErrorResponse(String message) {}
     private String resolveOrganization(Authentication auth, String requestedOrg) {
         boolean isAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));

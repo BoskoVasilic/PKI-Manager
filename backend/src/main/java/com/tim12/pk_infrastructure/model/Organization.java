@@ -21,6 +21,10 @@ public class Organization {
     @Column(nullable = false)
     private String name;
 
+//    private String keyStoreFileName;
+//
+//    private String keyStorePassword;
+
     public Organization(String name) {
         this.name = name;
     }

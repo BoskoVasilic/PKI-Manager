@@ -20,15 +20,14 @@ import org.springframework.security.core.AuthenticationException;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final ActivationTokenRepository tokenRepo;
-    private final UserRepository userRepo;
+    private final ActivationTokenRepository tokenRepository;
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
-    PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     public void validateToken(String token) {
-        ActivationToken at = tokenRepo.findByToken(token)
+        ActivationToken at = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid token"));
 
         if (at.isUsed() || at.getExpiresAt().isBefore(LocalDateTime.now()))
@@ -36,19 +35,19 @@ public class AuthService {
     }
 
     public void activateCaUser(String token, String newPassword) {
-        ActivationToken at = tokenRepo.findByToken(token)
+        ActivationToken at = tokenRepository.findByToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid token"));
 
         if (at.isUsed() || at.getExpiresAt().isBefore(LocalDateTime.now()))
             throw new RuntimeException("Token expired or used");
 
-        User user = userRepo.findById(at.getUserId()).orElseThrow();
+        User user = userRepository.findById(at.getUserId()).orElseThrow();
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setEnabled(true);
-        userRepo.save(user);
+        userRepository.save(user);
 
         at.setUsed(true);
-        tokenRepo.save(at);
+        tokenRepository.save(at);
     }
 
     public String login(String email, String password) {
