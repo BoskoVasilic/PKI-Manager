@@ -1,5 +1,17 @@
-<div class="min-h-screen bg-[#0b0b18] flex items-start justify-center px-4 py-10 font-['DM_Sans',sans-serif] text-[#e8e8f0]"
+<div class="min-h-screen bg-[#0b0b18] flex items-start justify-center px-4 py-10 font-['DM_Sans',sans-serif] text-[#e8e8f0] relative"
      style="background-image: radial-gradient(ellipse at 20% 30%, rgba(108,99,255,0.07) 0%, transparent 55%), radial-gradient(ellipse at 80% 70%, rgba(99,179,255,0.04) 0%, transparent 50%)">
+
+    <button
+  routerLink="/dashboard" (click)="goToDashboard()"
+  class="absolute top-6 left-6 flex items-center gap-2 text-sm text-white/40 hover:text-white transition-all duration-150">
+
+  <svg width="16" height="16" viewBox="0 0 24 24"
+       fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M15 18l-6-6 6-6"/>
+  </svg>
+  
+  Back to Dashboard
+</button>
 
   <div class="w-full max-w-[680px] bg-white/[0.03] border border-white/[0.07] rounded-2xl p-10 shadow-[0_0_0_1px_rgba(108,99,255,0.08),0_32px_64px_rgba(0,0,0,0.4)]">
 

@@ -132,4 +132,8 @@ export class IssueCertificateComponent implements OnInit {
     const c = this.form.get(field);
     return !!(c && c.invalid && c.touched);
   }
+
+  goToDashboard(): void {
+  this.router.navigate(['/dashboard']);
+}
 }
