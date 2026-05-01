@@ -28,10 +28,10 @@ export class ChangePasswordComponent implements OnInit {
   };
 
   passwordRequirements = [
-    { label: 'Minimalno 8 karaktera', met: false },
-    { label: 'Barem jedno veliko slovo', met: false },
-    { label: 'Barem jedan broj', met: false },
-    { label: 'Barem jedan specijalni karakter', met: false },
+    { label: 'Minimum 8 characters', met: false },
+    { label: 'At least one capital letter', met: false },
+    { label: 'At least one number', met: false },
+    { label: 'At least one special character', met: false },
   ];
 
   constructor(
@@ -61,6 +61,16 @@ export class ChangePasswordComponent implements OnInit {
     this.passwordStrength = this.passwordRequirements.filter(r => r.met).length;
   }
 
+  checkPasswordRequirements(): boolean {
+    const p = this.form.password;
+    this.passwordRequirements[0].met = p.length >= 8;
+    this.passwordRequirements[1].met = /[A-Z]/.test(p);
+    this.passwordRequirements[2].met = /[0-9]/.test(p);
+    this.passwordRequirements[3].met = /[^A-Za-z0-9]/.test(p);
+
+    return this.passwordRequirements.filter(r => r.met).length == 4;
+  }
+
   getStrengthColor(): string {
     if (this.passwordStrength <= 1) return 'bg-red-500';
     if (this.passwordStrength === 2) return 'bg-yellow-500';
@@ -76,14 +86,15 @@ export class ChangePasswordComponent implements OnInit {
   }
 
   getStrengthLabel(): string {
-    if (this.passwordStrength <= 1) return 'Slaba lozinka';
-    if (this.passwordStrength === 2) return 'Srednja lozinka';
-    if (this.passwordStrength === 3) return 'Jaka lozinka';
-    return 'Vrlo jaka lozinka';
+    if (this.passwordStrength <= 1) return 'Weak password';
+    if (this.passwordStrength === 2) return 'Medium password';
+    if (this.passwordStrength === 3) return 'Strong password';
+    return 'Very strong password';
   }
 
   onSubmit(): void {
     if (this.form.password !== this.form.confirmPassword) return;
+    if (!this.checkPasswordRequirements()) return;
     if (this.isLoading) return;
 
     this.errorMessage = '';
