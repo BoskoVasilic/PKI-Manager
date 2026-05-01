@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login';
 import { DashboardComponent } from './pages/dashboard/dashboard';
+import { IssueCertificateComponent } from './pages/issue-certificate-ca/issue-certificate-ca';
 import { CertificatesComponent } from './pages/certificates/certificates';
 import { authGuard } from './guards/auth.guard';
 import {ChangePasswordComponent} from './components/change-password/change-password.component';
@@ -15,10 +16,17 @@ export const routes: Routes = [
   { path: 'admin/ca-users', component: CaUserRegisterComponent, canActivate: [authGuard] },
   { path: 'admin/issue-certificate', component: IssueCertificateAdminComponent, canActivate: [authGuard] },
   { path: 'admin/certificates', component: AdminCertificatesViewComponent, canActivate: [authGuard] },
+  { path: 'admin/register-ca', component: CaUserRegisterComponent},
   {
     path: 'dashboard',
     component: DashboardComponent,
     canActivate: [authGuard],
+    children: [
+      {
+        path: 'issue-certificate',
+        component: IssueCertificateComponent,
+      },
+    ],
   },
   {
     path: 'certificates',

@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { CertificateService, Certificate } from '../../services/certificate.service';
+import { CertificateService, CertificateDto } from '../../services/certificate.service';
 
 @Component({
   selector: 'app-certificates',
@@ -10,8 +10,8 @@ import { CertificateService, Certificate } from '../../services/certificate.serv
   templateUrl: './certificates.html'
 })
 export class CertificatesComponent implements OnInit {
-  certificates = signal<Certificate[]>([]);
-  selected = signal<Certificate | null>(null);
+  certificates = signal<CertificateDto[]>([]);
+  selected = signal<CertificateDto | null>(null);
   isLoading = signal(true);
   error = signal('');
 
@@ -37,7 +37,7 @@ export class CertificatesComponent implements OnInit {
     this.router.navigate(['/dashboard']);
   }
 
-  selectCert(cert: Certificate): void {
+  selectCert(cert: CertificateDto): void {
     this.selected.set(this.selected()?.serialNumber === cert.serialNumber ? null : cert);
   }
 
@@ -49,7 +49,7 @@ export class CertificatesComponent implements OnInit {
     return new Date(validTo) < new Date();
   }
 
-  statusClass(cert: Certificate): string {
+  statusClass(cert: CertificateDto): string {
     if (cert.status === 'REVOKED')
       return 'bg-red-500/10 text-red-400 border border-red-500/25';
     if (this.isExpired(cert.validTo))
@@ -57,7 +57,7 @@ export class CertificatesComponent implements OnInit {
     return 'bg-emerald-400/10 text-emerald-400 border border-emerald-400/25';
   }
 
-  statusLabel(cert: Certificate): string {
+  statusLabel(cert: CertificateDto): string {
     if (cert.status === 'REVOKED') return 'Revoked';
     if (this.isExpired(cert.validTo)) return 'Expired';
     return 'Active';
