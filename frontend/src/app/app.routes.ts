@@ -6,11 +6,11 @@ import { UserCertificatesViewComponent } from './components/user-certificates-vi
 import { GenerateCertificateComponent } from './pages/generate-certificates/generate-certificate';
 import { UploadCsrComponent } from './pages/upload-csr/upload-csr';
 import { authGuard } from './guards/auth.guard';
-import {ChangePasswordComponent} from './components/change-password/change-password.component';
-import {CaUserRegisterComponent} from './components/ca-user-register/ca-user-register.component';
-import {AuthService} from './services/auth.service';
-import {IssueCertificateAdminComponent} from './components/issue-certificate-admin/issue-certificate-admin.component';
-import {AdminCertificatesViewComponent} from './components/admin-certificates-view/admin-certificates-view.component';
+import { ChangePasswordComponent } from './components/change-password/change-password.component';
+import { CaUserRegisterComponent } from './components/ca-user-register/ca-user-register.component';
+import { IssueCertificateAdminComponent } from './components/issue-certificate-admin/issue-certificate-admin.component';
+import { AdminCertificatesViewComponent } from './components/admin-certificates-view/admin-certificates-view.component';
+import { ProfileComponent } from './components/profile/profile';  
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -18,13 +18,17 @@ export const routes: Routes = [
   { path: 'admin/ca-users', component: CaUserRegisterComponent, canActivate: [authGuard] },
   { path: 'admin/issue-certificate', component: IssueCertificateAdminComponent, canActivate: [authGuard] },
   { path: 'admin/certificates', component: AdminCertificatesViewComponent, canActivate: [authGuard] },
-  { path: 'admin/register-ca', component: CaUserRegisterComponent},
+  { path: 'admin/register-ca', component: CaUserRegisterComponent },
   {
     path: 'dashboard',
     component: DashboardComponent,
     canActivate: [authGuard],
   },
-
+  {
+    path: 'profile',                      
+    component: ProfileComponent,
+    canActivate: [authGuard],
+  },
   {
     path: 'certificates/issue',
     component: IssueCertificateComponent,

@@ -7,24 +7,10 @@ import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
-/**
- * Writes private keys and certificates into organization JKS KeyStore files.
- * Each organization has its own .jks file stored in the keystores/ directory.
- * If the file does not exist yet, a new KeyStore is created automatically.
- */
+
 @Component
 public class KeyStoreWriter {
 
-    /**
-     * Stores a private key + certificate into an organization's KeyStore file.
-     * Creates a new .jks file if one does not already exist for this organization.
-     *
-     * @param keyStoreFile  path to the .jks file (e.g. "keystores/MyOrg.jks")
-     * @param alias         alias for this entry (certificate serial number)
-     * @param privateKey    the private key to store
-     * @param password      password for the KeyStore and the key entry
-     * @param certificate   the X509Certificate that corresponds to this key
-     */
     public void write(String keyStoreFile, String alias,
                       PrivateKey privateKey, char[] password, Certificate certificate) {
         try {

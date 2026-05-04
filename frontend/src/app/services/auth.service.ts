@@ -10,6 +10,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   accessToken: string;
+  twoFaRequired: boolean;
 }
 
 @Injectable({
@@ -18,6 +19,7 @@ export interface LoginResponse {
 export class AuthService {
   private readonly API_URL = 'http://localhost:8081/api';
   private readonly TOKEN_KEY = 'access_token';
+  private readonly PRE_AUTH_KEY = 'pre_auth_token';
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -26,13 +28,51 @@ export class AuthService {
       .post<LoginResponse>(`${this.API_URL}/auth/login`, credentials)
       .pipe(
         tap((response) => {
+          if (response.twoFaRequired) {
+            sessionStorage.setItem(this.PRE_AUTH_KEY, response.accessToken);
+          } else {
+            this.saveToken(response.accessToken);
+          }
+        })
+      );
+  }
+
+  verifyTwoFa(code: string): Observable<{ accessToken: string }> {
+    const preAuthToken = sessionStorage.getItem(this.PRE_AUTH_KEY);
+    return this.http
+      .post<{ accessToken: string }>(`${this.API_URL}/auth/2fa/verify`, {
+        preAuthToken,
+        code,
+      })
+      .pipe(
+        tap((response) => {
+          sessionStorage.removeItem(this.PRE_AUTH_KEY);
           this.saveToken(response.accessToken);
         })
       );
   }
 
+  setup2Fa(): Observable<{ secret: string; qrCodeDataUri: string }> {
+    return this.http.post<{ secret: string; qrCodeDataUri: string }>(
+      `${this.API_URL}/auth/2fa/setup`,
+      {}
+    );
+  }
+
+  enable2Fa(secret: string, code: string): Observable<void> {
+    return this.http.post<void>(`${this.API_URL}/auth/2fa/enable`, {
+      secret,
+      code,
+    });
+  }
+
+  disable2Fa(code: string): Observable<void> {
+    return this.http.post<void>(`${this.API_URL}/auth/2fa/disable`, { code });
+  }
+
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
+    sessionStorage.removeItem(this.PRE_AUTH_KEY);
     this.router.navigate(['/login']);
   }
 
@@ -60,18 +100,16 @@ export class AuthService {
   }
 
   getCurrentUserOrganization(): string {
-  const token = this.getToken();
-  if (!token) return '';
-
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const org = payload.organization;
-
-    if (!org) return '';
-    if (typeof org === 'string') return org;
-    return org.name || '';
-  } catch {
-    return '';
+    const token = this.getToken();
+    if (!token) return '';
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const org = payload.organization;
+      if (!org) return '';
+      if (typeof org === 'string') return org;
+      return org.name || '';
+    } catch {
+      return '';
+    }
   }
-}
 }
