@@ -93,4 +93,30 @@ public class KeyStoreReader {
             throw new RuntimeException(e);
         }
     }
+
+    public X509Certificate readX509Certificate(String keyStoreFile, String alias, char[] password) {
+        try {
+            KeyStore ks = KeyStore.getInstance("JKS", "SUN");
+
+            try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(keyStoreFile))) {
+                ks.load(in, password);
+            }
+
+            Certificate cert = ks.getCertificate(alias);
+
+            if (cert == null) {
+                throw new RuntimeException("Sertifikat sa aliasom '" + alias + "' nije pronađen u keystoru.");
+            }
+
+            if (!(cert instanceof X509Certificate)) {
+                throw new RuntimeException("Sertifikat sa aliasom '" + alias + "' nije X509 sertifikat.");
+            }
+
+            return (X509Certificate) cert;
+
+        } catch (KeyStoreException | NoSuchProviderException | NoSuchAlgorithmException |
+                 CertificateException | IOException e) {
+            throw new RuntimeException("Greška pri čitanju X509 sertifikata iz keystora: " + e.getMessage(), e);
+        }
+    }
 }
