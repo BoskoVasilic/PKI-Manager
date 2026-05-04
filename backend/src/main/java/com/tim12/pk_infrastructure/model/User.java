@@ -45,7 +45,14 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String publicKey;
 
-    // Random string encrypted with the user's public key, used during account activation
+    // Random string encrypted with the users public key, used during account activation
     @Column(columnDefinition = "TEXT")
     private String activationChallenge;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean twoFactorEnabled = false;
+
+    @Column
+    private String twoFactorSecret;
 }
