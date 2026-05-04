@@ -50,7 +50,7 @@ public class AuthService {
         tokenRepository.save(at);
     }
 
-    public String login(String email, String password) {
+    public LoginResult login(String email, String password) {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
@@ -62,6 +62,12 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return jwtUtil.generateAccessToken(user);
+        if (user.isTwoFactorEnabled()) {
+            return new LoginResult(jwtUtil.generatePreAuthToken(user), true);
+        }
+
+        return new LoginResult(jwtUtil.generateAccessToken(user), false);
     }
+
+    public record LoginResult(String token, boolean twoFaRequired) {}
 }
