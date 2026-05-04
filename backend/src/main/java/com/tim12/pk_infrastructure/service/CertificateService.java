@@ -471,9 +471,9 @@ public class CertificateService {
 
     private void validateValidityPeriod(IssueCertificateRequest req, Certificate issuerData) {
         if (req.getValidFrom().before(issuerData.getValidFrom()))
-            throw new RuntimeException("Datum početka ne može biti pre početka važenja issuera (" + issuerData.getValidFrom() + ").");
+            throw new RuntimeException("Start date cannot be before the issuer's validity period (" + issuerData.getValidFrom() + ").");
         if (req.getValidTo().after(issuerData.getValidTo()))
-            throw new RuntimeException("Datum isteka ne može biti posle isteka issuera (" + issuerData.getValidTo() + ").");
+            throw new RuntimeException("End date cannot be after the issuer's expiration date (" + issuerData.getValidTo() + ").");
     }
 
     private String buildDn(IssueCertificateRequestCA req) {
