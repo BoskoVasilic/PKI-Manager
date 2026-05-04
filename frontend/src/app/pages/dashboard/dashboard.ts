@@ -117,6 +117,12 @@ export class DashboardComponent implements OnInit {
           route: '/certificates/revoke',
           description: 'Revoke one of your certificates with an X.509 reason',
         },
+        {
+          label: 'Profile & Security',
+          icon: 'profile',
+          route: '/profile',
+          description: 'Manage two-factor authentication and account settings',
+        },
       ],
     },
   };
