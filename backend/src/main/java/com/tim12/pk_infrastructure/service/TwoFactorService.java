@@ -24,7 +24,7 @@ public class TwoFactorService {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
-    private final KeyEncryptionService keyEncryptionService; // ← inject existing service
+    private final KeyEncryptionService keyEncryptionService; 
 
     private static final String ISSUER = "PKI System";
 
@@ -98,7 +98,7 @@ public String verify(String preAuthToken, String code) {
         }
 
         user.setTwoFactorEnabled(false);
-        user.setTwoFactorSecret(null); // ← wipe — old app entries produce dead codes
+        user.setTwoFactorSecret(null); 
         userRepository.save(user);
     }
 
@@ -107,7 +107,7 @@ public String verify(String preAuthToken, String code) {
         CodeGenerator codeGenerator = new DefaultCodeGenerator(HashingAlgorithm.SHA1, 6);
         DefaultCodeVerifier verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
         verifier.setTimePeriod(30);
-        verifier.setAllowedTimePeriodDiscrepancy(1);
+        verifier.setAllowedTimePeriodDiscrepancy(0);
         return verifier.isValidCode(secret, code);
     }
 
