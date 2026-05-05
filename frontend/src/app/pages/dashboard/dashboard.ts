@@ -56,6 +56,12 @@ export class DashboardComponent implements OnInit {
           description: 'Add new organizations and CA users',
         },
         {
+          label: 'Download Certificate',
+          icon: 'download',
+          route: '/certificates/download',
+          description: 'Download your certificates in PEM or DER format',
+        },
+        {
           label: 'Revocation (CRL)',
           icon: 'revoke',
           route: '/certificates/revoked',
@@ -116,6 +122,12 @@ export class DashboardComponent implements OnInit {
           icon: 'revoke',
           route: '/certificates/revoke',
           description: 'Revoke one of your certificates with an X.509 reason',
+        },
+        {
+          label: 'Download Certificate',
+          icon: 'download',
+          route: '/certificates/download',
+          description: 'Download your certificates in PEM or DER format',
         },
         {
           label: 'Profile & Security',

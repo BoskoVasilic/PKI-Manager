@@ -11,6 +11,7 @@ import { CaUserRegisterComponent } from './components/ca-user-register/ca-user-r
 import { IssueCertificateAdminComponent } from './components/issue-certificate-admin/issue-certificate-admin.component';
 import { AdminCertificatesViewComponent } from './components/admin-certificates-view/admin-certificates-view.component';
 import { ProfileComponent } from './components/profile/profile';  
+import { CertificateDownloadComponent } from './components/download-certificate/download-certificate';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -47,6 +48,11 @@ export const routes: Routes = [
   {
     path: 'certificates/csr',
     component: UploadCsrComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'certificates/download',
+    component: CertificateDownloadComponent,
     canActivate: [authGuard],
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
