@@ -191,7 +191,7 @@ public class CertificateService {
                 .status(CertificateStatus.ACTIVE)
                 .revoked(false)
                 .certificatePem(toPem(signedCert))
-                .owner(caller)
+                .owner(userRepository.findByEmail(req.getEmail()).get())
                 .issuingOrg(issuerRecord.getIssuingOrg())
                 .build();
 
@@ -326,6 +326,7 @@ public class CertificateService {
                 .issuerSerialNumber(req.getType() == CertificateType.ROOT ? null : req.getIssuerSerialNumber())
                 .revoked(false)
                 .status(CertificateStatus.ACTIVE)
+                .certificatePem(toPem(x509Cert))
                 .issuingOrg(subjectOrg)
                 .owner(userRepository.findByEmail(req.getEmail()).get())
                 .build();
@@ -538,10 +539,14 @@ public class CertificateService {
         }
     }
 
-    private String toPem(X509Certificate cert) throws Exception {
-        StringWriter sw = new StringWriter();
-        try (JcaPEMWriter w = new JcaPEMWriter(sw)) { w.writeObject(cert); }
-        return sw.toString();
+    private String toPem(X509Certificate cert) {
+        try {
+            StringWriter sw = new StringWriter();
+            try (JcaPEMWriter w = new JcaPEMWriter(sw)) { w.writeObject(cert); }
+            return sw.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to convert certificate to PEM", e);
+        }
     }
 
     private String privateKeyToPem(PrivateKey key) throws Exception {
