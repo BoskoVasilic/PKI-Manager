@@ -92,7 +92,7 @@ export class IssueCertificateAdminComponent {
   loadIssuers(): void {
     this.certService.getAvailableIssuersAdmin().subscribe({
       next: (issuers) => { this.issuers = issuers; },
-      error: (err) => console.error('Greška pri učitavanju issuera', err)
+      error: (err) => console.error('Error loading issuers.', err)
     });
   }
 
@@ -160,7 +160,7 @@ export class IssueCertificateAdminComponent {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err?.error?.message || 'Greška pri izdavanju sertifikata. Proverite validnost issuera.';
+        this.errorMessage = err?.error?.message || 'Error occurred while issuing the certificate. Check issuer validity.';
       }
     });
   }

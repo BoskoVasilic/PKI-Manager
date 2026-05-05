@@ -110,7 +110,7 @@ export class ChangePasswordComponent implements OnInit {
         if (err?.status === 400 || err?.status === 404) {
           this.tokenInvalid = true;
         } else {
-          this.errorMessage = err?.error?.message || 'Greška pri aktivaciji. Pokušajte ponovo.';
+          this.errorMessage = err?.error?.message || 'Error while activating the user. Please try again.';
         }
       }
     });
