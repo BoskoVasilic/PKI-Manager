@@ -191,7 +191,7 @@ public class CertificateService {
                 .status(CertificateStatus.ACTIVE)
                 .revoked(false)
                 .certificatePem(toPem(signedCert))
-                .owner(caller)
+                .owner(userRepository.findByEmail(req.getEmail()).get())
                 .issuingOrg(issuerRecord.getIssuingOrg())
                 .build();
 
@@ -328,7 +328,7 @@ public class CertificateService {
                 .status(CertificateStatus.ACTIVE)
                 .certificatePem(toPem(x509Cert))
                 .issuingOrg(subjectOrg)
-                .owner(getCurrentUser())
+                .owner(userRepository.findByEmail(req.getEmail()).get())
                 .build();
 
         return certificateRepository.save(certData);
