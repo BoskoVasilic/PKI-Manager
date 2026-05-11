@@ -20,6 +20,8 @@
     <!-- ── Result ───────────────────────────────────────────────────────────── -->
     @if (result) {
       <div class="flex flex-col gap-4">
+
+        <!-- Success banner -->
         <div class="flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
@@ -30,19 +32,19 @@
           </div>
         </div>
 
-        <button (click)="downloadCert()"
-                class="self-start flex items-center gap-2 px-4 py-2.5 bg-[#6c63ff]/15 border border-[#6c63ff]/30 border-solid text-[#a5b4fc] text-sm rounded-lg hover:bg-[#6c63ff]/25 transition-colors cursor-pointer">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        <!-- Navigate to downloads -->
+        <div class="flex items-center gap-3 px-4 py-3 bg-[#6c63ff]/8 border border-[#6c63ff]/20 rounded-xl">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b83ff" stroke-width="2" class="shrink-0">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
           </svg>
-          Download Certificate (.crt)
-        </button>
-
-        <div class="bg-white/[0.02] border border-white/[0.07] rounded-xl overflow-hidden">
-          <div class="px-4 py-3 border-b border-white/[0.06]">
-            <span class="text-white/50 text-xs font-medium uppercase tracking-wide">Certificate PEM</span>
-          </div>
-          <pre class="px-4 py-3 text-[0.72rem] text-emerald-300/70 overflow-x-auto leading-relaxed font-mono whitespace-pre-wrap break-all">{{ result.certificatePem }}</pre>
+          <p class="text-[#8b83ff]/70 text-xs flex-1">The certificate is saved to your account. Download it as <strong class="text-[#8b83ff]">.pem</strong> or <strong class="text-[#8b83ff]">.cer</strong> anytime from the Downloads page.</p>
+          <button (click)="goToDownloads()"
+                  class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[#6c63ff]/20 border border-[#6c63ff]/30 border-solid text-[#a5b4fc] text-xs rounded-lg hover:bg-[#6c63ff]/30 transition-colors cursor-pointer">
+            Downloads
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
         </div>
 
         <button (click)="reset()"
@@ -210,17 +212,27 @@
             }
           </div>
 
-          <!-- Valid To -->
-          <div class="flex flex-col gap-1.5">
-            <label class="text-[0.8rem] text-white/60 font-medium">
-              Valid To <span class="text-red-400">*</span>
-              @if (selectedCa) {
-                <span class="text-white/25 font-normal ml-1">— max {{ selectedCa.validTo | date:'mediumDate' }}</span>
-              }
-            </label>
-            <input [(ngModel)]="validTo" name="validTo" type="datetime-local"
-                   [max]="maxValidTo"
-                   class="px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.1] rounded-lg text-sm text-white outline-none focus:border-[#6c63ff]/50 focus:bg-white/[0.06] transition-all [color-scheme:dark]" />
+          <!-- Valid From + Valid To -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[0.8rem] text-white/60 font-medium">
+                Valid From <span class="text-red-400">*</span>
+              </label>
+              <input [(ngModel)]="validFrom" name="validFrom" type="datetime-local"
+                     [min]="minValidFrom" [max]="maxValidTo"
+                     class="px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.1] rounded-lg text-sm text-white outline-none focus:border-[#6c63ff]/50 focus:bg-white/[0.06] transition-all [color-scheme:dark]" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[0.8rem] text-white/60 font-medium">
+                Valid To <span class="text-red-400">*</span>
+                @if (selectedCa) {
+                  <span class="text-white/25 font-normal ml-1">— max {{ selectedCa.validTo | date:'mediumDate' }}</span>
+                }
+              </label>
+              <input [(ngModel)]="validTo" name="validTo" type="datetime-local"
+                     [max]="maxValidTo"
+                     class="px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.1] rounded-lg text-sm text-white outline-none focus:border-[#6c63ff]/50 focus:bg-white/[0.06] transition-all [color-scheme:dark]" />
+            </div>
           </div>
         </div>
 
