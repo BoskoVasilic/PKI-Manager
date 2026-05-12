@@ -137,11 +137,6 @@ export class GenerateCertificateComponent implements OnInit {
     });
   }
 
-  downloadCert(): void {
-    if (!this.result) return;
-    this.downloadBlob(this.result.certificatePem, this.result.serialNumber + '.crt', 'application/x-pem-file');
-  }
-
   downloadKeystore(): void {
     if (!this.result?.keystoreBase64) return;
     // Decode Base64 → binary → Blob → .jks file
@@ -174,6 +169,10 @@ export class GenerateCertificateComponent implements OnInit {
     this.validFrom = new Date().toISOString().slice(0, 16);
     this.validTo = '';
     this.keyDismissed = false;
+  }
+
+  goToDownloads(): void {
+    this.router.navigate(['/certificates/download']);
   }
 
   goBack(): void {

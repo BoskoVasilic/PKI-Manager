@@ -13,6 +13,7 @@ import { CertificateService, CertificateDto, CsrResponse } from '../../services/
 export class UploadCsrComponent implements OnInit {
   csrPem = '';
   selectedCaSerial = '';
+  validFrom = new Date().toISOString().slice(0, 16);
   validTo = '';
 
   availableCas: CertificateDto[] = [];
@@ -47,7 +48,8 @@ export class UploadCsrComponent implements OnInit {
   selectCa(ca: CertificateDto): void {
     this.selectedCaSerial = ca.serialNumber;
     this.caDropdownOpen = false;
-    this.validTo = ''; // reset when CA changes so max constraint refreshes
+    this.validFrom = new Date().toISOString().slice(0, 16); // reset so min constraint refreshes
+    this.validTo = '';
   }
 
   @HostListener('document:click', ['$event'])
@@ -98,11 +100,23 @@ export class UploadCsrComponent implements OnInit {
     return ca ? new Date(ca.validTo).toISOString().slice(0, 16) : '';
   }
 
+  get minValidFrom(): string {
+    const ca = this.selectedCa;
+    if (!ca) return new Date().toISOString().slice(0, 16);
+    const caFrom = new Date(ca.validFrom);
+    const now    = new Date();
+    return (caFrom > now ? caFrom : now).toISOString().slice(0, 16);
+  }
+
 
   submit(): void {
     if (!this.csrPem.trim())      { this.error = 'Please paste or upload a PEM-encoded CSR.'; return; }
     if (!this.selectedCaSerial)   { this.error = 'Please select a CA certificate.'; return; }
+    if (!this.validFrom)          { this.error = 'Please specify the certificate start date.'; return; }
     if (!this.validTo)            { this.error = 'Please specify the certificate expiry date.'; return; }
+    if (new Date(this.validFrom) >= new Date(this.validTo)) {
+      this.error = 'Valid From must be before Valid To.'; return;
+    }
 
     this.loading = true;
     this.error = '';
@@ -111,6 +125,7 @@ export class UploadCsrComponent implements OnInit {
     this.certService.uploadCsr({
       csrPem: this.csrPem,
       caSerialNumber: this.selectedCaSerial,
+      validFrom: this.validFrom + ':00',
       validTo: this.validTo + ':00',
     }).subscribe({
       next: (res) => { this.result = res; this.loading = false; },
@@ -121,18 +136,15 @@ export class UploadCsrComponent implements OnInit {
     });
   }
 
-  downloadCert(): void {
-    if (!this.result) return;
-    const blob = new Blob([this.result.certificatePem], { type: 'application/x-pem-file' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = this.result.serialNumber + '.crt'; a.click();
-    URL.revokeObjectURL(url);
+  goToDownloads(): void {
+    this.router.navigate(['/certificates/download']);
   }
 
   reset(): void {
     this.result = null; this.error = ''; this.csrPem = '';
-    this.selectedCaSerial = ''; this.validTo = '';
+    this.selectedCaSerial = '';
+    this.validFrom = new Date().toISOString().slice(0, 16);
+    this.validTo = '';
   }
 
   goBack(): void { this.router.navigate(['/dashboard']); }
