@@ -79,11 +79,49 @@
               </svg>
               <span class="text-white/40 text-xs font-medium uppercase tracking-wide">Inspect the keystore via terminal</span>
             </div>
-            <div class="px-4 py-3 flex flex-col gap-2">
-              <p class="text-white/30 text-xs">List all entries:</p>
-              <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">keytool -list -v -keystore {{ result.serialNumber }}.jks -storepass {{ result.keystorePassword }}</pre>
-              <p class="text-white/30 text-xs mt-1">Export certificate from the keystore:</p>
-              <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">keytool -exportcert -alias {{ result.serialNumber }} -keystore {{ result.serialNumber }}.jks -storepass {{ result.keystorePassword }} -rfc -file {{ result.serialNumber }}.pem</pre>
+            <div class="px-4 py-3 flex flex-col gap-3">
+
+              <p class="text-white/50 text-xs font-semibold uppercase tracking-wide">JKS</p>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">List all entries:</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">keytool -list -v -keystore {{ result.serialNumber }}.jks -storepass {{ result.keystorePassword }}</pre>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">Export certificate <span class="text-white/20">(alias is always <code class="text-[#8b83ff]/60">cert-&#123;serial&#125;</code>)</span>:</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">keytool -exportcert -alias "cert-{{ result.serialNumber }}" -keystore {{ result.serialNumber }}.jks -storepass {{ result.keystorePassword }} -rfc -file {{ result.serialNumber }}.pem</pre>
+              </div>
+
+              <div class="h-px bg-white/[0.06] my-1"></div>
+
+              <p class="text-white/50 text-xs font-semibold uppercase tracking-wide">PKCS12 (.p12)</p>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">List all entries:</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">keytool -list -v -keystore {{ result.serialNumber }}.p12 -storetype PKCS12 -storepass {{ result.keystorePassword }}</pre>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">Export certificate:</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">keytool -exportcert -alias "cert-{{ result.serialNumber }}" -keystore {{ result.serialNumber }}.p12 -storetype PKCS12 -storepass {{ result.keystorePassword }} -rfc -file {{ result.serialNumber }}.pem</pre>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">OpenSSL — see everything (cert + private key):</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">openssl pkcs12 -info -in {{ result.serialNumber }}.p12 -passin pass:{{ result.keystorePassword }} -nodes</pre>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">OpenSSL — cert info only:</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">openssl pkcs12 -in {{ result.serialNumber }}.p12 -nokeys -passin pass:{{ result.keystorePassword }} | openssl x509 -text -noout</pre>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">OpenSSL — verify private key is present:</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">openssl pkcs12 -in {{ result.serialNumber }}.p12 -nocerts -nodes -passin pass:{{ result.keystorePassword }}</pre>
+              </div>
+
             </div>
           </div>
         }
