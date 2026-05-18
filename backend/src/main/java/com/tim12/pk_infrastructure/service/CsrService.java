@@ -116,6 +116,8 @@ public class CsrService {
         String ksPassword = generateKeystorePassword();
         byte[] jksBytes   = buildInMemoryJks(alias, keyPair.getPrivate(), x509, ksPassword);
         String jksBase64  = Base64.getEncoder().encodeToString(jksBytes);
+        byte[] p12Bytes   = buildInMemoryP12(alias, keyPair.getPrivate(), x509, ksPassword);
+        String p12Base64  = Base64.getEncoder().encodeToString(p12Bytes);
 
         Organization caOrg = ca.getIssuingOrg();
 
@@ -146,8 +148,9 @@ public class CsrService {
                 .serialNumber(serialHex)
                 .certificatePem(certPem)
                 .keystoreBase64(jksBase64)
+                .p12Base64(p12Base64)
                 .keystorePassword(ksPassword)
-                .message("Certificate generated. Download the JKS keystore now – the private key will not be available again.")
+                .message("Certificate generated. Download the JKS or P12 keystore now – the private key will not be available again.")
                 .build();
     }
 
@@ -381,6 +384,17 @@ public class CsrService {
     private byte[] buildInMemoryJks(String alias, PrivateKey privateKey,
                                     X509Certificate cert, String password) throws Exception {
         KeyStore ks = KeyStore.getInstance("JKS", "SUN");
+        ks.load(null, password.toCharArray());
+        ks.setKeyEntry(alias, privateKey, password.toCharArray(),
+                new java.security.cert.Certificate[]{cert});
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ks.store(baos, password.toCharArray());
+        return baos.toByteArray();
+    }
+
+    private byte[] buildInMemoryP12(String alias, PrivateKey privateKey,
+                                    X509Certificate cert, String password) throws Exception {
+        KeyStore ks = KeyStore.getInstance("PKCS12");
         ks.load(null, password.toCharArray());
         ks.setKeyEntry(alias, privateKey, password.toCharArray(),
                 new java.security.cert.Certificate[]{cert});

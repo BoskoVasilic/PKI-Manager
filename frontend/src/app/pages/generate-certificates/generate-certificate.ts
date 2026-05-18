@@ -137,14 +137,15 @@ export class GenerateCertificateComponent implements OnInit {
     });
   }
 
-  downloadKeystore(): void {
-    if (!this.result?.keystoreBase64) return;
-    // Decode Base64 → binary → Blob → .jks file
-    const binary = atob(this.result.keystoreBase64);
+  downloadKeystore(format: 'jks' | 'p12'): void {
+    if (!this.result) return;
+    const b64 = format === 'jks' ? this.result.keystoreBase64 : this.result.p12Base64;
+    if (!b64) return;
+    const binary = atob(b64);
     const bytes  = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
     const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
-    this.downloadBlob(buffer, this.result.serialNumber + '.jks', 'application/octet-stream', true);
+    this.downloadBlob(buffer, `${this.result.serialNumber}.${format}`, 'application/octet-stream', true);
   }
 
   private downloadBlob(content: string | ArrayBuffer, filename: string, type: string, binary = false): void {
