@@ -79,6 +79,58 @@ public class CertificateDownloadController {
         }
     }
 
+    @GetMapping("/{serialNumber}/download/p12")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<byte[]> downloadAsP12(
+            @PathVariable String serialNumber,
+            @RequestParam String exportPassword) {
+        try {
+            byte[] ksBytes = downloadService.downloadAsP12(
+                    serialNumber, exportPassword.toCharArray());
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("application/x-pkcs12"));
+            headers.setContentDispositionFormData(
+                    "attachment",
+                    "certificate-" + serialNumber + ".p12"
+            );
+
+            return new ResponseEntity<>(ksBytes, headers, HttpStatus.OK);
+
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage().getBytes());
+        }
+    }
+
+    @GetMapping("/{serialNumber}/download/jks")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<byte[]> downloadAsJks(
+            @PathVariable String serialNumber,
+            @RequestParam String exportPassword) {
+        try {
+            byte[] ksBytes = downloadService.downloadAsJks(
+                    serialNumber, exportPassword.toCharArray());
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType("application/x-java-keystore"));
+            headers.setContentDispositionFormData(
+                    "attachment",
+                    "certificate-" + serialNumber + ".jks"
+            );
+
+            return new ResponseEntity<>(ksBytes, headers, HttpStatus.OK);
+
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage().getBytes());
+        }
+    }
+
     private CertificateDTO toDto(Certificate c) {
         return CertificateDTO.builder()
                 .serialNumber(c.getSerialNumber())
