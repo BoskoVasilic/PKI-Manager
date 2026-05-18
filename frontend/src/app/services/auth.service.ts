@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, catchError, throwError } from 'rxjs';
 
 export interface LoginRequest {
   email: string;
@@ -10,6 +10,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   accessToken: string;
+  refreshToken: string;
   twoFaRequired: boolean;
 }
 
@@ -19,6 +20,7 @@ export interface LoginResponse {
 export class AuthService {
   private readonly API_URL = 'http://localhost:8081/api';
   private readonly TOKEN_KEY = 'access_token';
+  private readonly REFRESH_TOKEN_KEY = 'refresh_token';
   private readonly PRE_AUTH_KEY = 'pre_auth_token';
 
   constructor(private http: HttpClient, private router: Router) {}
@@ -31,23 +33,45 @@ export class AuthService {
           if (response.twoFaRequired) {
             sessionStorage.setItem(this.PRE_AUTH_KEY, response.accessToken);
           } else {
-            this.saveToken(response.accessToken);
+            this.saveTokens(response.accessToken, response.refreshToken);
           }
         })
       );
   }
 
-  verifyTwoFa(code: string): Observable<{ accessToken: string }> {
+  refresh(): Observable<LoginResponse> {
+    const refreshToken = localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    if (!refreshToken) {
+      this.logout();
+      return throwError(() => new Error('No refresh token available'));
+    }
+
+    return this.http
+      .post<LoginResponse>(`${this.API_URL}/auth/refresh`, { refreshToken })
+      .pipe(
+        tap((response) => {
+          this.saveTokens(response.accessToken, response.refreshToken);
+        }),
+        catchError((err) => {
+          // Refresh token itself is expired — force logout
+          this.logout();
+          return throwError(() => err);
+        })
+      );
+  }
+
+  verifyTwoFa(code: string): Observable<LoginResponse> {
     const preAuthToken = sessionStorage.getItem(this.PRE_AUTH_KEY);
     return this.http
-      .post<{ accessToken: string }>(`${this.API_URL}/auth/2fa/verify`, {
+      .post<LoginResponse>(`${this.API_URL}/auth/2fa/verify`, {
         preAuthToken,
         code,
       })
       .pipe(
         tap((response) => {
           sessionStorage.removeItem(this.PRE_AUTH_KEY);
-          this.saveToken(response.accessToken);
+          // After 2FA, the backend should return both tokens
+          this.saveTokens(response.accessToken, response.refreshToken);
         })
       );
   }
@@ -72,6 +96,7 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     sessionStorage.removeItem(this.PRE_AUTH_KEY);
     this.router.navigate(['/login']);
   }
@@ -84,8 +109,9 @@ export class AuthService {
     return !!this.getToken();
   }
 
-  private saveToken(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
+  private saveTokens(accessToken: string, refreshToken: string): void {
+    localStorage.setItem(this.TOKEN_KEY, accessToken);
+    localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
   }
 
   getCurrentUserEmail(): string | null {
