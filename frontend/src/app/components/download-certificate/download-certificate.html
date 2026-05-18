@@ -396,28 +396,190 @@
                 </p>
               </div>
             } @else {
-              <div class="px-5 py-5">
-                <div class="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-5 py-10 text-center">
-                  <div class="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-[#6c63ff]/10 text-[#8b83ff]">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                      <path d="M12 3v18"/>
-                      <path d="M7 8l5-5 5 5"/>
-                      <path d="M5 21h14"/>
-                    </svg>
-                  </div>
-                  <p class="text-sm font-medium text-white/80">Download with private key</p>
-                  <p class="mt-2 text-xs leading-relaxed text-white/30">
-                    This tab is reserved for the private-key export flow your friend is implementing.
+              <div class="px-5 py-5 flex flex-col gap-4">
+
+                <!-- Password field -->
+                <div>
+                  <p class="text-[0.7rem] text-white/30 uppercase tracking-[0.07em] mb-2">
+                    Keystore password
                   </p>
-                  <div class="mt-5 inline-flex items-center gap-2 rounded-full border border-[#6c63ff]/20 bg-[#6c63ff]/8 px-3 py-1 text-[0.68rem] text-[#b7b2ff]">
-                    Coming soon
+                  <div class="relative">
+                    <input
+                      [type]="showPassword() ? 'text' : 'password'"
+                      [value]="exportPassword()"
+                      (input)="exportPassword.set($any($event.target).value)"
+                      placeholder="Choose a password to protect the file…"
+                      class="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl text-sm
+                            text-white/70 placeholder-white/20 pl-4 pr-10 py-2.5
+                            focus:outline-none focus:border-[#6c63ff]/40 transition-colors font-['DM_Sans']"/>
+                    <button
+                      type="button"
+                      (click)="toggleShowPassword()"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-white/25
+                            hover:text-white/50 transition-colors border-none bg-transparent cursor-pointer">
+                      @if (showPassword()) {
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                          <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                      } @else {
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      }
+                    </button>
+                  </div>
+                  <p class="text-[0.65rem] text-white/20 mt-1.5 leading-relaxed">
+                    You'll need this password to open the downloaded keystore file.
+                  </p>
+                </div>
+
+                <!-- Format buttons -->
+                <div>
+                  <p class="text-[0.7rem] text-white/30 uppercase tracking-[0.07em] mb-3">Choose format</p>
+                  <div class="flex flex-col gap-3">
+
+                    <!-- PKCS12 button -->
+                    <button
+                      (click)="download('p12')"
+                      [disabled]="dl.inProgress || selected()!.revoked || !exportPassword().trim()"
+                      class="group flex items-center gap-3 w-full px-4 py-3.5 rounded-xl border
+                            transition-all duration-150 cursor-pointer text-left
+                            disabled:opacity-40 disabled:cursor-not-allowed"
+                      [class]="dl.lastFormat === 'p12' && dl.success
+                        ? 'bg-emerald-500/10 border-emerald-500/30'
+                        : 'bg-white/[0.03] border-white/[0.08] hover:border-[#6c63ff]/40 hover:bg-[#6c63ff]/5'">
+
+                      <div class="w-9 h-9 rounded-lg shrink-0 grid place-items-center transition-colors duration-150"
+                          [class]="dl.lastFormat === 'p12' && dl.success
+                            ? 'bg-emerald-500/15 text-emerald-400'
+                            : 'bg-white/[0.06] text-white/40 group-hover:bg-[#6c63ff]/15 group-hover:text-[#8b83ff]'">
+                        @if (dl.inProgress && dl.lastFormat === 'p12') {
+                          <div class="w-4 h-4 border border-white/20 border-t-[#8b83ff] rounded-full animate-spin"></div>
+                        } @else if (dl.lastFormat === 'p12' && dl.success) {
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        } @else {
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                          </svg>
+                        }
+                      </div>
+
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white/80 group-hover:text-white transition-colors">
+                          Download as <span class="font-mono text-[#8b83ff]">.p12</span>
+                        </p>
+                        <p class="text-xs text-white/25 mt-0.5">PKCS#12 · cert + private key · widely supported</p>
+                      </div>
+
+                      @if (!(dl.inProgress && dl.lastFormat === 'p12') && !(dl.lastFormat === 'p12' && dl.success)) {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            class="text-white/15 group-hover:text-[#8b83ff] transition-colors shrink-0">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="7 10 12 15 17 10"/>
+                          <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                      }
+                    </button>
+
+                    <!-- JKS button -->
+                    <button
+                      (click)="download('jks')"
+                      [disabled]="dl.inProgress || selected()!.revoked || !exportPassword().trim()"
+                      class="group flex items-center gap-3 w-full px-4 py-3.5 rounded-xl border
+                            transition-all duration-150 cursor-pointer text-left
+                            disabled:opacity-40 disabled:cursor-not-allowed"
+                      [class]="dl.lastFormat === 'jks' && dl.success
+                        ? 'bg-emerald-500/10 border-emerald-500/30'
+                        : 'bg-white/[0.03] border-white/[0.08] hover:border-[#6c63ff]/40 hover:bg-[#6c63ff]/5'">
+
+                      <div class="w-9 h-9 rounded-lg shrink-0 grid place-items-center transition-colors duration-150"
+                          [class]="dl.lastFormat === 'jks' && dl.success
+                            ? 'bg-emerald-500/15 text-emerald-400'
+                            : 'bg-white/[0.06] text-white/40 group-hover:bg-[#6c63ff]/15 group-hover:text-[#8b83ff]'">
+                        @if (dl.inProgress && dl.lastFormat === 'jks') {
+                          <div class="w-4 h-4 border border-white/20 border-t-[#8b83ff] rounded-full animate-spin"></div>
+                        } @else if (dl.lastFormat === 'jks' && dl.success) {
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        } @else {
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                          </svg>
+                        }
+                      </div>
+
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white/80 group-hover:text-white transition-colors">
+                          Download as <span class="font-mono text-[#8b83ff]">.jks</span>
+                        </p>
+                        <p class="text-xs text-white/25 mt-0.5">Java KeyStore · cert + private key · Java ecosystem</p>
+                      </div>
+
+                      @if (!(dl.inProgress && dl.lastFormat === 'jks') && !(dl.lastFormat === 'jks' && dl.success)) {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            class="text-white/15 group-hover:text-[#8b83ff] transition-colors shrink-0">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="7 10 12 15 17 10"/>
+                          <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                      }
+                    </button>
                   </div>
                 </div>
+
+                <!-- Success notice -->
+                @if (dl.success && (dl.lastFormat === 'p12' || dl.lastFormat === 'jks')) {
+                  <div class="flex items-center gap-2 px-3.5 py-3 bg-emerald-500/8
+                              border border-emerald-500/20 rounded-xl text-emerald-400 text-xs">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>
+                      <strong class="font-mono">certificate-{{ selected()!.serialNumber }}.{{ dl.lastFormat }}</strong>
+                      saved. Keep the password safe — it cannot be recovered.
+                    </span>
+                  </div>
+                }
+
+                <!-- Error -->
+                @if (dl.error) {
+                  <div class="flex items-center gap-2 px-3.5 py-3 bg-red-500/8
+                              border border-red-500/20 rounded-xl text-red-400 text-xs">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="8" x2="12" y2="12"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    {{ dl.error }}
+                  </div>
+                }
+
+                <!-- Revoked warning -->
+                @if (selected()!.revoked) {
+                  <div class="flex items-center gap-2 px-3.5 py-3 bg-red-500/8
+                              border border-red-500/20 rounded-xl text-red-400 text-xs">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                    </svg>
+                    This certificate has been revoked and cannot be downloaded.
+                  </div>
+                }
               </div>
 
               <div class="px-5 py-3.5 border-t border-white/[0.06] bg-white/[0.01]">
                 <p class="text-[0.68rem] text-white/20 leading-relaxed">
-                  Keep the current flow here until the private-key download is connected.
+                  The private key never leaves the server unencrypted.
+                  The keystore is protected by the password you enter above.
                 </p>
               </div>
             }

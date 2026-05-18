@@ -2,6 +2,7 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
 import { CertificateService, CertificateDto } from '../../services/certificate.service';
 import {
   CertificateDownloadService,
@@ -55,6 +56,10 @@ export class CertificateDownloadComponent implements OnInit {
     error: '',
   };
 
+  // ── Private key export ───────────────────────────────────────────────────
+  exportPassword = signal('');
+  showPassword   = signal(false);
+
   constructor(
     private certService:     CertificateService,
     private downloadService: CertificateDownloadService,
@@ -62,17 +67,17 @@ export class CertificateDownloadComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-  this.downloadService.getDownloadableCertificates().subscribe({
-    next: data => {
-      this.certificates.set(data);
-      this.isLoading.set(false);
-    },
-    error: () => {
-      this.fetchError.set('Failed to load certificates.');
-      this.isLoading.set(false);
-    },
-  });
-}
+    this.downloadService.getDownloadableCertificates().subscribe({
+      next: data => {
+        this.certificates.set(data);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.fetchError.set('Failed to load certificates.');
+        this.isLoading.set(false);
+      },
+    });
+  }
 
   goBack(): void {
     this.router.navigate(['/dashboard']);
@@ -80,14 +85,17 @@ export class CertificateDownloadComponent implements OnInit {
 
   setTab(tab: DownloadTab): void {
     this.activeTab.set(tab);
+    // Reset download state when switching tabs
+    this.dl = { inProgress: false, lastFormat: null, success: false, error: '' };
   }
 
   // ── Selection ────────────────────────────────────────────────────────────
   select(cert: CertificateDto): void {
     const isSame = this.selected()?.serialNumber === cert.serialNumber;
     this.selected.set(isSame ? null : cert);
-    // Reset download state on new selection
     this.dl = { inProgress: false, lastFormat: null, success: false, error: '' };
+    this.exportPassword.set('');
+    this.showPassword.set(false);
   }
 
   // ── Download ─────────────────────────────────────────────────────────────
@@ -95,12 +103,29 @@ export class CertificateDownloadComponent implements OnInit {
     const cert = this.selected();
     if (!cert || this.dl.inProgress) return;
 
+    if ((format === 'p12' || format === 'jks') && !this.exportPassword().trim()) {
+      this.dl = {
+        inProgress: false,
+        lastFormat: format,
+        success: false,
+        error: 'Please enter a password to protect the keystore.',
+      };
+      return;
+    }
+
     this.dl = { inProgress: true, lastFormat: format, success: false, error: '' };
 
-    const stream$ =
-      format === 'pem'
-        ? this.downloadService.downloadAsPem(cert.serialNumber)
-        : this.downloadService.downloadAsCer(cert.serialNumber);
+    let stream$: Observable<Blob>;
+
+    if (format === 'pem') {
+      stream$ = this.downloadService.downloadAsPem(cert.serialNumber);
+    } else if (format === 'cer') {
+      stream$ = this.downloadService.downloadAsCer(cert.serialNumber);
+    } else if (format === 'p12') {
+      stream$ = this.downloadService.downloadAsP12(cert.serialNumber, this.exportPassword());
+    } else {
+      stream$ = this.downloadService.downloadAsJks(cert.serialNumber, this.exportPassword());
+    }
 
     const filename = `certificate-${cert.serialNumber}.${format}`;
 
@@ -120,9 +145,12 @@ export class CertificateDownloadComponent implements OnInit {
     });
   }
 
+  toggleShowPassword(): void {
+    this.showPassword.set(!this.showPassword());
+  }
+
   // ── Helpers ──────────────────────────────────────────────────────────────
   applyFilters(): void {
-    // Nudges the computed signal — same pattern as existing UserCertificatesViewComponent
     this.certificates.set([...this.certificates()]);
   }
 

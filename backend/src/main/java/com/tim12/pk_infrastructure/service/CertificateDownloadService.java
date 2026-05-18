@@ -12,6 +12,10 @@ import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import java.io.ByteArrayOutputStream;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 
 import java.io.File;
 import java.io.StringWriter;
@@ -180,5 +184,53 @@ public class CertificateDownloadService {
             String role) {
         return auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals(role));
+    }
+
+    public byte[] downloadAsP12(String serialNumber, char[] exportPassword) {
+        Certificate cert = loadAndAuthorize(serialNumber);
+        return buildKeyStore("PKCS12", serialNumber, cert, exportPassword);
+    }
+
+    public byte[] downloadAsJks(String serialNumber, char[] exportPassword) {
+        Certificate cert = loadAndAuthorize(serialNumber);
+        return buildKeyStore("JKS", serialNumber, cert, exportPassword);
+    }
+
+    private byte[] buildKeyStore(String ksType, String serialNumber,
+                                 Certificate cert, char[] exportPassword) {
+        Organization org = cert.getIssuingOrg();
+        if (org == null) {
+            throw new RuntimeException("No organization linked to certificate: " + serialNumber);
+        }
+
+        String ksPath = resolveKeyStorePath(org);
+        char[] ksPass = resolveOrgKeyStorePassword(org);
+
+        // Read the X509 certificate and private key from the org keystore
+        X509Certificate x509 = keyStoreReader.readX509Certificate(ksPath, cert.getAlias(), ksPass);
+        PrivateKey privateKey = keyStoreReader.readPrivateKey(ksPath, cert.getAlias(), ksPass, ksPass);
+
+        if (privateKey == null) {
+            throw new RuntimeException("Private key not found for certificate: " + serialNumber);
+        }
+
+        try {
+            // Build a fresh keystore of the requested type containing only this cert+key
+            KeyStore exportKs = KeyStore.getInstance(ksType);
+            exportKs.load(null, exportPassword);
+            exportKs.setKeyEntry(
+                    cert.getAlias(),
+                    privateKey,
+                    exportPassword,
+                    new java.security.cert.Certificate[]{x509}
+            );
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            exportKs.store(baos, exportPassword);
+            return baos.toByteArray();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to build export keystore: " + e.getMessage(), e);
+        }
     }
 }
