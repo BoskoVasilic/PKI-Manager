@@ -42,7 +42,7 @@
             </svg>
             <div class="flex flex-col gap-1">
               <span class="text-yellow-400 text-sm font-semibold">Download your keystore now</span>
-              <span class="text-yellow-300/60 text-xs leading-relaxed">The private key exists only in this JKS file and is not stored on the server. If you lose it, the key cannot be recovered — only the certificate can be re-downloaded later from the Downloads page.</span>
+              <span class="text-yellow-300/60 text-xs leading-relaxed">The private key exists only in these keystore files and is not stored on the server. If you lose it, the key cannot be recovered — only the certificate can be re-downloaded later from the Downloads page.</span>
               <div class="flex items-center gap-2 mt-2 px-3 py-2 bg-black/20 rounded-lg border border-yellow-500/20">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2">
                   <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
@@ -53,14 +53,23 @@
             </div>
           </div>
 
-          <!-- JKS download -->
-          <button (click)="downloadKeystore()"
-                  class="self-start flex items-center gap-2 px-4 py-2.5 bg-yellow-500/15 border border-yellow-500/30 border-solid text-yellow-400 text-sm rounded-lg hover:bg-yellow-500/25 transition-colors cursor-pointer">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-            </svg>
-            Download Keystore (.jks)
-          </button>
+          <!-- Keystore download buttons -->
+          <div class="flex flex-wrap gap-2">
+            <button (click)="downloadKeystore('p12')"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-yellow-500/15 border border-yellow-500/30 border-solid text-yellow-400 text-sm rounded-lg hover:bg-yellow-500/25 transition-colors cursor-pointer">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+              </svg>
+              Download Keystore (.p12)
+            </button>
+            <button (click)="downloadKeystore('jks')"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-yellow-500/15 border border-yellow-500/30 border-solid text-yellow-400 text-sm rounded-lg hover:bg-yellow-500/25 transition-colors cursor-pointer">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+              </svg>
+              Download Keystore (.jks)
+            </button>
+          </div>
 
           <!-- Terminal hint -->
           <div class="bg-black/30 border border-white/[0.07] rounded-xl overflow-hidden">
@@ -70,11 +79,49 @@
               </svg>
               <span class="text-white/40 text-xs font-medium uppercase tracking-wide">Inspect the keystore via terminal</span>
             </div>
-            <div class="px-4 py-3 flex flex-col gap-2">
-              <p class="text-white/30 text-xs">List all entries:</p>
-              <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">keytool -list -v -keystore {{ result.serialNumber }}.jks -storepass {{ result.keystorePassword }}</pre>
-              <p class="text-white/30 text-xs mt-1">Export certificate from the keystore:</p>
-              <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">keytool -exportcert -alias {{ result.serialNumber }} -keystore {{ result.serialNumber }}.jks -storepass {{ result.keystorePassword }} -rfc -file {{ result.serialNumber }}.pem</pre>
+            <div class="px-4 py-3 flex flex-col gap-3">
+
+              <p class="text-white/50 text-xs font-semibold uppercase tracking-wide">JKS</p>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">List all entries:</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">keytool -list -v -keystore {{ result.serialNumber }}.jks -storepass {{ result.keystorePassword }}</pre>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">Export certificate <span class="text-white/20">(alias is always <code class="text-[#8b83ff]/60">cert-&#123;serial&#125;</code>)</span>:</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">keytool -exportcert -alias "cert-{{ result.serialNumber }}" -keystore {{ result.serialNumber }}.jks -storepass {{ result.keystorePassword }} -rfc -file {{ result.serialNumber }}.pem</pre>
+              </div>
+
+              <div class="h-px bg-white/[0.06] my-1"></div>
+
+              <p class="text-white/50 text-xs font-semibold uppercase tracking-wide">PKCS12 (.p12)</p>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">List all entries:</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">keytool -list -v -keystore {{ result.serialNumber }}.p12 -storetype PKCS12 -storepass {{ result.keystorePassword }}</pre>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">Export certificate:</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">keytool -exportcert -alias "cert-{{ result.serialNumber }}" -keystore {{ result.serialNumber }}.p12 -storetype PKCS12 -storepass {{ result.keystorePassword }} -rfc -file {{ result.serialNumber }}.pem</pre>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">OpenSSL — see everything (cert + private key):</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">openssl pkcs12 -info -in {{ result.serialNumber }}.p12 -passin pass:{{ result.keystorePassword }} -nodes</pre>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">OpenSSL — cert info only:</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">openssl pkcs12 -in {{ result.serialNumber }}.p12 -nokeys -passin pass:{{ result.keystorePassword }} | openssl x509 -text -noout</pre>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <p class="text-white/30 text-xs">OpenSSL — verify private key is present:</p>
+                <pre class="text-[0.72rem] text-[#8b83ff]/80 font-mono leading-relaxed whitespace-pre-wrap break-all">openssl pkcs12 -in {{ result.serialNumber }}.p12 -nocerts -nodes -passin pass:{{ result.keystorePassword }}</pre>
+              </div>
+
             </div>
           </div>
         }
@@ -273,7 +320,7 @@
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
           </svg>
           <p class="text-[#8b83ff]/70 text-xs leading-relaxed">
-            The server generates a 2048-bit RSA key pair. The private key is packaged into a <strong class="text-[#8b83ff]">JKS keystore</strong> returned <strong class="text-[#8b83ff]">only once</strong> with a one-time password. It is not stored server-side. Download the keystore right after generation.
+            The server generates a 2048-bit RSA key pair. The private key is packaged into a <strong class="text-[#8b83ff]">JKS and P12 keystore</strong> returned <strong class="text-[#8b83ff]">only once</strong> with a one-time password. It is not stored server-side. Download the keystore right after generation.
           </p>
         </div>
 

@@ -14,7 +14,7 @@ public class CsrResponseDto {
     private String serialNumber;
     private String certificatePem;
     private String keystoreBase64;    // Base64-encoded JKS (autogenerate only, one-time)
+    private String p12Base64;
     private String keystorePassword;  // Password to open the JKS
     private String message;
 }
- 

@@ -57,8 +57,9 @@ export interface CsrUploadRequest {
 export interface CsrResponse {
   serialNumber: string;
   certificatePem: string;
-  keystoreBase64?: string;    
-  keystorePassword?: string;  
+  keystoreBase64?: string;
+  p12Base64?: string;
+  keystorePassword?: string;
   message: string;
 }
 
