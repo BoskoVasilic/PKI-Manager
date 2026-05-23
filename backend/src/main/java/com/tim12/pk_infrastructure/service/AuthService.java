@@ -145,7 +145,11 @@ public class AuthService {
             throw new RuntimeException("Account is already activated.");
         }
 
-        return new ChallengeResponseDTO(user.getActivationChallenge(), tokenValue);
+        return new ChallengeResponseDTO(
+                user.getActivationChallenge(),
+                tokenValue,
+                false
+        );
     }
 
     @Transactional
@@ -207,7 +211,11 @@ public class AuthService {
         User user = userRepository.findById(token.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found."));
 
-        return new ChallengeResponseDTO(user.getActivationChallenge(), tokenValue);
+        return new ChallengeResponseDTO(
+                user.getActivationChallenge(),
+                tokenValue,
+                user.isTwoFactorEnabled()
+        );
     }
 
 
@@ -221,7 +229,7 @@ public class AuthService {
             throw new RuntimeException("Passwords do not match.");
         }
 
-        validatePassword(req.getNewPassword());
+        validatePassword(req.getNewPassword(), user.isTwoFactorEnabled());
 
         if (!user.getPlainChallenge().equals(req.getDecryptedChallenge().trim())) {
             throw new RuntimeException("Verification failed. Please ensure you are using the correct private key.");
@@ -235,18 +243,27 @@ public class AuthService {
         tokenRepository.save(token);
     }
 
-    private void validatePassword(String password) {
+    private void validatePassword(String password, boolean twoFactorEnabled) {
         if (password == null || password.isBlank()) {
             throw new RuntimeException("Password is required.");
         }
 
-        if (password.length() < 15) {
-            throw new RuntimeException("Password must be at least 15 characters long.");
+        int minLength = twoFactorEnabled ? 8 : 15;
+
+        if (password.length() < minLength) {
+            throw new RuntimeException(twoFactorEnabled
+                    ? "Password must be at least 8 characters long (MFA is enabled)."
+                    : "Password must be at least 15 characters long."
+            );
         }
 
         if (password.length() > 128) {
             throw new RuntimeException("Password must not exceed 128 characters.");
         }
+    }
+
+    private void validatePassword(String password) {
+        validatePassword(password, false);
     }
 
     private ActivationToken validateToken(String tokenValue, String expectedType) {

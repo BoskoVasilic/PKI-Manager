@@ -13,12 +13,14 @@ export interface PasswordAnalysis {
   meetsLength: boolean;
   underMaxLength: boolean;
   isAcceptable: boolean;
+  minLength: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class PasswordService {
 
-  static readonly MIN_LENGTH = 15;
+  static readonly DEFAULT_MIN_LENGTH = 15;
+  static readonly MFA_MIN_LENGTH = 8;
   static readonly MAX_LENGTH = 128;
 
   private zxcvbn: any = null;
@@ -28,7 +30,6 @@ export class PasswordService {
     this.loadZxcvbn();
   }
 
-  // ── zxcvbn lazy load ───────────────────────────────────────────────────────
 
   private async loadZxcvbn(): Promise<void> {
     try {
@@ -54,8 +55,12 @@ export class PasswordService {
     }
   }
 
-  async analyze(password: string): Promise<PasswordAnalysis> {
-    const meetsLength = password.length >= PasswordService.MIN_LENGTH;
+  async analyze(
+    password: string,
+    minLength: number = PasswordService.DEFAULT_MIN_LENGTH
+  ): Promise<PasswordAnalysis> {
+
+    const meetsLength = password.length >= minLength;
     const underMaxLength = password.length <= PasswordService.MAX_LENGTH;
 
     let score: 0 | 1 | 2 | 3 | 4 = 0;
@@ -71,7 +76,7 @@ export class PasswordService {
       suggestions = result.feedback?.suggestions || [];
     } else {
       if (password.length >= 20) score = 3;
-      else if (password.length >= 15) score = 2;
+      else if (password.length >= minLength) score = 2;
       else if (password.length >= 8) score = 1;
     }
 
@@ -83,13 +88,19 @@ export class PasswordService {
         isPwned = result.isPwned;
         pwnedCount = result.count;
       } catch {
-        console.warn('HaveIBeenPwned API is unavailable');
+        console.warn('HaveIBeenPwned API unavailable');
       }
     }
 
     const isAcceptable = score >= 3 && !isPwned && meetsLength && underMaxLength;
 
-    return { score, crackTime, warning, suggestions, isPwned, pwnedCount, meetsLength, underMaxLength, isAcceptable };
+    return {
+      score, crackTime, warning, suggestions,
+      isPwned, pwnedCount,
+      meetsLength, underMaxLength,
+      isAcceptable,
+      minLength,
+    };
   }
 
 

@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
 import { WebCryptoService } from '../../services/webCrypto.service';
 import { AuthService } from '../../services/auth.service';
-import { PasswordService, PasswordAnalysis } from '../../services/password.service';
+import { PasswordService } from '../../services/password.service';
 import { PasswordStrengthComponent } from '../password-strength/password-strength.component';
 
 type Mode = 'registration' | 'password-reset';
@@ -38,6 +38,8 @@ export class ActivateAccountComponent implements OnInit {
   isCheckingPassword = false;
   private passwordDebounce: any;
 
+  passwordMinLength = 15;
+
   get passwordsMatch(): boolean {
     return this.newPassword === this.confirmPassword;
   }
@@ -61,7 +63,6 @@ export class ActivateAccountComponent implements OnInit {
     private cdr: ChangeDetectorRef,
   ) {}
 
-
   ngOnInit(): void {
     this.token = this.route.snapshot.queryParamMap.get('token') || '';
     const typeParam = this.route.snapshot.queryParamMap.get('type');
@@ -83,6 +84,7 @@ export class ActivateAccountComponent implements OnInit {
     request$.subscribe({
       next: (res) => {
         this.encryptedChallenge = res.encryptedChallenge;
+        this.passwordMinLength = res.twoFactorEnabled ? 8 : 15;
         this.pageState = 'verify';
       },
       error: () => {
@@ -174,7 +176,7 @@ export class ActivateAccountComponent implements OnInit {
     }
 
     this.passwordDebounce = setTimeout(async () => {
-      const analysis = await this.passwordService.analyze(this.newPassword);
+      const analysis = await this.passwordService.analyze(this.newPassword, this.passwordMinLength);
       this.isPasswordAcceptable = analysis.isAcceptable;
       this.isCheckingPassword = false;
       this.cdr.detectChanges();

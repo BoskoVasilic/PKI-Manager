@@ -1,22 +1,23 @@
-import { Component, Input, OnChanges, SimpleChanges, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import {DecimalPipe, NgClass} from '@angular/common';
+import {
+  Component, Input, OnChanges, SimpleChanges,
+  ChangeDetectionStrategy, ChangeDetectorRef
+} from '@angular/core';
+import { NgClass } from '@angular/common';
 import { PasswordAnalysis, PasswordService } from '../../services/password.service';
 
 @Component({
   selector: 'app-password-strength',
-  imports: [NgClass, DecimalPipe],
+  imports: [NgClass],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (password && password.length > 0) {
       <div class="mt-2 space-y-2">
-
         <div class="flex gap-1">
-          @for (seg of [0,1,2,3]; track seg) {
+          @for (seg of [0,1,2,3,4]; track seg) {
             <div class="h-1 flex-1 rounded-full transition-all duration-300"
                  [ngClass]="analysis && analysis.score > seg
                    ? svc.getScoreBarClass(analysis.score)
-                   : 'bg-gray-800'">
-            </div>
+                   : 'bg-gray-800'"></div>
           }
         </div>
 
@@ -26,9 +27,7 @@ import { PasswordAnalysis, PasswordService } from '../../services/password.servi
               {{ svc.getScoreLabel(analysis.score) }}
             </span>
             @if (analysis.crackTime) {
-              <span class="text-xs text-gray-600">
-                Crack time: {{ analysis.crackTime }}
-              </span>
+              <span class="text-xs text-gray-600">Crack time: {{ analysis.crackTime }}</span>
             }
           </div>
 
@@ -44,7 +43,13 @@ import { PasswordAnalysis, PasswordService } from '../../services/password.servi
                   <circle cx="12" cy="12" r="3" stroke-width="2"/>
                 </svg>
               }
-              Minimum {{ minLength }} characters ({{ password.length }}/{{ minLength }})
+
+              Minimum {{ analysis.minLength }} characters
+              ({{ password.length }}/{{ analysis.minLength }})
+
+              @if (analysis.minLength === 8) {
+                <span class="text-gray-600 italic">(MFA enabled)</span>
+              }
             </div>
 
             @if (!analysis.underMaxLength) {
@@ -57,7 +62,7 @@ import { PasswordAnalysis, PasswordService } from '../../services/password.servi
             }
           </div>
 
-          <!-- HaveIBeenPwned status -->
+          <!-- HaveIBeenPwned -->
           <div>
             @if (isPwnedChecking) {
               <div class="flex items-center gap-1.5 text-xs text-gray-500">
@@ -74,12 +79,11 @@ import { PasswordAnalysis, PasswordService } from '../../services/password.servi
                         d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                 </svg>
                 <span>
-                  This password has appeared in
-                  <strong>{{ analysis.pwnedCount | number }}</strong>
-                  data breaches. Please choose a different one.
+                  This password appeared in <strong>{{ analysis.pwnedCount }}</strong>
+                  data breaches. Choose a different one.
                 </span>
               </div>
-            } @else if (analysis.score >= 0) {
+            } @else {
               <div class="flex items-center gap-1.5 text-xs text-emerald-500">
                 <svg class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
@@ -130,7 +134,10 @@ export class PasswordStrengthComponent implements OnChanges {
   ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['password']) {
+    const passwordChanged = !!changes['password'];
+    const minLengthChanged = !!changes['minLength'] && !changes['minLength'].firstChange;
+
+    if (passwordChanged || minLengthChanged) {
       this.debounceAnalysis();
     }
   }
@@ -148,7 +155,7 @@ export class PasswordStrengthComponent implements OnChanges {
     this.cdr.markForCheck();
 
     this.debounceTimer = setTimeout(async () => {
-      this.analysis = await this.svc.analyze(this.password);
+      this.analysis = await this.svc.analyze(this.password, this.minLength);
       this.isPwnedChecking = false;
       this.cdr.markForCheck();
     }, 500);

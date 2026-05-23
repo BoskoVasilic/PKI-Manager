@@ -8,4 +8,5 @@ import lombok.AllArgsConstructor;
 public class ChallengeResponseDTO {
     private String encryptedChallenge;
     private String token;
+    private boolean twoFactorEnabled;
 }
