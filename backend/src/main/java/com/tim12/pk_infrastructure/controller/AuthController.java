@@ -40,7 +40,17 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         LoginResult result = authService.login(request.email(), request.password());
-        return ResponseEntity.ok(new LoginResponse(result.token(), result.twoFaRequired()));
+        return ResponseEntity.ok(
+                new LoginResponse(result.accessToken(), result.refreshToken(), result.twoFaRequired())
+        );
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refresh(@RequestBody RefreshRequest request) {
+        LoginResult result = authService.refresh(request.refreshToken());
+        return ResponseEntity.ok(
+                new LoginResponse(result.accessToken(), result.refreshToken(), false)
+        );
     }
 
     @ExceptionHandler(BadCredentialsException.class)
@@ -113,4 +123,6 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
+    public record RefreshRequest(String refreshToken) {}
+    public record LoginResponse(String accessToken, String refreshToken, boolean twoFaRequired) {}
 }
