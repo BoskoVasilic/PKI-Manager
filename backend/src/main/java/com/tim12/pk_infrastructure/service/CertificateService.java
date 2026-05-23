@@ -34,7 +34,10 @@ import java.io.*;
 import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -85,29 +88,42 @@ public class CertificateService {
 
         Certificate issuerRecord = certificateRepository
                 .findBySerialNumber(req.getIssuerSerialNumber())
-                .orElseThrow(() -> new IllegalArgumentException("Issuer certificate not found."));
+                    .orElseThrow(() -> new IllegalArgumentException("Issuer certificate not found."));
 
         validateIssuer(issuerRecord, caller);
 
-        X509Certificate issuerX509 = parseCertificatePem(issuerRecord.getCertificatePem());
-
         Organization issuerOrg = issuerRecord.getIssuingOrg();
-        if (issuerOrg == null)
-            throw new IllegalArgumentException("Issuer certificate has no associated organization.");
+
+        if (issuerOrg == null) {
+            throw new RuntimeException("Issuer certificate has no organization.");
+        }
 
         String issuerKsPath = resolveKeyStorePath(issuerOrg);
         char[] issuerKsPass = resolveOrgKeyStorePassword(issuerOrg);
 
-        Issuer issuerFromKs = keyStoreReader.readIssuerFromStore(
-                issuerKsPath, issuerRecord.getAlias(), issuerKsPass, issuerKsPass);
+        Issuer issuer = keyStoreReader.readIssuerFromStore(
+                issuerKsPath,
+                issuerRecord.getAlias(),
+                issuerKsPass,
+                issuerKsPass
+        );
 
-        PrivateKey issuerPrivKey = issuerFromKs.getPrivateKey();
+        if (issuer == null) {
+            throw new RuntimeException("Cannot load issuer from keystore. Alias: " + issuerRecord.getAlias());
+        }
 
+        X509Certificate issuerX509 = keyStoreReader.readX509Certificate(
+                issuerKsPath,
+                issuerRecord.getAlias(),
+                issuerKsPass
+        );
+
+        PrivateKey issuerPrivKey = issuer.getPrivateKey();
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(2048);
         KeyPair subjectKeyPair = keyGen.generateKeyPair();
 
-        X500Name subjectName = new X500Name(buildDn(req));
+        X500Name subjectName = buildX500NameCA(req);
         X500Name issuerName  = new X500Name(issuerX509.getSubjectX500Principal().getName());
 
         Date from = req.getValidFrom();
@@ -117,6 +133,8 @@ public class CertificateService {
         }
 
         BigInteger serial = new BigInteger(UUID.randomUUID().toString().replace("-", ""), 16).abs();
+        String serialNumber = serial.toString(16);
+        String alias = "cert-" + serialNumber;
 
         JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(
                 issuerName, serial, from, to, subjectName, subjectKeyPair.getPublic());
@@ -146,18 +164,19 @@ public class CertificateService {
         X509Certificate signedCert   = new JcaX509CertificateConverter().getCertificate(holder);
         signedCert.verify(issuerX509.getPublicKey());
 
-        Organization callerOrg = caller.getOrganization();
-        if (callerOrg == null)
-            throw new IllegalArgumentException("CA user has no associated organization.");
+        String subjectKsPath = resolveKeyStorePath(issuerRecord.getIssuingOrg());
+        char[] subjectKsPass = resolveOrgKeyStorePassword(issuerRecord.getIssuingOrg());
 
-        String subjectKsPath = resolveKeyStorePath(callerOrg);
-        char[] subjectKsPass = resolveOrgKeyStorePassword(callerOrg);
-        String alias         = "cert-" + serial.toString(16);
-
-        keyStoreWriter.write(subjectKsPath, alias, subjectKeyPair.getPrivate(), subjectKsPass, signedCert);
+        keyStoreWriter.write(
+                subjectKsPath,
+                alias,
+                subjectKeyPair.getPrivate(),
+                subjectKsPass,
+                signedCert
+        );
 
         Certificate saved = Certificate.builder()
-                .serialNumber(serial.toString(16))
+                .serialNumber(serialNumber)
                 .alias(alias)
                 .subjectCN(req.getCommonName())
                 .subjectO(req.getOrganization())
@@ -170,9 +189,10 @@ public class CertificateService {
                 .validTo(req.getValidTo())
                 .type(requestedType)
                 .status(CertificateStatus.ACTIVE)
+                .revoked(false)
                 .certificatePem(toPem(signedCert))
-                .issuingOrg(callerOrg)
-                .owner(caller)
+                .owner(userRepository.findByEmail(req.getEmail()).get())
+                .issuingOrg(issuerRecord.getIssuingOrg())
                 .build();
 
         return toDto(certificateRepository.save(saved));
@@ -192,42 +212,14 @@ public class CertificateService {
 
     public List<CertificateDTO> getAllMyAvailableIssuers() {
         User caller = getCurrentUser();
-        String callerOrg = caller.getOrganization().getName();
 
-        List<Certificate> owned = certificateRepository
-                .findByOwner(caller)
+        return certificateRepository
+                .findByIssuingOrg_Name(caller.getOrganization().getName())
                 .stream()
-                .filter(c -> c.getType() == CertificateType.INTERMEDIATE)
+                .filter(c -> c.getType() == CertificateType.ROOT || c.getType() == CertificateType.INTERMEDIATE)
                 .filter(c -> c.getStatus() == CertificateStatus.ACTIVE)
+                .map(this::toDto)
                 .toList();
-
-        Set<String> seen = new HashSet<>();
-        List<Certificate> result = new ArrayList<>(owned);
-        owned.forEach(c -> seen.add(c.getSerialNumber()));
-
-        for (Certificate cert : owned) {
-            String issuerSerial = cert.getIssuerSerialNumber();
-            while (issuerSerial != null) {
-                if (seen.contains(issuerSerial)) break;
-                seen.add(issuerSerial);
-
-                Optional<Certificate> parent = certificateRepository.findBySerialNumber(issuerSerial);
-                if (parent.isEmpty()) break;
-
-                Certificate p = parent.get();
-                boolean sameOrg = p.getIssuingOrg() != null &&
-                        callerOrg.equals(p.getIssuingOrg().getName());
-                boolean isCA    = p.getType() == CertificateType.INTERMEDIATE;
-                boolean active  = p.getStatus() == CertificateStatus.ACTIVE;
-
-                if (sameOrg && isCA && active) {
-                    result.add(p);
-                }
-                issuerSerial = p.getIssuerSerialNumber();
-            }
-        }
-
-        return result.stream().map(this::toDto).toList();
     }
 
     public Certificate issueCertificate(IssueCertificateRequest req) {
@@ -249,7 +241,7 @@ public class CertificateService {
             Certificate issuerData = certificateRepository
                     .findBySerialNumber(req.getIssuerSerialNumber())
                     .orElseThrow(() -> new RuntimeException(
-                            "Issuer sertifikat nije pronađen: " + req.getIssuerSerialNumber()));
+                            "Issuer certificate not found: " + req.getIssuerSerialNumber()));
 
             validateIssuerCertificate(issuerData);
             validateValidityPeriod(req, issuerData);
@@ -257,7 +249,7 @@ public class CertificateService {
             Organization issuerOrg = issuerData.getIssuingOrg();
             if (issuerOrg == null) {
                 throw new RuntimeException(
-                        "Issuer sertifikat nema organizaciju – ne mogu pronaći keystore.");
+                        "Issuer certificate has no organization – cannot find keystore.");
             }
 
             String   issuerKsPath = resolveKeyStorePath(issuerOrg);
@@ -272,7 +264,7 @@ public class CertificateService {
 
             if (issuer == null) {
                 throw new RuntimeException(
-                        "Nije moguće učitati issuera iz keystora. Proverite alias: " + issuerData.getAlias());
+                        "Cannot load issuer from keystore. Check alias: " + issuerData.getAlias());
             }
 
             subjectKeyPair = generateKeyPair();
@@ -303,12 +295,12 @@ public class CertificateService {
         );
 
         if (x509Cert == null) {
-            throw new RuntimeException("Generisanje sertifikata nije uspelo.");
+            throw new RuntimeException("Certificate generation failed.");
         }
 
         if (subjectOrg == null) {
             throw new RuntimeException(
-                    "Organizacija mora biti navedena kako bi se sertifikat sačuvao u keystore-u.");
+                    "Organization must be specified to store the certificate in the keystore.");
         }
 
         PrivateKey privateKeyToStore = (req.getType() == CertificateType.ROOT)
@@ -334,8 +326,9 @@ public class CertificateService {
                 .issuerSerialNumber(req.getType() == CertificateType.ROOT ? null : req.getIssuerSerialNumber())
                 .revoked(false)
                 .status(CertificateStatus.ACTIVE)
+                .certificatePem(toPem(x509Cert))
                 .issuingOrg(subjectOrg)
-                .owner(Objects.equals(req.getType().toString(), "ROOT") || req.getEmail() == null ? null : userRepository.findByEmail(req.getEmail()).get())
+                .owner(userRepository.findByEmail(req.getEmail()).get())
                 .build();
 
         return certificateRepository.save(certData);
@@ -409,6 +402,7 @@ public class CertificateService {
             throw new RuntimeException(
                     "Organization '" + org.getName() + "' has no keystore file name set.");
         }
+
         return new File(keystoreDir, org.getKeyStoreFileName()).getPath();
     }
 
@@ -424,49 +418,72 @@ public class CertificateService {
         Date now = new Date();
 
         if (now.before(issuerData.getValidFrom()))
-            throw new RuntimeException("Issuer sertifikat '" + issuerData.getSubjectCN() + "' još uvek nije počeo da važi.");
+            throw new RuntimeException("Issuer certificate '" + issuerData.getSubjectCN() + "' is not yet valid.");
         if (now.after(issuerData.getValidTo()))
-            throw new RuntimeException("Issuer sertifikat '" + issuerData.getSubjectCN() + "' je istekao.");
+            throw new RuntimeException("Issuer certificate '" + issuerData.getSubjectCN() + "' has expired.");
         if (issuerData.isRevoked())
-            throw new RuntimeException("Issuer sertifikat '" + issuerData.getSubjectCN() + "' je povučen (razlog: " + issuerData.getRevocationReason() + ").");
+            throw new RuntimeException("Issuer certificate '" + issuerData.getSubjectCN() + "' has been revoked (reason: " + issuerData.getRevocationReason() + ").");
         if (issuerData.getType() == CertificateType.END_ENTITY)
-            throw new RuntimeException("End-Entity sertifikat ne može biti issuer.");
+            throw new RuntimeException("End-Entity certificate cannot be an issuer.");
 
         if (issuerData.getIssuerSerialNumber() != null) {
             Certificate parent = certificateRepository
                     .findBySerialNumber(issuerData.getIssuerSerialNumber())
                     .orElseThrow(() -> new RuntimeException(
-                            "Issuer lanca nije pronađen u bazi: " + issuerData.getIssuerSerialNumber()));
+                            "Issuer chain certificate not found in database: " + issuerData.getIssuerSerialNumber()));
             validateIssuerCertificate(parent);
         }
     }
 
     private void validateIssuer(Certificate issuer, User caller) throws Exception {
-        if (issuer.getIssuingOrg() == null)
-            throw new IllegalArgumentException("Issuer certificate has no associated organization.");
-        if (!issuer.getOwner().getId().equals(caller.getId()))
-            throw new SecurityException("You can only use CA certificates you own.");
-        if (issuer.getStatus() == CertificateStatus.REVOKED)
+        if (issuer.getIssuingOrg() == null) {
+            throw new SecurityException("Issuer certificate has no organization.");
+        }
+
+        if (caller.getOrganization() == null) {
+            throw new SecurityException("Current user has no organization.");
+        }
+
+        if (!issuer.getIssuingOrg().getId().equals(caller.getOrganization().getId())) {
+            throw new SecurityException("You can only use CA certificates from your organization.");
+        }
+
+        if (issuer.getStatus() == CertificateStatus.REVOKED || issuer.isRevoked()) {
             throw new IllegalArgumentException("Issuer certificate has been revoked.");
-        if (issuer.getType() == CertificateType.END_ENTITY)
+        }
+
+        if (issuer.getType() == CertificateType.END_ENTITY) {
             throw new IllegalArgumentException("End-entity certificates cannot sign other certificates.");
-        parseCertificatePem(issuer.getCertificatePem()).checkValidity();
+        }
+
+        Organization issuerOrg = issuer.getIssuingOrg();
+
+        String issuerKsPath = resolveKeyStorePath(issuerOrg);
+        char[] issuerKsPass = resolveOrgKeyStorePassword(issuerOrg);
+
+        X509Certificate issuerX509 = keyStoreReader.readX509Certificate(
+                issuerKsPath,
+                issuer.getAlias(),
+                issuerKsPass
+        );
+
+        issuerX509.checkValidity();
     }
 
     private void validateValidityPeriod(IssueCertificateRequest req, Certificate issuerData) {
         if (req.getValidFrom().before(issuerData.getValidFrom()))
-            throw new RuntimeException("Datum početka ne može biti pre početka važenja issuera (" + issuerData.getValidFrom() + ").");
+            throw new RuntimeException("Start date cannot be before the issuer's validity period (" + issuerData.getValidFrom() + ").");
         if (req.getValidTo().after(issuerData.getValidTo()))
-            throw new RuntimeException("Datum isteka ne može biti posle isteka issuera (" + issuerData.getValidTo() + ").");
+            throw new RuntimeException("End date cannot be after the issuer's expiration date (" + issuerData.getValidTo() + ").");
     }
 
     private String buildDn(IssueCertificateRequestCA req) {
         StringBuilder sb = new StringBuilder();
-        if (req.getCommonName()         != null) sb.append("CN=").append(req.getCommonName()).append(",");
-        if (req.getOrganization()       != null) sb.append("O=").append(req.getOrganization()).append(",");
-        if (req.getOrganizationalUnit() != null) sb.append("OU=").append(req.getOrganizationalUnit()).append(",");
-        if (req.getCountry()            != null) sb.append("C=").append(req.getCountry()).append(",");
-        if (req.getEmail()              != null) sb.append("E=").append(req.getEmail()).append(",");
+        if (req.getCommonName()        != null) sb.append("CN=").append(req.getCommonName()).append(",");
+        if (req.getOrganization()      != null) sb.append("O=").append(req.getOrganization()).append(",");
+        if (req.getOrganizationalUnit()!= null) sb.append("OU=").append(req.getOrganizationalUnit()).append(",");
+        if (req.getCountry()           != null) sb.append("C=").append(req.getCountry()).append(",");
+        if (req.getEmail()             != null) sb.append("E=").append(req.getEmail()).append(",");
         String dn = sb.toString();
         return dn.endsWith(",") ? dn.substring(0, dn.length() - 1) : dn;
     }
@@ -477,7 +494,7 @@ public class CertificateService {
         if (req.getOrganization()     != null && !req.getOrganization().isBlank())     b.addRDN(BCStyle.O,  req.getOrganization());
         if (req.getOrganizationUnit() != null && !req.getOrganizationUnit().isBlank()) b.addRDN(BCStyle.OU, req.getOrganizationUnit());
         if (req.getCountry()          != null && !req.getCountry().isBlank())          b.addRDN(BCStyle.C,  req.getCountry());
-        if (req.getEmail()            != null && !req.getEmail().isBlank())            b.addRDN(BCStyle.E,  req.getEmail());
+        if (req.getEmail()            != null && !req.getEmail().isBlank())             b.addRDN(BCStyle.E,  req.getEmail());
         return b.build();
     }
 
@@ -504,7 +521,7 @@ public class CertificateService {
             kg.initialize(2048, rng);
             return kg.generateKeyPair();
         } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
-            throw new RuntimeException("Greška pri generisanju ključeva: " + e.getMessage(), e);
+            throw new RuntimeException("Error generating keys: " + e.getMessage(), e);
         }
     }
 
@@ -522,16 +539,41 @@ public class CertificateService {
         }
     }
 
-    private String toPem(X509Certificate cert) throws Exception {
-        StringWriter sw = new StringWriter();
-        try (JcaPEMWriter w = new JcaPEMWriter(sw)) { w.writeObject(cert); }
-        return sw.toString();
+    private String toPem(X509Certificate cert) {
+        try {
+            StringWriter sw = new StringWriter();
+            try (JcaPEMWriter w = new JcaPEMWriter(sw)) { w.writeObject(cert); }
+            return sw.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to convert certificate to PEM", e);
+        }
     }
 
     private String privateKeyToPem(PrivateKey key) throws Exception {
         StringWriter sw = new StringWriter();
         try (JcaPEMWriter w = new JcaPEMWriter(sw)) { w.writeObject(key); }
         return sw.toString();
+    }
+
+    private X500Name buildX500NameCA(IssueCertificateRequestCA req) {
+        X500NameBuilder b = new X500NameBuilder(BCStyle.INSTANCE);
+
+        if (req.getCommonName() != null && !req.getCommonName().isBlank())
+            b.addRDN(BCStyle.CN, req.getCommonName());
+
+        if (req.getOrganization() != null && !req.getOrganization().isBlank())
+            b.addRDN(BCStyle.O, req.getOrganization());
+
+        if (req.getOrganizationalUnit() != null && !req.getOrganizationalUnit().isBlank())
+            b.addRDN(BCStyle.OU, req.getOrganizationalUnit());
+
+        if (req.getCountry() != null && !req.getCountry().isBlank())
+            b.addRDN(BCStyle.C, req.getCountry());
+
+        if (req.getEmail() != null && !req.getEmail().isBlank())
+            b.addRDN(BCStyle.EmailAddress, req.getEmail());
+
+        return b.build();
     }
 
     private CertificateDTO toDto(Certificate c) {

@@ -59,6 +59,9 @@ dependencies {
 	// Bouncy Castle for PKI/Cryptography
 	implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
 	implementation 'org.bouncycastle:bcpkix-jdk18on:1.78.1'
+
+	implementation 'dev.samstevens.totp:totp-spring-boot-starter:1.7.1'
+
 }
 
 tasks.named('test') {

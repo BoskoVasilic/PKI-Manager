@@ -1,8 +1,7 @@
 <div class="min-h-screen bg-[#0b0b18] text-[#e8e8f0] font-['DM_Sans',sans-serif] px-10 py-8">
 
   <!-- Back button -->
-  <button
-    (click)="goBack()"
+  <button (click)="goBack()"
     class="flex items-center gap-2 text-sm text-white/35 hover:text-white/70 transition-colors duration-150 mb-8 border-none bg-transparent cursor-pointer font-['DM_Sans']">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M19 12H5M12 5l-7 7 7 7"/>
@@ -12,123 +11,246 @@
 
   <div class="max-w-2xl mx-auto">
 
-  <!-- Header -->
-  <div class="mb-8">
-    <h2 class="font-['Syne'] text-2xl font-bold tracking-[-0.03em] text-white mb-1">Upload CSR</h2>
-    <p class="text-white/40 text-sm">Upload your PKCS#10 CSR file. The server will sign it and return a certificate. Your private key stays with you.</p>
-  </div>
-
-  <!-- Result view -->
-  @if (result) {
-    <div class="flex flex-col gap-4">
-      <div class="flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-        </svg>
-        <div>
-          <span class="text-emerald-400 text-sm font-medium block">CSR signed successfully</span>
-          <span class="text-white/35 text-xs">Serial: {{ result.serialNumber }}</span>
-        </div>
-      </div>
-
-      <button (click)="downloadCert()"
-              class="self-start flex items-center gap-2 px-4 py-2.5 bg-[#6c63ff]/15 border border-[#6c63ff]/30 text-[#a5b4fc] text-sm rounded-lg hover:bg-[#6c63ff]/25 transition-colors cursor-pointer border-solid">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        Download Certificate (.crt)
-      </button>
-
-      <div class="bg-white/[0.02] border border-white/[0.07] rounded-xl overflow-hidden">
-        <div class="px-4 py-3 border-b border-white/[0.06]">
-          <span class="text-white/50 text-xs font-medium uppercase tracking-wide">Certificate PEM</span>
-        </div>
-        <pre class="px-4 py-3 text-[0.72rem] text-emerald-300/70 overflow-x-auto leading-relaxed font-mono whitespace-pre-wrap break-all">{{ result.certificatePem }}</pre>
-      </div>
-
-      <button (click)="reset()"
-              class="self-start text-sm text-white/40 hover:text-white/70 transition-colors cursor-pointer border-none bg-transparent">
-        ← Upload another CSR
-      </button>
+    <!-- Header -->
+    <div class="mb-8">
+      <h2 class="font-['Syne'] text-2xl font-bold tracking-[-0.03em] text-white mb-1">Upload CSR</h2>
+      <p class="text-white/40 text-sm">Upload your PKCS#10 CSR. The server signs it and returns a certificate. Your private key stays with you.</p>
     </div>
-  }
 
-  <!-- Form -->
-  @if (!result) {
-    <form (ngSubmit)="submit()" class="flex flex-col gap-5">
+    <!-- ── Result ───────────────────────────────────────────────────────────── -->
+    @if (result) {
+      <div class="flex flex-col gap-4">
 
-      @if (error) {
-        <div class="flex items-center gap-2.5 px-4 py-3 bg-red-500/10 border border-red-500/25 rounded-xl text-red-400 text-sm">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        <!-- Success banner -->
+        <div class="flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
           </svg>
-          {{ error }}
-        </div>
-      }
-
-      <!-- CSR input -->
-      <div class="bg-white/[0.02] border border-white/[0.07] rounded-xl p-5 flex flex-col gap-4">
-        <span class="text-white/40 text-xs uppercase tracking-[0.07em] font-medium">CSR File</span>
-
-        <!-- File upload -->
-        <label class="flex flex-col items-center justify-center gap-3 px-4 py-8 border-2 border-dashed border-white/[0.12] rounded-xl hover:border-[#6c63ff]/40 transition-colors cursor-pointer">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-white/30">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          <span class="text-white/40 text-sm">Drop a .csr / .pem file or click to browse</span>
-          <input type="file" accept=".csr,.pem,.txt" (change)="onFileChange($event)" class="hidden" />
-        </label>
-
-        <!-- Or paste -->
-        <div class="flex items-center gap-3">
-          <div class="flex-1 h-px bg-white/[0.07]"></div>
-          <span class="text-white/25 text-xs">or paste PEM</span>
-          <div class="flex-1 h-px bg-white/[0.07]"></div>
+          <div>
+            <span class="text-emerald-400 text-sm font-medium block">CSR signed successfully</span>
+            <span class="text-white/35 text-xs font-mono">Serial: {{ result.serialNumber }}</span>
+          </div>
         </div>
 
-        <textarea [(ngModel)]="csrPem" name="csrPem" rows="6"
-                  placeholder="-----BEGIN CERTIFICATE REQUEST-----&#10;...&#10;-----END CERTIFICATE REQUEST-----"
-                  class="px-3.5 py-3 bg-white/[0.04] border border-white/[0.1] rounded-lg text-xs text-emerald-300/80 placeholder-white/15 outline-none focus:border-[#6c63ff]/50 focus:bg-white/[0.06] transition-all font-mono resize-none leading-relaxed"></textarea>
+        <!-- Navigate to downloads -->
+        <div class="flex items-center gap-3 px-4 py-3 bg-[#6c63ff]/8 border border-[#6c63ff]/20 rounded-xl">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b83ff" stroke-width="2" class="shrink-0">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <p class="text-[#8b83ff]/70 text-xs flex-1">The certificate is saved to your account. Download it as <strong class="text-[#8b83ff]">.pem</strong> or <strong class="text-[#8b83ff]">.cer</strong> anytime from the Downloads page.</p>
+          <button (click)="goToDownloads()"
+                  class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[#6c63ff]/20 border border-[#6c63ff]/30 border-solid text-[#a5b4fc] text-xs rounded-lg hover:bg-[#6c63ff]/30 transition-colors cursor-pointer">
+            Downloads
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+
+        <button (click)="reset()"
+                class="self-start text-sm text-white/40 hover:text-white/70 transition-colors cursor-pointer border-none bg-transparent">
+          ← Upload another CSR
+        </button>
       </div>
+    }
 
-      <!-- CA + Validity -->
-      <div class="bg-white/[0.02] border border-white/[0.07] rounded-xl p-5 flex flex-col gap-4">
-        <span class="text-white/40 text-xs uppercase tracking-[0.07em] font-medium">Issuance Parameters</span>
+    <!-- ── Form ─────────────────────────────────────────────────────────────── -->
+    @if (!result) {
+      <form (ngSubmit)="submit()" class="flex flex-col gap-5">
 
-        <div class="flex flex-col gap-1.5">
-          <label class="text-[0.8rem] text-white/60 font-medium">
-            CA Serial Number <span class="text-red-400">*</span>
-          </label>
-          <input [(ngModel)]="caSerialNumber" name="caSerialNumber"
-                 placeholder="e.g. 3FA2C8B1D0..."
-                 class="px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.1] rounded-lg text-sm text-white placeholder-white/20 outline-none focus:border-[#6c63ff]/50 focus:bg-white/[0.06] transition-all font-mono" />
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-          <label class="text-[0.8rem] text-white/60 font-medium">
-            Valid To <span class="text-red-400">*</span>
-          </label>
-          <input [(ngModel)]="validTo" name="validTo" type="datetime-local"
-                 class="px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.1] rounded-lg text-sm text-white outline-none focus:border-[#6c63ff]/50 focus:bg-white/[0.06] transition-all [color-scheme:dark]" />
-        </div>
-      </div>
-
-      <button type="submit" [disabled]="loading"
-              class="flex items-center justify-center gap-2.5 px-5 py-3 bg-[#6c63ff] hover:bg-[#7c74ff] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-white text-sm font-semibold transition-colors cursor-pointer border-none">
-        @if (loading) {
-          <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-          </svg>
-          Signing CSR...
-        } @else {
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          Sign CSR
+        @if (error) {
+          <div class="flex items-center gap-2.5 px-4 py-3 bg-red-500/10 border border-red-500/25 rounded-xl text-red-400 text-sm">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            {{ error }}
+          </div>
         }
-      </button>
-    </form>
-  }
 
+        <!-- CSR section -->
+        <div class="bg-white/[0.02] border border-white/[0.07] rounded-xl p-5 flex flex-col gap-4">
+          <span class="text-white/40 text-xs uppercase tracking-[0.07em] font-medium">CSR Content</span>
+
+          <!-- Drop zone -->
+          <div
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
+            [class]="isDragging
+              ? 'border-[#6c63ff]/60 bg-[#6c63ff]/8'
+              : 'border-white/[0.12] hover:border-[#6c63ff]/30'"
+            class="relative flex flex-col items-center justify-center gap-3 px-4 py-8 border-2 border-dashed rounded-xl transition-all duration-150 cursor-pointer"
+            (click)="fileInput.click()">
+
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                 [attr.stroke]="isDragging ? '#8b83ff' : 'currentColor'"
+                 stroke-width="1.5" class="transition-colors"
+                 [class]="isDragging ? 'text-[#8b83ff]' : 'text-white/30'">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+
+            <div class="text-center">
+              <p [class]="isDragging ? 'text-[#8b83ff]' : 'text-white/40'" class="text-sm transition-colors">
+                {{ isDragging ? 'Drop it!' : 'Drag & drop a .csr / .pem file here' }}
+              </p>
+              <p class="text-white/25 text-xs mt-0.5">or click to browse</p>
+            </div>
+
+            <input #fileInput type="file" accept=".csr,.pem,.txt"
+                   (change)="onFileChange($event)" class="hidden" />
+          </div>
+
+          <!-- Divider -->
+          <div class="flex items-center gap-3">
+            <div class="flex-1 h-px bg-white/[0.07]"></div>
+            <span class="text-white/25 text-xs">or paste PEM directly</span>
+            <div class="flex-1 h-px bg-white/[0.07]"></div>
+          </div>
+
+          <!-- Paste area -->
+          <textarea [(ngModel)]="csrPem" name="csrPem" rows="7"
+                    placeholder="-----BEGIN CERTIFICATE REQUEST-----&#10;MIICvTCCAaUCAQAweDESMBAGA1UE...&#10;-----END CERTIFICATE REQUEST-----"
+                    class="px-3.5 py-3 bg-white/[0.04] border border-white/[0.1] rounded-lg text-xs text-emerald-300/80 placeholder-white/15 outline-none focus:border-[#6c63ff]/50 focus:bg-white/[0.06] transition-all font-mono resize-none leading-relaxed"></textarea>
+
+          <!-- Filled indicator -->
+          @if (csrPem.trim()) {
+            <div class="flex items-center gap-2 text-xs text-emerald-400/70">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              CSR loaded — {{ csrPem.trim().split('\n').length }} lines
+            </div>
+          }
+        </div>
+
+        <!-- Issuance params -->
+        <div class="bg-white/[0.02] border border-white/[0.07] rounded-xl p-5 flex flex-col gap-4">
+          <span class="text-white/40 text-xs uppercase tracking-[0.07em] font-medium">Issuance Parameters</span>
+
+          <!-- Custom CA dropdown -->
+          <div class="flex flex-col gap-1.5">
+            <label class="text-[0.8rem] text-white/60 font-medium">
+              Signing CA <span class="text-red-400">*</span>
+            </label>
+
+            @if (loadingCas) {
+              <div class="flex items-center gap-2 px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.1] rounded-lg text-white/30 text-sm">
+                <svg class="animate-spin shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+                Loading CAs…
+              </div>
+            } @else if (availableCas.length === 0) {
+              <div class="px-3.5 py-2.5 bg-yellow-500/10 border border-yellow-500/25 rounded-lg text-yellow-400 text-sm">
+                No active CA certificates found. Contact your administrator.
+              </div>
+            } @else {
+              <!-- Trigger button -->
+              <div class="relative" data-ca-dropdown>
+                <button type="button" (click)="toggleDropdown()"
+                        [class]="caDropdownOpen ? 'border-[#6c63ff]/50 bg-white/[0.06]' : 'border-white/[0.1] bg-white/[0.04]'"
+                        class="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 border rounded-lg text-sm transition-all cursor-pointer text-left">
+                  <span [class]="selectedCa ? 'text-white' : 'text-white/30'">
+                    @if (selectedCa) {
+                      <span class="font-medium">{{ selectedCa.commonName }}</span>
+                      @if (selectedCa.organization) {
+                        <span class="text-white/45"> · {{ selectedCa.organization }}</span>
+                      }
+                    } @else {
+                      Select a CA certificate…
+                    }
+                  </span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                       class="shrink-0 text-white/40 transition-transform duration-150"
+                       [class.rotate-180]="caDropdownOpen">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+
+                <!-- Options panel -->
+                @if (caDropdownOpen) {
+                  <div class="absolute top-full left-0 right-0 mt-1.5 bg-[#13131f] border border-white/[0.12] rounded-xl overflow-hidden z-50 shadow-2xl">
+                    @for (ca of availableCas; track ca.serialNumber) {
+                      <button type="button" (click)="selectCa(ca)"
+                              class="w-full flex items-start gap-3 px-4 py-3 hover:bg-white/[0.06] transition-colors text-left cursor-pointer border-none border-b border-white/[0.05] last:border-0">
+                        <!-- Type badge -->
+                        <span class="mt-0.5 shrink-0 text-[0.65rem] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded"
+                              [class]="ca.type === 'ROOT' ? 'bg-yellow-400/15 text-yellow-400' : 'bg-blue-400/15 text-blue-400'">
+                          {{ ca.type }}
+                        </span>
+                        <div class="flex-1 min-w-0">
+                          <p class="text-white text-sm font-medium truncate">{{ ca.commonName }}</p>
+                          <p class="text-white/35 text-xs mt-0.5">
+                            @if (ca.organization) { {{ ca.organization }} · }
+                            Expires {{ ca.validTo | date:'mediumDate' }}
+                          </p>
+                        </div>
+                        @if (ca.serialNumber === selectedCaSerial) {
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b83ff" stroke-width="2.5" class="shrink-0 mt-1">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        }
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Selected CA info -->
+              @if (selectedCa) {
+                <div class="flex flex-wrap gap-2 mt-0.5">
+                  <span class="text-[0.7rem] px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-white/40 font-mono">
+                    {{ selectedCa.serialNumber | slice:0:20 }}…
+                  </span>
+                  <span class="text-[0.7rem] px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-white/40">
+                    Valid until {{ selectedCa.validTo | date:'mediumDate' }}
+                  </span>
+                </div>
+              }
+            }
+          </div>
+
+          <!-- Valid From + Valid To -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[0.8rem] text-white/60 font-medium">
+                Valid From <span class="text-red-400">*</span>
+              </label>
+              <input [(ngModel)]="validFrom" name="validFrom" type="datetime-local"
+                     [min]="minValidFrom" [max]="maxValidTo"
+                     class="px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.1] rounded-lg text-sm text-white outline-none focus:border-[#6c63ff]/50 focus:bg-white/[0.06] transition-all [color-scheme:dark]" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-[0.8rem] text-white/60 font-medium">
+                Valid To <span class="text-red-400">*</span>
+                @if (selectedCa) {
+                  <span class="text-white/25 font-normal ml-1">— max {{ selectedCa.validTo | date:'mediumDate' }}</span>
+                }
+              </label>
+              <input [(ngModel)]="validTo" name="validTo" type="datetime-local"
+                     [max]="maxValidTo"
+                     class="px-3.5 py-2.5 bg-white/[0.04] border border-white/[0.1] rounded-lg text-sm text-white outline-none focus:border-[#6c63ff]/50 focus:bg-white/[0.06] transition-all [color-scheme:dark]" />
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" [disabled]="loading || loadingCas || availableCas.length === 0"
+                class="flex items-center justify-center gap-2.5 px-5 py-3 bg-[#6c63ff] hover:bg-[#7c74ff] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-white text-sm font-semibold transition-colors cursor-pointer border-none">
+          @if (loading) {
+            <svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+            Signing CSR…
+          } @else {
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Sign CSR
+          }
+        </button>
+      </form>
+    }
   </div>
 </div>

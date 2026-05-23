@@ -48,7 +48,7 @@ export class CaUserRegisterComponent {
   loadOrganizations(): void {
     this.userService.getOrganizations().subscribe({
       next: (orgs) => { this.organizations = orgs; this.ref.detectChanges(); },
-      error: (err) => console.error('Greška pri učitavanju organizacija', err)
+      error: (err) => console.error('Error loading organizations.', err)
     });
   }
 
@@ -73,7 +73,7 @@ export class CaUserRegisterComponent {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err?.error?.message || 'Greška pri kreiranju CA korisnika.';
+        this.errorMessage = err?.error?.message || 'Error creating CA user.';
         this.ref.detectChanges();
       }
     });

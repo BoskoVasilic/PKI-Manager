@@ -1,0 +1,591 @@
+<div class="min-h-screen bg-[#0b0b18] text-[#e8e8f0] font-['DM_Sans',sans-serif] px-10 py-8">
+
+  <!-- Back button -->
+  <button
+    (click)="goBack()"
+    class="flex items-center gap-2 text-sm text-white/35 hover:text-white/70 transition-colors duration-150
+           mb-8 border-none bg-transparent cursor-pointer font-['DM_Sans']">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M19 12H5M12 5l-7 7 7 7"/>
+    </svg>
+    Back to Dashboard
+  </button>
+
+  <div class="max-w-5xl mx-auto">
+
+    <!-- Page header -->
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-9 h-9 rounded-xl bg-[#6c63ff]/15 border border-[#6c63ff]/30 grid place-items-center text-[#8b83ff]">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <h2 class="font-['Syne'] text-2xl font-bold text-white tracking-tight">Download Certificate</h2>
+      </div>
+      <p class="text-white/35 text-sm mt-1 ml-12">
+        Switch between downloads with or without a private key.
+      </p>
+    </div>
+
+    <!-- Two-column layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
+
+      <!-- LEFT: Certificate list ─────────────────────────────────────── -->
+      <div>
+
+        <!-- Search -->
+        <div class="relative mb-4">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20"
+               fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+          </svg>
+          <input
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="applyFilters()"
+            placeholder="Search by name, serial or organization…"
+            class="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl text-sm text-white/70
+                   placeholder-white/20 pl-9 pr-4 py-2.5 focus:outline-none focus:border-[#6c63ff]/40
+                   transition-colors font-['DM_Sans']"/>
+        </div>
+
+        <!-- Loading spinner -->
+        @if (isLoading()) {
+          <div class="flex items-center justify-center py-24">
+            <div class="w-8 h-8 border-2 border-white/10 border-t-[#6c63ff] rounded-full animate-spin"></div>
+          </div>
+        }
+
+        <!-- Fetch error -->
+        @if (fetchError()) {
+          <div class="flex items-center gap-3 px-5 py-4 bg-red-500/10 border border-red-500/25
+                      rounded-xl text-red-400 text-sm">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            {{ fetchError() }}
+          </div>
+        }
+
+        <!-- Empty state -->
+        @if (!isLoading() && !fetchError() && filteredCerts().length === 0) {
+          <div class="flex flex-col items-center justify-center py-24 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/[0.07]
+                        grid place-items-center mb-4 text-white/20">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="3"/>
+                <path d="M7 8h10M7 12h6M7 16h4"/>
+              </svg>
+            </div>
+            <p class="text-white/40 text-sm">No certificates found.</p>
+            <p class="text-white/20 text-xs mt-1">Generate or upload a CSR to receive a certificate.</p>
+          </div>
+        }
+
+        <!-- Certificate list -->
+        @if (!isLoading() && filteredCerts().length > 0) {
+          <div class="flex flex-col gap-2">
+            @for (cert of filteredCerts(); track cert.serialNumber) {
+              <button
+                (click)="select(cert)"
+                class="w-full text-left flex items-center gap-4 px-4 py-3.5 rounded-xl border
+                       transition-all duration-150 cursor-pointer font-['DM_Sans']"
+                [class]="selected()?.serialNumber === cert.serialNumber
+                  ? 'bg-[#6c63ff]/10 border-[#6c63ff]/35 shadow-[0_0_0_1px_rgba(108,99,255,0.2)]'
+                  : 'bg-white/[0.025] border-white/[0.06] hover:bg-white/[0.045] hover:border-white/[0.1]'">
+
+                <!-- Icon -->
+                <div class="w-9 h-9 rounded-lg shrink-0 grid place-items-center transition-colors duration-150"
+                     [class]="selected()?.serialNumber === cert.serialNumber
+                       ? 'bg-[#6c63ff]/20 text-[#8b83ff]'
+                       : 'bg-white/[0.05] text-white/30'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="3" y="3" width="18" height="18" rx="3"/>
+                    <path d="M7 8h10M7 12h6M7 16h4"/>
+                    <circle cx="17" cy="16" r="2.5"/>
+                  </svg>
+                </div>
+
+                <!-- Text -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-sm font-medium truncate"
+                          [class]="selected()?.serialNumber === cert.serialNumber ? 'text-white' : 'text-white/75'">
+                      {{ cert.commonName }}
+                    </span>
+                    <span class="text-[0.65rem] font-semibold px-2 py-0.5 rounded-full uppercase tracking-[0.06em] shrink-0"
+                          [class]="statusClass(cert)">
+                      {{ statusLabel(cert) }}
+                    </span>
+                  </div>
+                  <span class="text-xs text-white/25 font-mono">{{ cert.serialNumber }}</span>
+                </div>
+
+                <!-- Expiry -->
+                <div class="text-right shrink-0">
+                  <span class="text-xs text-white/25">Expires</span>
+                  <div class="text-xs font-medium mt-0.5"
+                       [class]="isExpired(cert) && !cert.revoked ? 'text-yellow-400' : 'text-white/45'">
+                    {{ formatDate(cert.validTo) }}
+                  </div>
+                </div>
+
+                <!-- Selected indicator -->
+                <div class="shrink-0 transition-all duration-150"
+                     [class]="selected()?.serialNumber === cert.serialNumber ? 'text-[#8b83ff]' : 'text-white/10'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- RIGHT: Download panel ──────────────────────────────────────── -->
+      <div class="sticky top-8">
+
+        @if (!selected()) {
+          <!-- Empty / no selection state -->
+          <div class="flex flex-col items-center justify-center text-center
+                      bg-white/[0.02] border border-white/[0.06] border-dashed rounded-2xl px-6 py-14">
+            <div class="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/[0.07]
+                        grid place-items-center mb-4 text-white/15">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+            <p class="text-white/30 text-sm font-medium">Select a certificate</p>
+            <p class="text-white/15 text-xs mt-1">to see download options</p>
+          </div>
+        }
+
+        @if (selected()) {
+          <!-- Download card -->
+          <div class="bg-white/[0.025] border border-white/[0.07] rounded-2xl overflow-hidden">
+
+            <!-- Card header -->
+            <div class="px-5 py-4 border-b border-white/[0.06] flex items-start gap-3">
+              <div class="w-8 h-8 rounded-lg bg-[#6c63ff]/15 border border-[#6c63ff]/25
+                          grid place-items-center text-[#8b83ff] shrink-0 mt-0.5">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="3" y="3" width="18" height="18" rx="3"/>
+                  <path d="M7 8h10M7 12h6M7 16h4"/>
+                  <circle cx="17" cy="16" r="2.5"/>
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-white truncate">{{ selected()!.commonName }}</p>
+                <p class="text-xs text-white/30 font-mono truncate mt-0.5">{{ selected()!.serialNumber }}</p>
+              </div>
+            </div>
+
+            <!-- Certificate metadata -->
+            <div class="px-5 py-4 grid grid-cols-2 gap-3 border-b border-white/[0.06]">
+              <div>
+                <p class="text-[0.65rem] text-white/25 uppercase tracking-[0.07em] mb-1">Organization</p>
+                <p class="text-xs text-white/60 truncate">{{ selected()!.organization || '—' }}</p>
+              </div>
+              <div>
+                <p class="text-[0.65rem] text-white/25 uppercase tracking-[0.07em] mb-1">Type</p>
+                <p class="text-xs text-white/60">{{ selected()!.type }}</p>
+              </div>
+              <div>
+                <p class="text-[0.65rem] text-white/25 uppercase tracking-[0.07em] mb-1">Valid From</p>
+                <p class="text-xs text-white/60">{{ formatDate(selected()!.validFrom) }}</p>
+              </div>
+              <div>
+                <p class="text-[0.65rem] text-white/25 uppercase tracking-[0.07em] mb-1">Valid To</p>
+                <p class="text-xs"
+                   [class]="isExpired(selected()!) && !selected()!.revoked ? 'text-yellow-400' : 'text-white/60'">
+                  {{ formatDate(selected()!.validTo) }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="px-5 pt-4">
+              <div class="grid grid-cols-2 gap-2 rounded-xl bg-white/[0.03] p-1 border border-white/[0.06]">
+                <button
+                  type="button"
+                  (click)="setTab('withoutPrivateKey')"
+                  class="rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150"
+                  [class]="activeTab() === 'withoutPrivateKey'
+                    ? 'bg-[#6c63ff]/15 text-white border border-[#6c63ff]/25 shadow-[0_0_0_1px_rgba(108,99,255,0.12)]'
+                    : 'text-white/35 hover:text-white/60'">
+                  Without private key
+                </button>
+                <button
+                  type="button"
+                  (click)="setTab('withPrivateKey')"
+                  class="rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150"
+                  [class]="activeTab() === 'withPrivateKey'
+                    ? 'bg-[#6c63ff]/15 text-white border border-[#6c63ff]/25 shadow-[0_0_0_1px_rgba(108,99,255,0.12)]'
+                    : 'text-white/35 hover:text-white/60'">
+                  With private key
+                </button>
+              </div>
+            </div>
+
+            @if (activeTab() === 'withoutPrivateKey') {
+              <!-- Download options -->
+              <div class="px-5 py-5">
+                <p class="text-[0.7rem] text-white/30 uppercase tracking-[0.07em] mb-3">Choose format</p>
+
+                <div class="flex flex-col gap-3">
+
+                  <!-- PEM button -->
+                  <button
+                    (click)="download('pem')"
+                    [disabled]="dl.inProgress || selected()!.revoked"
+                    class="group flex items-center gap-3 w-full px-4 py-3.5 rounded-xl border
+                           transition-all duration-150 cursor-pointer text-left
+                           disabled:opacity-40 disabled:cursor-not-allowed"
+                    [class]="dl.lastFormat === 'pem' && dl.success
+                      ? 'bg-emerald-500/10 border-emerald-500/30'
+                      : 'bg-white/[0.03] border-white/[0.08] hover:border-[#6c63ff]/40 hover:bg-[#6c63ff]/5'">
+
+                    <!-- Format icon -->
+                    <div class="w-9 h-9 rounded-lg shrink-0 grid place-items-center transition-colors duration-150"
+                         [class]="dl.lastFormat === 'pem' && dl.success
+                           ? 'bg-emerald-500/15 text-emerald-400'
+                           : 'bg-white/[0.06] text-white/40 group-hover:bg-[#6c63ff]/15 group-hover:text-[#8b83ff]'">
+                      @if (dl.inProgress && dl.lastFormat === 'pem') {
+                        <div class="w-4 h-4 border border-white/20 border-t-[#8b83ff] rounded-full animate-spin"></div>
+                      } @else if (dl.lastFormat === 'pem' && dl.success) {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      } @else {
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                          <line x1="16" y1="13" x2="8" y2="13"/>
+                          <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                      }
+                    </div>
+
+                    <!-- Label -->
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-white/80 group-hover:text-white transition-colors">
+                        Download as
+                        <span class="font-mono text-[#8b83ff]">.pem</span>
+                      </p>
+                      <p class="text-xs text-white/25 mt-0.5">
+                        Base64-encoded X.509 · human-readable
+                      </p>
+                    </div>
+
+                    <!-- Arrow -->
+                    @if (!(dl.inProgress && dl.lastFormat === 'pem') && !(dl.lastFormat === 'pem' && dl.success)) {
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                           class="text-white/15 group-hover:text-[#8b83ff] transition-colors shrink-0">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                    }
+                  </button>
+
+                  <!-- CER button -->
+                  <button
+                    (click)="download('cer')"
+                    [disabled]="dl.inProgress || selected()!.revoked"
+                    class="group flex items-center gap-3 w-full px-4 py-3.5 rounded-xl border
+                           transition-all duration-150 cursor-pointer text-left
+                           disabled:opacity-40 disabled:cursor-not-allowed"
+                    [class]="dl.lastFormat === 'cer' && dl.success
+                      ? 'bg-emerald-500/10 border-emerald-500/30'
+                      : 'bg-white/[0.03] border-white/[0.08] hover:border-[#6c63ff]/40 hover:bg-[#6c63ff]/5'">
+
+                    <!-- Format icon -->
+                    <div class="w-9 h-9 rounded-lg shrink-0 grid place-items-center transition-colors duration-150"
+                         [class]="dl.lastFormat === 'cer' && dl.success
+                           ? 'bg-emerald-500/15 text-emerald-400'
+                           : 'bg-white/[0.06] text-white/40 group-hover:bg-[#6c63ff]/15 group-hover:text-[#8b83ff]'">
+                      @if (dl.inProgress && dl.lastFormat === 'cer') {
+                        <div class="w-4 h-4 border border-white/20 border-t-[#8b83ff] rounded-full animate-spin"></div>
+                      } @else if (dl.lastFormat === 'cer' && dl.success) {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      } @else {
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                      }
+                    </div>
+
+                    <!-- Label -->
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-white/80 group-hover:text-white transition-colors">
+                        Download as
+                        <span class="font-mono text-[#8b83ff]">.cer</span>
+                      </p>
+                      <p class="text-xs text-white/25 mt-0.5">
+                        DER binary · Windows / macOS certificate stores
+                      </p>
+                    </div>
+
+                    <!-- Arrow -->
+                    @if (!(dl.inProgress && dl.lastFormat === 'cer') && !(dl.lastFormat === 'cer' && dl.success)) {
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                           class="text-white/15 group-hover:text-[#8b83ff] transition-colors shrink-0">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                    }
+                  </button>
+                </div>
+
+                <!-- Success notice -->
+                @if (dl.success) {
+                  <div class="flex items-center gap-2 mt-4 px-3.5 py-3 bg-emerald-500/8
+                              border border-emerald-500/20 rounded-xl text-emerald-400 text-xs">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>
+                      <strong class="font-mono">certificate-{{ selected()!.serialNumber }}.{{ dl.lastFormat }}</strong>
+                      saved successfully.
+                    </span>
+                  </div>
+                }
+
+                <!-- Download error -->
+                @if (dl.error) {
+                  <div class="flex items-center gap-2 mt-4 px-3.5 py-3 bg-red-500/8
+                              border border-red-500/20 rounded-xl text-red-400 text-xs">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="8" x2="12" y2="12"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    {{ dl.error }}
+                  </div>
+                }
+
+                <!-- Revoked warning -->
+                @if (selected()!.revoked) {
+                  <div class="flex items-center gap-2 mt-4 px-3.5 py-3 bg-red-500/8
+                              border border-red-500/20 rounded-xl text-red-400 text-xs">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                    </svg>
+                    This certificate has been revoked and cannot be downloaded.
+                  </div>
+                }
+              </div>
+
+              <!-- Info footer -->
+              <div class="px-5 py-3.5 border-t border-white/[0.06] bg-white/[0.01]">
+                <p class="text-[0.68rem] text-white/20 leading-relaxed">
+                  Private key is never included in this download.
+                  Use the second tab when the private-key export is ready.
+                </p>
+              </div>
+            } @else {
+              <div class="px-5 py-5 flex flex-col gap-4">
+
+                <!-- Password field -->
+                <div>
+                  <p class="text-[0.7rem] text-white/30 uppercase tracking-[0.07em] mb-2">
+                    Keystore password
+                  </p>
+                  <div class="relative">
+                    <input
+                      [type]="showPassword() ? 'text' : 'password'"
+                      [value]="exportPassword()"
+                      (input)="exportPassword.set($any($event.target).value)"
+                      placeholder="Choose a password to protect the file…"
+                      class="w-full bg-white/[0.03] border border-white/[0.07] rounded-xl text-sm
+                            text-white/70 placeholder-white/20 pl-4 pr-10 py-2.5
+                            focus:outline-none focus:border-[#6c63ff]/40 transition-colors font-['DM_Sans']"/>
+                    <button
+                      type="button"
+                      (click)="toggleShowPassword()"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-white/25
+                            hover:text-white/50 transition-colors border-none bg-transparent cursor-pointer">
+                      @if (showPassword()) {
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                          <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                      } @else {
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      }
+                    </button>
+                  </div>
+                  <p class="text-[0.65rem] text-white/20 mt-1.5 leading-relaxed">
+                    You'll need this password to open the downloaded keystore file.
+                  </p>
+                </div>
+
+                <!-- Format buttons -->
+                <div>
+                  <p class="text-[0.7rem] text-white/30 uppercase tracking-[0.07em] mb-3">Choose format</p>
+                  <div class="flex flex-col gap-3">
+
+                    <!-- PKCS12 button -->
+                    <button
+                      (click)="download('p12')"
+                      [disabled]="dl.inProgress || selected()!.revoked || !exportPassword().trim()"
+                      class="group flex items-center gap-3 w-full px-4 py-3.5 rounded-xl border
+                            transition-all duration-150 cursor-pointer text-left
+                            disabled:opacity-40 disabled:cursor-not-allowed"
+                      [class]="dl.lastFormat === 'p12' && dl.success
+                        ? 'bg-emerald-500/10 border-emerald-500/30'
+                        : 'bg-white/[0.03] border-white/[0.08] hover:border-[#6c63ff]/40 hover:bg-[#6c63ff]/5'">
+
+                      <div class="w-9 h-9 rounded-lg shrink-0 grid place-items-center transition-colors duration-150"
+                          [class]="dl.lastFormat === 'p12' && dl.success
+                            ? 'bg-emerald-500/15 text-emerald-400'
+                            : 'bg-white/[0.06] text-white/40 group-hover:bg-[#6c63ff]/15 group-hover:text-[#8b83ff]'">
+                        @if (dl.inProgress && dl.lastFormat === 'p12') {
+                          <div class="w-4 h-4 border border-white/20 border-t-[#8b83ff] rounded-full animate-spin"></div>
+                        } @else if (dl.lastFormat === 'p12' && dl.success) {
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        } @else {
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                          </svg>
+                        }
+                      </div>
+
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white/80 group-hover:text-white transition-colors">
+                          Download as <span class="font-mono text-[#8b83ff]">.p12</span>
+                        </p>
+                        <p class="text-xs text-white/25 mt-0.5">PKCS#12 · cert + private key · widely supported</p>
+                      </div>
+
+                      @if (!(dl.inProgress && dl.lastFormat === 'p12') && !(dl.lastFormat === 'p12' && dl.success)) {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            class="text-white/15 group-hover:text-[#8b83ff] transition-colors shrink-0">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="7 10 12 15 17 10"/>
+                          <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                      }
+                    </button>
+
+                    <!-- JKS button -->
+                    <button
+                      (click)="download('jks')"
+                      [disabled]="dl.inProgress || selected()!.revoked || !exportPassword().trim()"
+                      class="group flex items-center gap-3 w-full px-4 py-3.5 rounded-xl border
+                            transition-all duration-150 cursor-pointer text-left
+                            disabled:opacity-40 disabled:cursor-not-allowed"
+                      [class]="dl.lastFormat === 'jks' && dl.success
+                        ? 'bg-emerald-500/10 border-emerald-500/30'
+                        : 'bg-white/[0.03] border-white/[0.08] hover:border-[#6c63ff]/40 hover:bg-[#6c63ff]/5'">
+
+                      <div class="w-9 h-9 rounded-lg shrink-0 grid place-items-center transition-colors duration-150"
+                          [class]="dl.lastFormat === 'jks' && dl.success
+                            ? 'bg-emerald-500/15 text-emerald-400'
+                            : 'bg-white/[0.06] text-white/40 group-hover:bg-[#6c63ff]/15 group-hover:text-[#8b83ff]'">
+                        @if (dl.inProgress && dl.lastFormat === 'jks') {
+                          <div class="w-4 h-4 border border-white/20 border-t-[#8b83ff] rounded-full animate-spin"></div>
+                        } @else if (dl.lastFormat === 'jks' && dl.success) {
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        } @else {
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                          </svg>
+                        }
+                      </div>
+
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white/80 group-hover:text-white transition-colors">
+                          Download as <span class="font-mono text-[#8b83ff]">.jks</span>
+                        </p>
+                        <p class="text-xs text-white/25 mt-0.5">Java KeyStore · cert + private key · Java ecosystem</p>
+                      </div>
+
+                      @if (!(dl.inProgress && dl.lastFormat === 'jks') && !(dl.lastFormat === 'jks' && dl.success)) {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            class="text-white/15 group-hover:text-[#8b83ff] transition-colors shrink-0">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="7 10 12 15 17 10"/>
+                          <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                      }
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Success notice -->
+                @if (dl.success && (dl.lastFormat === 'p12' || dl.lastFormat === 'jks')) {
+                  <div class="flex items-center gap-2 px-3.5 py-3 bg-emerald-500/8
+                              border border-emerald-500/20 rounded-xl text-emerald-400 text-xs">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>
+                      <strong class="font-mono">certificate-{{ selected()!.serialNumber }}.{{ dl.lastFormat }}</strong>
+                      saved. Keep the password safe — it cannot be recovered.
+                    </span>
+                  </div>
+                }
+
+                <!-- Error -->
+                @if (dl.error) {
+                  <div class="flex items-center gap-2 px-3.5 py-3 bg-red-500/8
+                              border border-red-500/20 rounded-xl text-red-400 text-xs">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="8" x2="12" y2="12"/>
+                      <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    {{ dl.error }}
+                  </div>
+                }
+
+                <!-- Revoked warning -->
+                @if (selected()!.revoked) {
+                  <div class="flex items-center gap-2 px-3.5 py-3 bg-red-500/8
+                              border border-red-500/20 rounded-xl text-red-400 text-xs">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                    </svg>
+                    This certificate has been revoked and cannot be downloaded.
+                  </div>
+                }
+              </div>
+
+              <div class="px-5 py-3.5 border-t border-white/[0.06] bg-white/[0.01]">
+                <p class="text-[0.68rem] text-white/20 leading-relaxed">
+                  The private key never leaves the server unencrypted.
+                  The keystore is protected by the password you enter above.
+                </p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

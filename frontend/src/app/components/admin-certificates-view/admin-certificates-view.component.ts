@@ -59,7 +59,7 @@ export class AdminCertificatesViewComponent {
         this.certificates = certs;
         this.applyFilters();
       },
-      error: (err) => console.error('Greška pri učitavanju sertifikata', err)
+      error: (err) => console.error('Error loading certificates.', err)
     });
   }
 
@@ -95,9 +95,9 @@ export class AdminCertificatesViewComponent {
   }
 
   getStatusLabel(cert: CertificateData): string {
-    if (cert.revoked) return 'Povučen';
-    if (this.isExpired(cert)) return 'Istekao';
-    return 'Aktivan';
+    if (cert.revoked) return 'Revoked';
+    if (this.isExpired(cert)) return 'Expired';
+    return 'Active';
   }
 
   getStatusClass(cert: CertificateData): string {
@@ -157,7 +157,7 @@ export class AdminCertificatesViewComponent {
         this.applyFilters();
         this.revokeTarget = null;
       },
-      error: (err) => console.error('Greška pri povlačenju', err)
+      error: (err) => console.error('Error while revoking certificate.', err)
     });
   }
 

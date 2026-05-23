@@ -108,13 +108,13 @@ public class CertificateGenerator {
             return certConverter.getCertificate(certHolder);
 
         } catch (OperatorCreationException e) {
-            throw new RuntimeException("Greška pri kreiranju content signera: " + e.getMessage(), e);
+            throw new RuntimeException("Error creating content signer: " + e.getMessage(), e);
         } catch (CertificateException e) {
-            throw new RuntimeException("Greška pri konverziji sertifikata: " + e.getMessage(), e);
+            throw new RuntimeException("Error converting certificate: " + e.getMessage(), e);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Algoritam nije pronađen: " + e.getMessage(), e);
+            throw new RuntimeException("Algorithm not found: " + e.getMessage(), e);
         } catch (Exception e) {
-            throw new RuntimeException("Neočekivana greška pri generisanju sertifikata: " + e.getMessage(), e);
+            throw new RuntimeException("Unexpected error generating certificate: " + e.getMessage(), e);
         }
     }
 }

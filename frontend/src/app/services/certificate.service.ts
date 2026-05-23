@@ -19,7 +19,6 @@ export interface CertificateDto {
   revoked: boolean;
 }
 
-// Alias — admin pages already use CertificateData, keep it pointing to the same shape
 export type CertificateData = CertificateDto;
 
 export interface IssueCertificateRequest {
@@ -58,7 +57,9 @@ export interface CsrUploadRequest {
 export interface CsrResponse {
   serialNumber: string;
   certificatePem: string;
-  privateKeyPem?: string;
+  keystoreBase64?: string;
+  p12Base64?: string;
+  keystorePassword?: string;
   message: string;
 }
 
@@ -67,6 +68,22 @@ export class CertificateService {
   private readonly API_URL = 'http://localhost:8081/api/certificates';
 
   constructor(private http: HttpClient) {}
+
+  // ── CSR / User endpoints ────────────────────────────────────────────────────
+
+  listAvailableCas(): Observable<CertificateDto[]> {
+    return this.http.get<CertificateDto[]>(`${this.API_URL}/csr/available-cas`);
+  }
+
+  autogenerate(request: CsrRequest): Observable<CsrResponse> {
+    return this.http.post<CsrResponse>(`${this.API_URL}/csr/autogenerate`, request);
+  }
+
+  uploadCsr(request: CsrUploadRequest): Observable<CsrResponse> {
+    return this.http.post<CsrResponse>(`${this.API_URL}/csr/upload`, request);
+  }
+
+  // ── Regular user endpoints ──────────────────────────────────────────────────
 
   getMyCertificates(): Observable<CertificateDto[]> {
     return this.http.get<CertificateDto[]>(`${this.API_URL}/my`);
@@ -79,24 +96,19 @@ export class CertificateService {
   revokeMyCertificate(serialNumber: string, reason: string): Observable<void> {
     return this.http.put<void>(`${this.API_URL}/my/${serialNumber}/revoke`, { reason });
   }
-  
-  autogenerate(request: CsrRequest): Observable<CsrResponse> {
-    return this.http.post<CsrResponse>(`${this.API_URL}/csr/autogenerate`, request);
-  }
-  uploadCsr(request: CsrUploadRequest): Observable<CsrResponse> {
-    return this.http.post<CsrResponse>(`${this.API_URL}/csr/upload`, request);
-  }
+
+  // ── CA user endpoints ───────────────────────────────────────────────────────
 
   issueCertificate(request: IssueCertificateRequest): Observable<CertificateDto> {
     return this.http.post<CertificateDto>(`${this.API_URL}/issue`, request);
   }
 
-  // CA user: issuers from their own org
+  /** CA user: issuers from their own org */
   getAvailableIssuers(): Observable<CertificateDto[]> {
     return this.http.get<CertificateDto[]>(`${this.API_URL}/my/issuers`);
   }
 
-  // Admin: all issuers system-wide
+  // ── Admin endpoints ─────────────────────────────────────────────────────────
   getAvailableIssuersAdmin(): Observable<CertificateDto[]> {
     return this.http.get<CertificateDto[]>(`${this.API_URL}/issuers`);
   }
@@ -110,10 +122,10 @@ export class CertificateService {
   }
 
   getCertificate(serialNumber: string): Observable<CertificateDto> {
-    return this.http.get<CertificateDto>(`${this.API_URL}/certificates/${serialNumber}`);
+    return this.http.get<CertificateDto>(`${this.API_URL}/${serialNumber}`);
   }
 
   revokeCertificate(serialNumber: string, reason: string): Observable<void> {
-    return this.http.put<void>(`${this.API_URL}/certificates/${serialNumber}/revoke`, { reason });
+    return this.http.put<void>(`${this.API_URL}/${serialNumber}/revoke`, { reason });
   }
 }

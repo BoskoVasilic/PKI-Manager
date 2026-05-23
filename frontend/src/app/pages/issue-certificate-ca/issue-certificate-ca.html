@@ -56,7 +56,7 @@
         <!-- Left panel -->
         <div class="lg:col-span-1 space-y-4">
 
-          <!-- Certificate type (simplified — no ROOT for CA users) -->
+          <!-- Certificate type -->
           <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
             <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Certificate type</h2>
             <div class="space-y-2">
@@ -295,17 +295,61 @@
 
               </div>
 
+              <!-- pathLenConstraint — only relevant for Intermediate CA -->
+              <div class="mt-4"
+                   [class.opacity-40]="!form.get('isCA')?.value"
+                   [class.pointer-events-none]="!form.get('isCA')?.value">
+                <div class="flex items-start gap-3 p-3 rounded border transition-all"
+                     [class.border-emerald-500\/20]="form.get('isCA')?.value"
+                     [class.bg-emerald-500\/5]="form.get('isCA')?.value"
+                     [class.border-gray-800]="!form.get('isCA')?.value">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <label class="text-xs text-gray-400">
+                        Path Length Constraint
+                        <span class="text-gray-600 ml-1">(BasicConstraints pathLen)</span>
+                      </label>
+                      <!-- info tooltip trigger -->
+                      <div class="relative group">
+                        <svg class="w-3.5 h-3.5 text-gray-600 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div class="absolute left-5 bottom-0 z-10 hidden group-hover:block w-56 px-3 py-2
+                                    bg-gray-950 border border-gray-700 rounded text-xs text-gray-400 shadow-xl">
+                          Maximum number of intermediate CA certificates that may follow this certificate in a chain.
+                          <span class="block mt-1 text-gray-600">0 = can only sign end-entity certs · Leave empty for unlimited.</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <input type="number" formControlName="pathLenConstraint"
+                             min="0" max="10" placeholder="Unlimited"
+                             class="w-32 bg-gray-800 border border-gray-700 rounded text-sm text-gray-300
+                                    placeholder-gray-600 px-3 py-2 focus:outline-none focus:border-emerald-500/50
+                                    transition-colors [appearance:textfield]
+                                    [&::-webkit-outer-spin-button]:appearance-none
+                                    [&::-webkit-inner-spin-button]:appearance-none" />
+                      <span class="text-xs text-gray-600">levels of sub-CAs allowed</span>
+                    </div>
+                    @if (hasError('pathLenConstraint')) {
+                      <p class="text-xs text-red-400 mt-1">Must be a whole number between 0 and 10, or left empty.</p>
+                    }
+                  </div>
+                </div>
+              </div>
+
               <!-- Context hint -->
               <p class="text-xs text-gray-700 mt-3 italic">
                 @if (form.get('isCA')?.value) {
                   keyCertSign and BasicConstraints are automatically enabled for Intermediate CA certificates.
                 } @else {
-                  keyCertSign and BasicConstraints are disabled for End-Entity certificates.
+                  keyCertSign, BasicConstraints, and Path Length Constraint are disabled for End-Entity certificates.
                 }
               </p>
             </div>
 
-            <!-- X500Name preview — mirrors admin -->
+            <!-- X500Name preview -->
             <div class="mt-6 pt-5 border-t border-gray-800">
               <h3 class="text-xs text-gray-500 tracking-widest uppercase mb-3">X500Name Preview</h3>
               <div class="bg-gray-950 rounded px-4 py-3 font-mono text-xs text-emerald-400 break-all">

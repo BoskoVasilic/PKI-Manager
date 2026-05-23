@@ -19,6 +19,9 @@ public class JwtUtil {
     @Value("${jwt.access-token-expiration-ms}")
     private long accessTokenExpirationMs;
 
+    @Value("${jwt.refresh-token-expiration-ms}")
+    private long refreshTokenExpirationMs;
+
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
@@ -29,10 +32,40 @@ public class JwtUtil {
                 .claim("role", user.getRole().name())
                 .claim("userId", user.getId())
                 .claim("organization", user.getOrganization())
+                .claim("twoFaEnabled", user.isTwoFactorEnabled())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessTokenExpirationMs))
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    public String generatePreAuthToken(User user) {
+        return Jwts.builder()
+                .subject(user.getEmail())
+                .claim("twoFaRequired", true)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 5 * 60 * 1000L))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String generateRefreshToken(User user) {
+        return Jwts.builder()
+                .subject(user.getEmail())
+                .claim("tokenType", "refresh")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshTokenExpirationMs))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public boolean isRefreshToken(String token) {
+        try {
+            String type = extractAllClaims(token).get("tokenType", String.class);
+            return "refresh".equals(type);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public Claims extractAllClaims(String token) {
@@ -54,6 +87,15 @@ public class JwtUtil {
     public boolean isTokenValid(String token) {
         try {
             return extractAllClaims(token).getExpiration().after(new Date());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isTwoFaRequired(String token) {
+        try {
+            Boolean val = extractAllClaims(token).get("twoFaRequired", Boolean.class);
+            return Boolean.TRUE.equals(val);
         } catch (Exception e) {
             return false;
         }
