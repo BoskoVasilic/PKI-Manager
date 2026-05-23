@@ -13,6 +13,11 @@ export interface LoginResponse {
   twoFaRequired: boolean;
 }
 
+export interface ChallengeResponse {
+  encryptedChallenge: string;
+  token: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -111,5 +116,45 @@ export class AuthService {
     } catch {
       return '';
     }
+  }
+
+  register(payload: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    firstName: string;
+    lastName: string;
+    organizationName: string;
+    publicKeyPem: string;
+  }): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.API_URL}/auth/register`, payload);
+  }
+
+  getActivationChallenge(token: string): Observable<ChallengeResponse> {
+    return this.http.get<ChallengeResponse>(`${this.API_URL}/auth/activate/challenge?token=${token}`);
+  }
+
+  activateAccount(token: string, decryptedChallenge: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.API_URL}/auth/activate`, {
+      token,
+      decryptedChallenge
+    });
+  }
+
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.API_URL}/auth/forgot-password`, { email });
+  }
+
+  getForgotPasswordChallenge(token: string): Observable<ChallengeResponse> {
+    return this.http.get<ChallengeResponse>(`${this.API_URL}/auth/forgot-password/challenge?token=${token}`);
+  }
+
+  resetPassword(token: string, decryptedChallenge: string, newPassword: string, confirmNewPassword: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.API_URL}/auth/forgot-password/reset`, {
+      token,
+      decryptedChallenge,
+      newPassword,
+      confirmNewPassword
+    });
   }
 }
