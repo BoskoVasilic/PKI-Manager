@@ -53,14 +53,6 @@ public class AuthController {
         );
     }
 
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<String> handleBadCredentials(BadCredentialsException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
-    }
-
-    public record LoginRequest(String email, String password) {}
-    public record LoginResponse(String accessToken, boolean twoFaRequired) {}
-
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequestDTO req) {
         try {
@@ -123,6 +115,13 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<String> handleBadCredentials(BadCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    }
+
+    public record LoginRequest(String email, String password) {}
     public record RefreshRequest(String refreshToken) {}
     public record LoginResponse(String accessToken, String refreshToken, boolean twoFaRequired) {}
 }

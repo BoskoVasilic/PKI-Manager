@@ -83,7 +83,23 @@ public class AuthService {
         );
     }
 
-    public record LoginResult(String token, boolean twoFaRequired) {}
+    public LoginResult refresh(String refreshToken) {
+        if (!jwtUtil.isTokenValid(refreshToken) || !jwtUtil.isRefreshToken(refreshToken)) {
+            throw new BadCredentialsException("Invalid or expired refresh token");
+        }
+
+        String email = jwtUtil.extractEmail(refreshToken);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new LoginResult(
+                jwtUtil.generateAccessToken(user),
+                jwtUtil.generateRefreshToken(user),
+                false
+        );
+    }
+
+    public record LoginResult(String accessToken, String refreshToken, boolean twoFaRequired) {}
 
     @Transactional
     public void register(RegisterRequestDTO req) {
@@ -140,7 +156,6 @@ public class AuthService {
         emailService.sendRegistrationActivationEmail(user.getEmail(), tokenValue);
     }
 
-
     public ChallengeResponseDTO getRegistrationChallenge(String tokenValue) {
         ActivationToken token = validateToken(tokenValue, "REGISTRATION");
         User user = userRepository.findById(token.getUserId())
@@ -175,7 +190,6 @@ public class AuthService {
         tokenRepository.save(token);
     }
 
-
     @Transactional
     public void initiateForgotPassword(ForgotPasswordRequestDTO req) {
         User user = userRepository.findByEmail(req.getEmail()).orElse(null);
@@ -206,7 +220,6 @@ public class AuthService {
         emailService.sendPasswordResetEmail(user.getEmail(), tokenValue);
     }
 
-
     public ChallengeResponseDTO getForgotPasswordChallenge(String tokenValue) {
         ActivationToken token = validateToken(tokenValue, "PASSWORD_RESET");
         User user = userRepository.findById(token.getUserId())
@@ -214,7 +227,6 @@ public class AuthService {
 
         return new ChallengeResponseDTO(user.getActivationChallenge(), tokenValue);
     }
-
 
     @Transactional
     public void resetPassword(ResetPasswordRequestDTO req) {
@@ -269,21 +281,4 @@ public class AuthService {
         }
         return token;
     }
-    public LoginResult refresh(String refreshToken) {
-        if (!jwtUtil.isTokenValid(refreshToken) || !jwtUtil.isRefreshToken(refreshToken)) {
-            throw new BadCredentialsException("Invalid or expired refresh token");
-        }
-
-        String email = jwtUtil.extractEmail(refreshToken);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return new LoginResult(
-                jwtUtil.generateAccessToken(user),
-                jwtUtil.generateRefreshToken(user),
-                false
-        );
-    }
-
-    public record LoginResult(String accessToken, String refreshToken, boolean twoFaRequired) {}
 }
