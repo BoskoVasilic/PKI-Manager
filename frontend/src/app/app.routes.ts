@@ -10,8 +10,11 @@ import { ChangePasswordComponent } from './components/change-password/change-pas
 import { CaUserRegisterComponent } from './components/ca-user-register/ca-user-register.component';
 import { IssueCertificateAdminComponent } from './components/issue-certificate-admin/issue-certificate-admin.component';
 import { AdminCertificatesViewComponent } from './components/admin-certificates-view/admin-certificates-view.component';
-import { ProfileComponent } from './components/profile/profile';  
+import { ProfileComponent } from './components/profile/profile';
 import { CertificateDownloadComponent } from './components/download-certificate/download-certificate';
+import {RegisterComponent} from './components/register/register.component';
+import {ActivateAccountComponent} from './components/activate-account/activate-account.component';
+import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -20,13 +23,16 @@ export const routes: Routes = [
   { path: 'admin/issue-certificate', component: IssueCertificateAdminComponent, canActivate: [authGuard] },
   { path: 'admin/certificates', component: AdminCertificatesViewComponent, canActivate: [authGuard] },
   { path: 'admin/register-ca', component: CaUserRegisterComponent },
+  { path: 'register', component: RegisterComponent },
+  { path: 'verify-account', component: ActivateAccountComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
   {
     path: 'dashboard',
     component: DashboardComponent,
     canActivate: [authGuard],
   },
   {
-    path: 'profile',                      
+    path: 'profile',
     component: ProfileComponent,
     canActivate: [authGuard],
   },

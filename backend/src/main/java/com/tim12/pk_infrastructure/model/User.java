@@ -41,11 +41,12 @@ public class User {
     @Builder.Default
     private boolean enabled = false;
 
-    // Stored public key (PEM format) used for identity verification during registration/password recovery
     @Column(columnDefinition = "TEXT")
     private String publicKey;
 
-    // Random string encrypted with the users public key, used during account activation
+    @Column(columnDefinition = "TEXT")
+    private String plainChallenge;
+
     @Column(columnDefinition = "TEXT")
     private String activationChallenge;
 

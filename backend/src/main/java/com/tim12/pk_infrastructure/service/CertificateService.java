@@ -88,7 +88,7 @@ public class CertificateService {
 
         Certificate issuerRecord = certificateRepository
                 .findBySerialNumber(req.getIssuerSerialNumber())
-                .orElseThrow(() -> new IllegalArgumentException("Issuer certificate not found."));
+                    .orElseThrow(() -> new IllegalArgumentException("Issuer certificate not found."));
 
         validateIssuer(issuerRecord, caller);
 
@@ -241,7 +241,7 @@ public class CertificateService {
             Certificate issuerData = certificateRepository
                     .findBySerialNumber(req.getIssuerSerialNumber())
                     .orElseThrow(() -> new RuntimeException(
-                            "Issuer sertifikat nije pronađen: " + req.getIssuerSerialNumber()));
+                            "Issuer certificate not found: " + req.getIssuerSerialNumber()));
 
             validateIssuerCertificate(issuerData);
             validateValidityPeriod(req, issuerData);
@@ -249,7 +249,7 @@ public class CertificateService {
             Organization issuerOrg = issuerData.getIssuingOrg();
             if (issuerOrg == null) {
                 throw new RuntimeException(
-                        "Issuer sertifikat nema organizaciju – ne mogu pronaći keystore.");
+                        "Issuer certificate has no organization – cannot find keystore.");
             }
 
             String   issuerKsPath = resolveKeyStorePath(issuerOrg);
@@ -264,7 +264,7 @@ public class CertificateService {
 
             if (issuer == null) {
                 throw new RuntimeException(
-                        "Nije moguće učitati issuera iz keystora. Proverite alias: " + issuerData.getAlias());
+                        "Cannot load issuer from keystore. Check alias: " + issuerData.getAlias());
             }
 
             subjectKeyPair = generateKeyPair();
@@ -295,12 +295,12 @@ public class CertificateService {
         );
 
         if (x509Cert == null) {
-            throw new RuntimeException("Generisanje sertifikata nije uspelo.");
+            throw new RuntimeException("Certificate generation failed.");
         }
 
         if (subjectOrg == null) {
             throw new RuntimeException(
-                    "Organizacija mora biti navedena kako bi se sertifikat sačuvao u keystore-u.");
+                    "Organization must be specified to store the certificate in the keystore.");
         }
 
         PrivateKey privateKeyToStore = (req.getType() == CertificateType.ROOT)
@@ -418,19 +418,19 @@ public class CertificateService {
         Date now = new Date();
 
         if (now.before(issuerData.getValidFrom()))
-            throw new RuntimeException("Issuer sertifikat '" + issuerData.getSubjectCN() + "' još uvek nije počeo da važi.");
+            throw new RuntimeException("Issuer certificate '" + issuerData.getSubjectCN() + "' is not yet valid.");
         if (now.after(issuerData.getValidTo()))
-            throw new RuntimeException("Issuer sertifikat '" + issuerData.getSubjectCN() + "' je istekao.");
+            throw new RuntimeException("Issuer certificate '" + issuerData.getSubjectCN() + "' has expired.");
         if (issuerData.isRevoked())
-            throw new RuntimeException("Issuer sertifikat '" + issuerData.getSubjectCN() + "' je povučen (razlog: " + issuerData.getRevocationReason() + ").");
+            throw new RuntimeException("Issuer certificate '" + issuerData.getSubjectCN() + "' has been revoked (reason: " + issuerData.getRevocationReason() + ").");
         if (issuerData.getType() == CertificateType.END_ENTITY)
-            throw new RuntimeException("End-Entity sertifikat ne može biti issuer.");
+            throw new RuntimeException("End-Entity certificate cannot be an issuer.");
 
         if (issuerData.getIssuerSerialNumber() != null) {
             Certificate parent = certificateRepository
                     .findBySerialNumber(issuerData.getIssuerSerialNumber())
                     .orElseThrow(() -> new RuntimeException(
-                            "Issuer lanca nije pronađen u bazi: " + issuerData.getIssuerSerialNumber()));
+                            "Issuer chain certificate not found in database: " + issuerData.getIssuerSerialNumber()));
             validateIssuerCertificate(parent);
         }
     }
@@ -521,7 +521,7 @@ public class CertificateService {
             kg.initialize(2048, rng);
             return kg.generateKeyPair();
         } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
-            throw new RuntimeException("Greška pri generisanju ključeva: " + e.getMessage(), e);
+            throw new RuntimeException("Error generating keys: " + e.getMessage(), e);
         }
     }
 
