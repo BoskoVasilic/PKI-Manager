@@ -63,11 +63,32 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (user.isTwoFactorEnabled()) {
-            return new LoginResult(jwtUtil.generatePreAuthToken(user), true);
+            // Pre-auth token only — refresh token issued after 2FA completes
+            return new LoginResult(jwtUtil.generatePreAuthToken(user), null, true);
         }
 
-        return new LoginResult(jwtUtil.generateAccessToken(user), false);
+        return new LoginResult(
+                jwtUtil.generateAccessToken(user),
+                jwtUtil.generateRefreshToken(user),
+                false
+        );
     }
 
-    public record LoginResult(String token, boolean twoFaRequired) {}
+    public LoginResult refresh(String refreshToken) {
+        if (!jwtUtil.isTokenValid(refreshToken) || !jwtUtil.isRefreshToken(refreshToken)) {
+            throw new BadCredentialsException("Invalid or expired refresh token");
+        }
+
+        String email = jwtUtil.extractEmail(refreshToken);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new LoginResult(
+                jwtUtil.generateAccessToken(user),
+                jwtUtil.generateRefreshToken(user),
+                false
+        );
+    }
+
+    public record LoginResult(String accessToken, String refreshToken, boolean twoFaRequired) {}
 }
