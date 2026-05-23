@@ -236,23 +236,16 @@ public class AuthService {
     }
 
     private void validatePassword(String password) {
-        if (password == null || password.length() < 8) {
-            throw new RuntimeException("Password must be at least 8 characters long.");
+        if (password == null || password.isBlank()) {
+            throw new RuntimeException("Password is required.");
         }
+
+        if (password.length() < 15) {
+            throw new RuntimeException("Password must be at least 15 characters long.");
+        }
+
         if (password.length() > 128) {
-            throw new RuntimeException("Password must not be longer than 128 characters.");
-        }
-        if (!password.matches(".*[A-Z].*")) {
-            throw new RuntimeException("Password must contain at least one uppercase letter.");
-        }
-        if (!password.matches(".*[a-z].*")) {
-            throw new RuntimeException("Password must contain at least one lowercase letter.");
-        }
-        if (!password.matches(".*[0-9].*")) {
-            throw new RuntimeException("Password must contain at least one number.");
-        }
-        if (!password.matches(".*[^A-Za-z0-9].*")) {
-            throw new RuntimeException("Password must contain at least one special character (!@#$%...).");
+            throw new RuntimeException("Password must not exceed 128 characters.");
         }
     }
 
