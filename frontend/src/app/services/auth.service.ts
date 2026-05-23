@@ -17,6 +17,7 @@ export interface LoginResponse {
 export interface ChallengeResponse {
   encryptedChallenge: string;
   token: string;
+  twoFactorEnabled: boolean;
 }
 
 @Injectable({
