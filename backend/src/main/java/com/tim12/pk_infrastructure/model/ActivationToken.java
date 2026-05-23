@@ -29,4 +29,6 @@ public class ActivationToken {
 
     @Column(nullable = false)
     private boolean used;
+
+    private String tokenType;
 }
