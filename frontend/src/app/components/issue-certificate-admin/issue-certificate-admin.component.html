@@ -53,7 +53,7 @@
     <form (ngSubmit)="onSubmit()" #certForm="ngForm">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- Left panel: Tip + Issuer -->
+        <!-- Left panel -->
         <div class="lg:col-span-1 space-y-4">
 
           <!-- Certificate type -->
@@ -64,49 +64,58 @@
                 <label
                   class="flex items-start gap-3 p-3 rounded border cursor-pointer transition-all"
                   [ngClass]="form.type === opt.value
-                ? 'border-emerald-500/50 bg-emerald-500/5'
-                : 'border-gray-800 hover:border-gray-700'">
+                    ? 'border-emerald-500/50 bg-emerald-500/5'
+                    : 'border-gray-800 hover:border-gray-700'">
                   <input type="radio" [(ngModel)]="form.type" name="type" [value]="opt.value"
                          (change)="onTypeChange()" class="mt-0.5 accent-emerald-500" required />
                   <div>
                     <p class="text-sm text-gray-200">{{ opt.label }}</p>
+                    <p class="text-xs text-gray-600 mt-0.5">
+                      @if (opt.value === 'ROOT') { Self-signed, trust anchor }
+                      @else if (opt.value === 'INTERMEDIATE') { Can sign other certificates }
+                      @else { Users, servers, devices }
+                    </p>
                   </div>
                 </label>
               }
             </div>
           </div>
 
-          <!-- Issuer selection (hidden for ROOT) -->
+          <!-- Issuer selection — hidden for ROOT, shown for others -->
           @if (form.type !== 'ROOT') {
             <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
               <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Issuer (CA)</h2>
-
-              <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
-                @for (issuer of issuers; track issuer.serialNumber) {
-                  <label
-                    class="flex items-start gap-3 p-3 rounded border cursor-pointer transition-all block"
-                    [ngClass]="form.issuerSerialNumber === issuer.serialNumber
-                  ? 'border-emerald-500/50 bg-emerald-500/5'
-                  : 'border-gray-800 hover:border-gray-700'">
-                    <input type="radio" [(ngModel)]="form.issuerSerialNumber" name="issuer"
-                           [value]="issuer.serialNumber" (change)="onIssuerChange(issuer)"
-                           class="mt-1 accent-emerald-500" required />
-                    <div class="min-w-0">
-                      <p class="text-sm text-gray-200 truncate">{{ issuer.commonName }}</p>
-                      <p class="text-xs text-gray-600 truncate">{{ issuer.organization }}</p>
-                      <div class="flex items-center gap-2 mt-1">
-                        <span [ngClass]="getTypeClass(issuer.type)"
-                              class="text-xs px-1.5 py-0.5 rounded border tracking-widest uppercase">{{ issuer.type }}</span>
-                        <span class="text-xs text-gray-600">until {{ issuer.validTo | date:'dd.MM.yy' }}</span>
+              @if (!form.type) {
+                <p class="text-xs text-gray-600 italic">Select a certificate type first.</p>
+              } @else {
+                <div class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                  @for (issuer of issuers; track issuer.serialNumber) {
+                    <label
+                      class="flex items-start gap-3 p-3 rounded border cursor-pointer transition-all block"
+                      [ngClass]="form.issuerSerialNumber === issuer.serialNumber
+                        ? 'border-emerald-500/50 bg-emerald-500/5'
+                        : 'border-gray-800 hover:border-gray-700'">
+                      <input type="radio" [(ngModel)]="form.issuerSerialNumber" name="issuer"
+                             [value]="issuer.serialNumber" (change)="onIssuerChange(issuer)"
+                             class="mt-1 accent-emerald-500" required />
+                      <div class="min-w-0">
+                        <p class="text-sm text-gray-200 truncate">{{ issuer.commonName }}</p>
+                        <p class="text-xs text-gray-600 truncate">{{ issuer.organization }}</p>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                          <span [ngClass]="getTypeClass(issuer.type)"
+                                class="text-xs px-1.5 py-0.5 rounded border tracking-widest uppercase">{{ issuer.type }}</span>
+                          <span class="text-xs text-gray-600">until {{ issuer.validTo | date:'dd.MM.yy' }}</span>
+                        </div>
+                        @if (issuer.serialNumber) {
+                          <p class="text-[10px] text-gray-700 font-mono mt-1 truncate">{{ issuer.serialNumber }}</p>
+                        }
                       </div>
-                    </div>
-                  </label>
-                } @empty {
-                  <div class="text-xs text-yellow-500/70 italic">
-                    No CA certificates available.
-                  </div>
-                }
-              </div>
+                    </label>
+                  } @empty {
+                    <div class="text-xs text-yellow-500/70 italic">No CA certificates available.</div>
+                  }
+                </div>
+              }
             </div>
           }
 
@@ -118,14 +127,16 @@
                 <label class="text-xs text-gray-500 block mb-1">Start date</label>
                 <input type="date" [(ngModel)]="form.validFrom" name="validFrom"
                        [min]="today" [max]="selectedIssuer?.validTo"
-                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 px-3 py-2 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 px-3 py-2
+                              focus:outline-none focus:border-emerald-500/50 transition-colors [color-scheme:dark]"
                        required />
               </div>
               <div>
                 <label class="text-xs text-gray-500 block mb-1">End date</label>
                 <input type="date" [(ngModel)]="form.validTo" name="validTo"
                        [min]="form.validFrom || today" [max]="selectedIssuer?.validTo"
-                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 px-3 py-2 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 px-3 py-2
+                              focus:outline-none focus:border-emerald-500/50 transition-colors [color-scheme:dark]"
                        required />
               </div>
               @if (selectedIssuer) {
@@ -137,7 +148,7 @@
           </div>
         </div>
 
-        <!-- Right panel: Subject fields -->
+        <!-- Right panel: Subject + Extensions + Preview -->
         <div class="lg:col-span-2">
           <div class="bg-gray-900 border border-gray-800 rounded-lg p-5">
             <h2 class="text-xs text-gray-500 tracking-widest uppercase mb-6">Subject details (X500Name)</h2>
@@ -151,7 +162,9 @@
                 </label>
                 <input type="text" [(ngModel)]="form.commonName" name="commonName"
                        placeholder="e.g. Root CA, John Doe, server.example.com"
-                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300
+                              placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50
+                              transition-colors"
                        required />
               </div>
 
@@ -162,7 +175,9 @@
                 </label>
                 <input type="text" [(ngModel)]="form.organization" name="organization"
                        placeholder="e.g. Acme Corp"
-                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300
+                              placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50
+                              transition-colors"
                        required />
               </div>
 
@@ -171,7 +186,9 @@
                 <label class="text-xs text-gray-500 block mb-1">Organization Unit (OU)</label>
                 <input type="text" [(ngModel)]="form.organizationUnit" name="organizationUnit"
                        placeholder="e.g. IT Department"
-                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300
+                              placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50
+                              transition-colors" />
               </div>
 
               <!-- C -->
@@ -180,7 +197,8 @@
                   Country (C) <span class="text-red-500">*</span>
                 </label>
                 <select [(ngModel)]="form.country" name="country"
-                        class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                        class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300
+                               px-3 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-colors"
                         required>
                   <option value="">Select a country...</option>
                   <option value="RS">RS - Serbia</option>
@@ -198,7 +216,9 @@
                 <label class="text-xs text-gray-500 block mb-1">Email (E)</label>
                 <input type="email" [(ngModel)]="form.email" name="email"
                        placeholder="e.g. admin@example.com"
-                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300 placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50 transition-colors" />
+                       class="w-full bg-gray-800 border border-gray-700 rounded text-sm text-gray-300
+                              placeholder-gray-600 px-3 py-2.5 focus:outline-none focus:border-emerald-500/50
+                              transition-colors" />
               </div>
             </div>
 
@@ -206,42 +226,138 @@
             <div class="mt-6 pt-5 border-t border-gray-800">
               <h3 class="text-xs text-gray-500 tracking-widest uppercase mb-4">Extensions</h3>
               <div class="grid grid-cols-2 gap-3">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" [(ngModel)]="form.extensions.keyCertSign"
-                         name="keyCertSign" class="accent-emerald-500"
-                         [disabled]="form.type === 'END_ENTITY'" />
-                  <span class="text-xs text-gray-400">keyCertSign</span>
+
+                <!-- keyCertSign: auto-enabled for CA, locked for END_ENTITY -->
+                <label class="flex items-center gap-2"
+                       [ngClass]="form.type === 'END_ENTITY' || form.type === ''
+                         ? 'opacity-40 cursor-default select-none'
+                         : 'cursor-default select-none opacity-60'">
+                  <input type="checkbox"
+                         class="accent-emerald-500"
+                         [checked]="form.extensions.keyCertSign"
+                         disabled />
+                  <span class="text-xs text-gray-400">
+                    keyCertSign
+                    @if (form.type === 'ROOT' || form.type === 'INTERMEDIATE') {
+                      <span class="text-gray-600 ml-1">(auto)</span>
+                    }
+                  </span>
                 </label>
+
+                <!-- BasicConstraints isCA: auto-enabled for CA, locked for END_ENTITY -->
+                <label class="flex items-center gap-2"
+                       [ngClass]="form.type === 'END_ENTITY' || form.type === ''
+                         ? 'opacity-40 cursor-default select-none'
+                         : 'cursor-default select-none opacity-60'">
+                  <input type="checkbox"
+                         class="accent-emerald-500"
+                         [checked]="form.extensions.basicConstraintsCA"
+                         disabled />
+                  <span class="text-xs text-gray-400">
+                    BasicConstraints (isCA)
+                    @if (form.type === 'ROOT' || form.type === 'INTERMEDIATE') {
+                      <span class="text-gray-600 ml-1">(auto)</span>
+                    }
+                  </span>
+                </label>
+
+                <!-- cRLSign: always user-controllable -->
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" [(ngModel)]="form.extensions.cRLSign"
                          name="cRLSign" class="accent-emerald-500" />
                   <span class="text-xs text-gray-400">cRLSign</span>
                 </label>
+
+                <!-- digitalSignature: always user-controllable -->
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" [(ngModel)]="form.extensions.digitalSignature"
                          name="digitalSignature" class="accent-emerald-500" />
                   <span class="text-xs text-gray-400">digitalSignature</span>
                 </label>
-                <label class="flex items-center gap-2 cursor-pointer">
+
+                <!-- keyEncipherment: disabled for CA types -->
+                <label class="flex items-center gap-2"
+                       [ngClass]="(form.type === 'ROOT' || form.type === 'INTERMEDIATE')
+                         ? 'opacity-40 cursor-default select-none'
+                         : 'cursor-pointer'">
                   <input type="checkbox" [(ngModel)]="form.extensions.keyEncipherment"
-                         name="keyEncipherment" class="accent-emerald-500" />
+                         name="keyEncipherment" class="accent-emerald-500"
+                         [disabled]="form.type === 'ROOT' || form.type === 'INTERMEDIATE'" />
                   <span class="text-xs text-gray-400">keyEncipherment</span>
                 </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" [(ngModel)]="form.extensions.basicConstraintsCA"
-                         name="basicConstraintsCA" class="accent-emerald-500"
-                         [disabled]="form.type === 'END_ENTITY'" />
-                  <span class="text-xs text-gray-400">BasicConstraints (isCA)</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
+
+                <!-- serverAuth: disabled for CA types -->
+                <label class="flex items-center gap-2"
+                       [ngClass]="(form.type === 'ROOT' || form.type === 'INTERMEDIATE')
+                         ? 'opacity-40 cursor-default select-none'
+                         : 'cursor-pointer'">
                   <input type="checkbox" [(ngModel)]="form.extensions.serverAuth"
-                         name="serverAuth" class="accent-emerald-500" />
-                  <span class="text-xs text-gray-400">serverAuth (EKU)</span>
+                         name="serverAuth" class="accent-emerald-500"
+                         [disabled]="form.type === 'ROOT' || form.type === 'INTERMEDIATE'" />
+                  <span class="text-xs"
+                        [ngClass]="(form.type === 'ROOT' || form.type === 'INTERMEDIATE')
+                          ? 'text-gray-600'
+                          : 'text-gray-400'">serverAuth (EKU)</span>
                 </label>
+
               </div>
+
+              <!-- pathLenConstraint — only relevant for ROOT or INTERMEDIATE -->
+              <div class="mt-4 transition-opacity"
+                   [class.opacity-40]="form.type === 'END_ENTITY' || form.type === ''"
+                   [class.pointer-events-none]="form.type === 'END_ENTITY' || form.type === ''">
+                <div class="flex items-start gap-3 p-3 rounded border transition-all"
+                     [ngClass]="(form.type === 'ROOT' || form.type === 'INTERMEDIATE')
+                       ? 'border-emerald-500/20 bg-emerald-500/5'
+                       : 'border-gray-800'">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <label class="text-xs text-gray-400">
+                        Path Length Constraint
+                        <span class="text-gray-600 ml-1">(BasicConstraints pathLen)</span>
+                      </label>
+                      <div class="relative group">
+                        <svg class="w-3.5 h-3.5 text-gray-600 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div class="absolute left-5 bottom-0 z-10 hidden group-hover:block w-56 px-3 py-2
+                                    bg-gray-950 border border-gray-700 rounded text-xs text-gray-400 shadow-xl">
+                          Maximum number of intermediate CA certificates that may follow this one in a chain.
+                          <span class="block mt-1 text-gray-600">0 = can only sign end-entity certs · Leave empty for unlimited.</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <input type="number"
+                             [(ngModel)]="form.extensions.pathLenConstraint"
+                             name="pathLenConstraint"
+                             min="0" max="10"
+                             placeholder="Unlimited"
+                             class="w-32 bg-gray-800 border border-gray-700 rounded text-sm text-gray-300
+                                    placeholder-gray-600 px-3 py-2 focus:outline-none focus:border-emerald-500/50
+                                    transition-colors [appearance:textfield]
+                                    [&::-webkit-outer-spin-button]:appearance-none
+                                    [&::-webkit-inner-spin-button]:appearance-none" />
+                      <span class="text-xs text-gray-600">levels of sub-CAs allowed</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Context hint -->
+              <p class="text-xs text-gray-700 mt-3 italic">
+                @if (form.type === 'END_ENTITY') {
+                  keyCertSign, BasicConstraints, keyEncipherment, serverAuth, and Path Length are not applicable to End-Entity certificates.
+                } @else if (form.type === 'ROOT' || form.type === 'INTERMEDIATE') {
+                  keyCertSign and BasicConstraints are automatically enabled for CA certificates. serverAuth and keyEncipherment are disabled. Leave Path Length empty for unlimited depth.
+                } @else {
+                  Select a certificate type to see relevant extension guidance.
+                }
+              </p>
             </div>
 
-            <!-- Preview -->
+            <!-- X500Name Preview -->
             <div class="mt-6 pt-5 border-t border-gray-800">
               <h3 class="text-xs text-gray-500 tracking-widest uppercase mb-3">X500Name Preview</h3>
               <div class="bg-gray-950 rounded px-4 py-3 font-mono text-xs text-emerald-400 break-all">
@@ -253,13 +369,14 @@
           <!-- Submit -->
           <div class="mt-5 flex items-center justify-end gap-4">
             <button type="button" (click)="goBack()"
-                    class="px-5 py-2.5 text-xs tracking-widest uppercase text-gray-500 hover:text-gray-300 transition-colors cursor-pointer">
+                    class="px-5 py-2.5 text-xs tracking-widest uppercase text-gray-500
+                           hover:text-gray-300 transition-colors cursor-pointer">
               Cancel
             </button>
             <button type="submit" [disabled]="certForm.invalid || isLoading"
-                    class="flex items-center gap-2 px-6 py-2.5 text-xs tracking-widest uppercase bg-emerald-600
-                    cursor-pointer hover:bg-emerald-500 disabled:opacity-30 disabled:cursor-not-allowed text-white
-                    rounded transition-colors">
+                    class="flex items-center gap-2 px-6 py-2.5 text-xs tracking-widest uppercase
+                           bg-emerald-600 cursor-pointer hover:bg-emerald-500 disabled:opacity-30
+                           disabled:cursor-not-allowed text-white rounded transition-colors">
               @if (isLoading) {
                 <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

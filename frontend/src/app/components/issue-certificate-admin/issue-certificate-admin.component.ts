@@ -1,8 +1,19 @@
 import { Component } from '@angular/core';
-import {Router} from '@angular/router';
-import {CertificateData, CertificateService} from '../../services/certificate.service';
-import {FormsModule} from '@angular/forms';
-import {DatePipe, NgClass, Location} from '@angular/common';
+import { Router } from '@angular/router';
+import { CertificateData, CertificateService } from '../../services/certificate.service';
+import { FormsModule } from '@angular/forms';
+import { DatePipe, NgClass, Location } from '@angular/common';
+
+interface CertExtensions {
+  keyCertSign: boolean;
+  cRLSign: boolean;
+  digitalSignature: boolean;
+  keyEncipherment: boolean;
+  basicConstraintsCA: boolean;
+  serverAuth: boolean;
+  /** null = unlimited (omit pathLen from BasicConstraints); number = cap depth */
+  pathLenConstraint: number | null;
+}
 
 interface CertForm {
   type: 'ROOT' | 'INTERMEDIATE' | 'END_ENTITY' | '';
@@ -14,14 +25,7 @@ interface CertForm {
   email: string;
   validFrom: string;
   validTo: string;
-  extensions: {
-    keyCertSign: boolean;
-    cRLSign: boolean;
-    digitalSignature: boolean;
-    keyEncipherment: boolean;
-    basicConstraintsCA: boolean;
-    serverAuth: boolean;
-  };
+  extensions: CertExtensions;
 }
 
 @Component({
@@ -31,8 +35,7 @@ interface CertForm {
     NgClass,
     DatePipe
   ],
-  templateUrl: './issue-certificate-admin.component.html',
-  styleUrl: './issue-certificate-admin.component.css',
+  templateUrl: './issue-certificate-admin.component.html'
 })
 export class IssueCertificateAdminComponent {
   issuers: CertificateData[] = [];
@@ -61,22 +64,14 @@ export class IssueCertificateAdminComponent {
       keyEncipherment: false,
       basicConstraintsCA: false,
       serverAuth: false,
+      pathLenConstraint: null,
     }
   };
 
   certTypeOptions = [
-    {
-      value: 'ROOT',
-      label: 'Root CA',
-    },
-    {
-      value: 'INTERMEDIATE',
-      label: 'Intermediate CA',
-    },
-    {
-      value: 'END_ENTITY',
-      label: 'End-Entity',
-    }
+    { value: 'ROOT',        label: 'Root CA' },
+    { value: 'INTERMEDIATE', label: 'Intermediate CA' },
+    { value: 'END_ENTITY',  label: 'End-Entity' },
   ];
 
   constructor(
@@ -101,11 +96,18 @@ export class IssueCertificateAdminComponent {
     this.selectedIssuer = null;
 
     if (this.form.type === 'ROOT' || this.form.type === 'INTERMEDIATE') {
+      // CA certs: auto-enable signing extensions, clear EE-only ones
       this.form.extensions.keyCertSign = true;
       this.form.extensions.basicConstraintsCA = true;
+      this.form.extensions.serverAuth = false;     // serverAuth is for EE (TLS servers), not CAs
+      this.form.extensions.keyEncipherment = false; // not meaningful for CA certs
     } else {
+      // END_ENTITY: disable CA-only extensions and clear pathLen
       this.form.extensions.keyCertSign = false;
       this.form.extensions.basicConstraintsCA = false;
+      this.form.extensions.pathLenConstraint = null;
+      // sensible EE defaults
+      this.form.extensions.digitalSignature = true;
     }
   }
 
@@ -118,19 +120,19 @@ export class IssueCertificateAdminComponent {
 
   getX500Preview(): string {
     const parts: string[] = [];
-    if (this.form.commonName) parts.push(`CN=${this.form.commonName}`);
+    if (this.form.commonName)       parts.push(`CN=${this.form.commonName}`);
     if (this.form.organizationUnit) parts.push(`OU=${this.form.organizationUnit}`);
-    if (this.form.organization) parts.push(`O=${this.form.organization}`);
-    if (this.form.country) parts.push(`C=${this.form.country}`);
-    if (this.form.email) parts.push(`E=${this.form.email}`);
+    if (this.form.organization)     parts.push(`O=${this.form.organization}`);
+    if (this.form.country)          parts.push(`C=${this.form.country}`);
+    if (this.form.email)            parts.push(`E=${this.form.email}`);
     return parts.length > 0 ? parts.join(', ') : 'CN=..., O=..., C=...';
   }
 
   getTypeClass(type: string): string {
     switch (type) {
-      case 'ROOT': return 'text-purple-400 border-purple-500/30 bg-purple-500/10';
+      case 'ROOT':         return 'text-purple-400 border-purple-500/30 bg-purple-500/10';
       case 'INTERMEDIATE': return 'text-blue-400 border-blue-500/30 bg-blue-500/10';
-      default: return 'text-gray-400 border-gray-600/30 bg-gray-500/10';
+      default:             return 'text-gray-400 border-gray-600/30 bg-gray-500/10';
     }
   }
 
@@ -139,6 +141,14 @@ export class IssueCertificateAdminComponent {
     this.errorMessage = '';
     this.successMessage = '';
     this.isLoading = true;
+
+    // Resolve pathLenConstraint: only include for CA types, and only when a value is set
+    const isCA = this.form.type === 'ROOT' || this.form.type === 'INTERMEDIATE';
+    const rawPathLen = this.form.extensions.pathLenConstraint;
+    const pathLenConstraint: number | null =
+      isCA && rawPathLen !== null && rawPathLen !== undefined && String(rawPathLen) !== ''
+        ? Number(rawPathLen)
+        : null;
 
     const payload = {
       type: this.form.type,
@@ -150,7 +160,10 @@ export class IssueCertificateAdminComponent {
       email: this.form.email,
       validFrom: this.form.validFrom,
       validTo: this.form.validTo,
-      extensions: this.form.extensions,
+      extensions: {
+        ...this.form.extensions,
+        pathLenConstraint,
+      },
     };
 
     this.certService.issueCertificateAdmin(payload).subscribe({
@@ -168,5 +181,4 @@ export class IssueCertificateAdminComponent {
   goBack(): void {
     this.location.back();
   }
-
 }
