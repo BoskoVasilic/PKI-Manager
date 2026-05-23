@@ -31,8 +31,7 @@ interface CertForm {
     NgClass,
     DatePipe
   ],
-  templateUrl: './issue-certificate-admin.component.html',
-  styleUrl: './issue-certificate-admin.component.css',
+  templateUrl: './issue-certificate-admin.component.html'
 })
 export class IssueCertificateAdminComponent {
   issuers: CertificateData[] = [];
