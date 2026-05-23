@@ -1,9 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CertificateService, CertificateDto, IssueCertificateRequest } from '../../services/certificate.service';
 import { AuthService } from '../../services/auth.service';
+
+/** Validates that pathLenConstraint is either empty or a non-negative integer. */
+function pathLenValidator(control: AbstractControl): ValidationErrors | null {
+  const val = control.value;
+  if (val === null || val === '' || val === undefined) return null;
+  const num = Number(val);
+  if (!Number.isInteger(num) || num < 0 || num > 10) {
+    return { pathLen: true };
+  }
+  return null;
+}
 
 @Component({
   selector: 'app-issue-certificate',
@@ -23,9 +34,6 @@ export class IssueCertificateComponent implements OnInit {
 
   today: string = new Date().toISOString().split('T')[0];
 
-  // Extensions available to CA users.
-  // keyCertSign and basicConstraintsCA are toggled automatically based on isCA,
-  // matching the same logic as the admin form's onTypeChange().
   readonly EXTENSIONS = [
     { key: 'cRLSign',           label: 'cRLSign',          caOnly: false },
     { key: 'digitalSignature',  label: 'digitalSignature', caOnly: false },
@@ -60,6 +68,8 @@ export class IssueCertificateComponent implements OnInit {
       issuerSerialNumber:  ['', Validators.required],
       isCA:                [false],
       keyUsages:           this.fb.array([]),
+      // null = unlimited (no pathLen extension set); a number means capped at that depth
+      pathLenConstraint:   [null, pathLenValidator],
     });
   }
 
@@ -78,7 +88,6 @@ export class IssueCertificateComponent implements OnInit {
     });
   }
 
-
   onIssuerChange(serialNumber: string): void {
     this.selectedIssuer = this.issuers.find(i => i.serialNumber === serialNumber) ?? null;
     if (this.selectedIssuer && this.form.value.validTo > this.selectedIssuer.validTo) {
@@ -86,19 +95,35 @@ export class IssueCertificateComponent implements OnInit {
     }
   }
 
-
   onIsCAChange(value: boolean): void {
     this.form.get('isCA')?.setValue(value);
-    // When CA: auto-enable keyCertSign + basicConstraints; when END_ENTITY: disable both
-    // This matches admin's onTypeChange() behaviour exactly.
-    if (!value) {
-      // Remove keyCertSign from keyUsages if present
-      const arr = this.keyUsagesArray;
-      const idx = arr.controls.findIndex(c => c.value === 'KEY_CERT_SIGN');
-      if (idx >= 0) arr.removeAt(idx);
+    const arr = this.keyUsagesArray;
+
+    if (value) {
+      // Switching TO Intermediate CA:
+      // - ensure KEY_CERT_SIGN is present (mirrors admin auto-enable)
+      if (!this.isKeyUsageSelected('KEY_CERT_SIGN')) {
+        arr.push(this.fb.control('KEY_CERT_SIGN'));
+      }
+      // - remove serverAuth: it's an EE (TLS server) extension, not meaningful for a CA
+      const serverAuthIdx = arr.controls.findIndex(c => c.value === 'serverAuth');
+      if (serverAuthIdx >= 0) arr.removeAt(serverAuthIdx);
+      // - remove keyEncipherment: not meaningful for CA certs
+      const encipherIdx = arr.controls.findIndex(c => c.value === 'keyEncipherment');
+      if (encipherIdx >= 0) arr.removeAt(encipherIdx);
+    } else {
+      // Switching TO End-Entity:
+      // - remove KEY_CERT_SIGN (CAs only)
+      const keyCertIdx = arr.controls.findIndex(c => c.value === 'KEY_CERT_SIGN');
+      if (keyCertIdx >= 0) arr.removeAt(keyCertIdx);
+      // - reset pathLen
+      this.form.patchValue({ pathLenConstraint: null });
+      // - restore sensible EE default: digitalSignature on
+      if (!this.isKeyUsageSelected('digitalSignature')) {
+        arr.push(this.fb.control('digitalSignature'));
+      }
     }
   }
-
 
   get keyUsagesArray(): FormArray {
     return this.form.get('keyUsages') as FormArray;
@@ -118,7 +143,6 @@ export class IssueCertificateComponent implements OnInit {
     return this.keyUsagesArray.controls.some(c => c.value === value);
   }
 
-
   getX500Preview(): string {
     const v = this.form.getRawValue();
     const parts: string[] = [];
@@ -129,7 +153,6 @@ export class IssueCertificateComponent implements OnInit {
     if (v.email)              parts.push(`E=${v.email}`);
     return parts.length > 0 ? parts.join(', ') : 'CN=..., O=..., C=...';
   }
-
 
   onSubmit(): void {
     if (this.form.invalid) {
@@ -144,11 +167,16 @@ export class IssueCertificateComponent implements OnInit {
     const val = this.form.getRawValue();
     const isCA: boolean = val.isCA;
 
-    // Build keyUsages: if isCA, always include KEY_CERT_SIGN (mirrors admin keyCertSign auto-set)
     const keyUsages: string[] = [...val.keyUsages];
     if (isCA && !keyUsages.includes('KEY_CERT_SIGN')) {
       keyUsages.push('KEY_CERT_SIGN');
     }
+
+    // pathLenConstraint: send null when empty (unlimited) or not a CA cert
+    const pathLengthConstraint: number =
+      isCA && val.pathLenConstraint !== null && val.pathLenConstraint !== ''
+        ? Number(val.pathLenConstraint)
+        : -1;  // -1 = no limit, matching backend default
 
     const request: IssueCertificateRequest = {
       commonName:          val.commonName,
@@ -162,6 +190,7 @@ export class IssueCertificateComponent implements OnInit {
       type:                isCA ? 'INTERMEDIATE' : 'END_ENTITY',
       keyUsages,
       isCa:                isCA,
+      pathLengthConstraint,
     };
 
     this.certService.issueCertificate(request).subscribe({
