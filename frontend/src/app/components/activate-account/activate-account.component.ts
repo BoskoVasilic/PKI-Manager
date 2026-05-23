@@ -1,20 +1,18 @@
-import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {WebCryptoService} from '../../services/webCrypto.service';
-import {AuthService} from '../../services/auth.service';
-import {NgClass} from '@angular/common';
-import {FormsModule} from '@angular/forms';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { NgClass } from '@angular/common';
+import { WebCryptoService } from '../../services/webCrypto.service';
+import { AuthService } from '../../services/auth.service';
+import { PasswordService, PasswordAnalysis } from '../../services/password.service';
+import { PasswordStrengthComponent } from '../password-strength/password-strength.component';
 
 type Mode = 'registration' | 'password-reset';
-
 type PageState = 'loading' | 'invalid-token' | 'verify' | 'set-password' | 'success';
 
 @Component({
   selector: 'app-activate-account',
-  imports: [
-    NgClass,
-    FormsModule
-  ],
+  imports: [NgClass, FormsModule, PasswordStrengthComponent],
   templateUrl: './activate-account.component.html',
   styleUrl: './activate-account.component.css',
 })
@@ -35,21 +33,31 @@ export class ActivateAccountComponent implements OnInit {
   newPassword = '';
   confirmPassword = '';
   showPassword = false;
-  passwordStrength = 0;
-  passwordRequirements = [
-    { label: 'Min. 8 characters', met: false },
-    { label: 'Uppercase letter',   met: false },
-    { label: 'Lowercase letter',   met: false },
-    { label: 'Number',             met: false },
-    { label: 'Special character',  met: false },
-    { label: 'Max. 128 chars',     met: true  },
-  ];
+
+  isPasswordAcceptable = false;
+  isCheckingPassword = false;
+  private passwordDebounce: any;
+
+  get passwordsMatch(): boolean {
+    return this.newPassword === this.confirmPassword;
+  }
+
+  get canSubmitPassword(): boolean {
+    return (
+      this.isPasswordAcceptable &&
+      !this.isCheckingPassword &&
+      this.passwordsMatch &&
+      !!this.confirmPassword &&
+      !this.isLoading
+    );
+  }
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private authApi: AuthService,
     private webCrypto: WebCryptoService,
+    private passwordService: PasswordService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -155,22 +163,22 @@ export class ActivateAccountComponent implements OnInit {
   }
 
   onPasswordChange(): void {
-    const p = this.newPassword;
-    this.passwordRequirements[0].met = p.length >= 8;
-    this.passwordRequirements[1].met = /[A-Z]/.test(p);
-    this.passwordRequirements[2].met = /[a-z]/.test(p);
-    this.passwordRequirements[3].met = /[0-9]/.test(p);
-    this.passwordRequirements[4].met = /[^A-Za-z0-9]/.test(p);
-    this.passwordRequirements[5].met = p.length <= 128;
-    this.passwordStrength = this.passwordRequirements.filter(r => r.met).length;
-  }
+    this.isPasswordAcceptable = false;
+    this.isCheckingPassword = true;
+    clearTimeout(this.passwordDebounce);
 
-  get passwordsMatch(): boolean {
-    return this.newPassword === this.confirmPassword;
-  }
+    if (!this.newPassword) {
+      this.isCheckingPassword = false;
+      this.cdr.detectChanges();
+      return;
+    }
 
-  get canSubmitPassword(): boolean {
-    return this.passwordStrength === 6 && this.passwordsMatch && !!this.confirmPassword;
+    this.passwordDebounce = setTimeout(async () => {
+      const analysis = await this.passwordService.analyze(this.newPassword);
+      this.isPasswordAcceptable = analysis.isAcceptable;
+      this.isCheckingPassword = false;
+      this.cdr.detectChanges();
+    }, 600);
   }
 
   submitPasswordReset(): void {
@@ -190,10 +198,12 @@ export class ActivateAccountComponent implements OnInit {
         this.newPassword = '';
         this.confirmPassword = '';
         this.pageState = 'success';
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = err?.error?.message || 'Password reset failed. Please try again.';
+        this.cdr.detectChanges();
       }
     });
   }
@@ -214,22 +224,8 @@ export class ActivateAccountComponent implements OnInit {
 
   get successMessage(): string {
     return this.mode === 'registration'
-      ? 'Identity confirmed. You can log in.'
-      : 'Password has been changed successfully. You can log in.';
-  }
-
-  getStrengthBarColor(): string {
-    if (this.passwordStrength <= 3) return 'bg-red-500';
-    if (this.passwordStrength <= 4) return 'bg-yellow-500';
-    if (this.passwordStrength <= 5) return 'bg-blue-500';
-    return 'bg-emerald-500';
-  }
-
-  getStrengthLabel(): string {
-    if (this.passwordStrength <= 3) return 'Weak password';
-    if (this.passwordStrength <= 4) return 'Medium password';
-    if (this.passwordStrength <= 5) return 'Strong password';
-    return 'Very strong password';
+      ? 'Identity confirmed. You can now log in.'
+      : 'Password has been changed successfully. You can now log in.';
   }
 
   goToLogin(): void {
