@@ -84,11 +84,11 @@ public class AuthService {
     }
 
     public LoginResult refresh(String refreshToken) {
-        if (!jwtUtil.isTokenValid(refreshToken) || !jwtUtil.isRefreshToken(refreshToken)) {
+        if (!jwtUtil.isRefreshTokenValid(refreshToken)) {
             throw new BadCredentialsException("Invalid or expired refresh token");
         }
 
-        String email = jwtUtil.extractEmail(refreshToken);
+        String email = jwtUtil.extractEmailFromRefreshToken(refreshToken);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 

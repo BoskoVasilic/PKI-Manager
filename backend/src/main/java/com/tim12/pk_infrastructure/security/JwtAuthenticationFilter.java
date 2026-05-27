@@ -35,14 +35,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
-        if (!jwtUtil.isTokenValid(token)) {
+        if (!jwtUtil.isTokenValid(token) || jwtUtil.isTwoFaRequired(token)) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String email = jwtUtil.extractEmail(token);
 
-        // Only set authentication if not already set for this request
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
