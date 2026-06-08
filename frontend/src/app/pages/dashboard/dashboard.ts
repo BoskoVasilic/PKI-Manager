@@ -118,12 +118,6 @@ export class DashboardComponent implements OnInit {
           description: 'View and download your End-Entity certificates',
         },
         {
-          label: 'Revoke Certificate',
-          icon: 'revoke',
-          route: '/certificates/revoke',
-          description: 'Revoke one of your certificates with an X.509 reason',
-        },
-        {
           label: 'Download Certificate',
           icon: 'download',
           route: '/certificates/download',
