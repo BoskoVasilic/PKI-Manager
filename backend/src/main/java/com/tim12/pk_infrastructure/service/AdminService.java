@@ -58,7 +58,7 @@ public class AdminService {
 
         tokenRepo.save(at);
 
-        emailService.sendActivationEmail(user.getEmail(), "http://localhost:4200/activate?token=" + token);
+        emailService.sendActivationEmail(user.getEmail(), "https://localhost:4200/activate?token=" + token);
 
         return userRepo.findByEmail(request.getEmail())
                 .map(u -> new CreatedCaUserDTO(u.getId(), u.getEmail(), u.getFirstName(), u.getLastName(),

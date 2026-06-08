@@ -17,6 +17,8 @@ export interface CertificateDto {
   type: 'ROOT' | 'INTERMEDIATE' | 'END_ENTITY';
   issuerSerialNumber: string | null;
   revoked: boolean;
+  revokedAt: Date | null;
+  revocationReason: string | null;
 }
 
 export type CertificateData = CertificateDto;
@@ -65,7 +67,7 @@ export interface CsrResponse {
 
 @Injectable({ providedIn: 'root' })
 export class CertificateService {
-  private readonly API_URL = 'http://localhost:8081/api/certificates';
+  private readonly API_URL = 'https://localhost:8443/api/certificates';
 
   constructor(private http: HttpClient) {}
 
@@ -127,5 +129,9 @@ export class CertificateService {
 
   revokeCertificate(serialNumber: string, reason: string): Observable<void> {
     return this.http.put<void>(`${this.API_URL}/${serialNumber}/revoke`, { reason });
+  }
+
+  getRevokedCertificates(): Observable<CertificateData[]> {
+    return this.http.get<CertificateData[]>(`${this.API_URL}/revoked`);
   }
 }

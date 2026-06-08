@@ -15,6 +15,7 @@ import { CertificateDownloadComponent } from './components/download-certificate/
 import {RegisterComponent} from './components/register/register.component';
 import {ActivateAccountComponent} from './components/activate-account/activate-account.component';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
+import {CrlViewComponent} from './components/crl-view/crl-view.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -26,6 +27,7 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'verify-account', component: ActivateAccountComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'certificates/revoked', component: CrlViewComponent },
   {
     path: 'dashboard',
     component: DashboardComponent,

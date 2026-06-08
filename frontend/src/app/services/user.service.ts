@@ -8,7 +8,7 @@ export class UserService {
   constructor(private http: HttpClient) {}
 
   getOrganizations(): Observable<{ id: number; name: string }[]> {
-    return this.http.get<{ id: number; name: string }[]>('http://localhost:8081/api/admin/organizations');
+    return this.http.get<{ id: number; name: string }[]>('https://localhost:8443/api/admin/organizations');
   }
 
   createCaUser(payload: {
@@ -18,14 +18,14 @@ export class UserService {
     organizationId: string | null;
     organizationName: string | null;
   }): Observable<void> {
-    return this.http.post<void>('http://localhost:8081/api/admin/ca-users', payload);
+    return this.http.post<void>('https://localhost:8443/api/admin/ca-users', payload);
   }
 
   validateActivationToken(token: string): Observable<void> {
-    return this.http.get<void>(`http://localhost:8081/api/auth/validate-token?token=${token}`);
+    return this.http.get<void>(`https://localhost:8443/api/auth/validate-token?token=${token}`);
   }
 
   activateCaUser(token: string, password: string): Observable<void> {
-    return this.http.post<void>('http://localhost:8081/api/auth/activate-ca', { token, password });
+    return this.http.post<void>('https://localhost:8443/api/auth/activate-ca', { token, password });
   }
 }
