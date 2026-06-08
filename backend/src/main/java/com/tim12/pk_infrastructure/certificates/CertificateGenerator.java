@@ -2,6 +2,7 @@ package com.tim12.pk_infrastructure.certificates;
 
 import com.tim12.pk_infrastructure.model.Issuer;
 import com.tim12.pk_infrastructure.model.Subject;
+import org.bouncycastle.asn1.DERIA5String;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
@@ -20,6 +21,7 @@ import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.List;
 
 @Component
 public class CertificateGenerator {
@@ -39,7 +41,9 @@ public class CertificateGenerator {
             boolean cRLSign,
             boolean digitalSig,
             boolean keyEncipher,
-            boolean serverAuth
+            boolean serverAuth,
+            String crlDistributionPointUrl,
+            List<String> sanDnsNames
     ) {
         try {
             JcaContentSignerBuilder builder = new JcaContentSignerBuilder("SHA256WithRSAEncryption");
@@ -74,7 +78,7 @@ public class CertificateGenerator {
 
             certGen.addExtension(
                     Extension.basicConstraints,
-                    true,  // critical
+                    true,
                     new BasicConstraints(isCA)
             );
 
@@ -97,6 +101,41 @@ public class CertificateGenerator {
                         Extension.extendedKeyUsage,
                         false,
                         new ExtendedKeyUsage(KeyPurposeId.id_kp_serverAuth)
+                );
+            }
+
+            if (serverAuth && sanDnsNames != null && !sanDnsNames.isEmpty()) {
+                GeneralName[] generalNames = sanDnsNames.stream()
+                        .map(name -> {
+                            if (name.matches("\\d+\\.\\d+\\.\\d+\\.\\d+")) {
+                                return new GeneralName(GeneralName.iPAddress, name);
+                            }
+                            return new GeneralName(GeneralName.dNSName, name);
+                        })
+                        .toArray(GeneralName[]::new);
+
+                GeneralNames subjectAltNames = new GeneralNames(generalNames);
+                certGen.addExtension(
+                        Extension.subjectAlternativeName,
+                        false,
+                        subjectAltNames
+                );
+            }
+
+            if (crlDistributionPointUrl != null && !crlDistributionPointUrl.isBlank()) {
+                GeneralName gn = new GeneralName(
+                        GeneralName.uniformResourceIdentifier,
+                        new DERIA5String(crlDistributionPointUrl)
+                );
+                GeneralNames gns = new GeneralNames(gn);
+                DistributionPointName dpn = new DistributionPointName(gns);
+                DistributionPoint dp = new DistributionPoint(dpn, null, null);
+                CRLDistPoint crlDistPoint = new CRLDistPoint(new DistributionPoint[]{dp});
+
+                certGen.addExtension(
+                        Extension.cRLDistributionPoints,
+                        false,
+                        crlDistPoint
                 );
             }
 

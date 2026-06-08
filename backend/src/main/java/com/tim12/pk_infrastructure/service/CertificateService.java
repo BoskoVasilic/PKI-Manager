@@ -49,6 +49,7 @@ public class CertificateService {
     private final KeyStoreReader          keyStoreReader;
     private final KeyStoreWriter          keyStoreWriter;
     private final KeyEncryptionService    keyEncryptionService;
+    private final CrlService              crlService;
 
     @Value("${pki.keystore.dir}")
     private String keystoreDir;
@@ -270,6 +271,15 @@ public class CertificateService {
             subjectKeyPair = generateKeyPair();
         }
 
+        String cdpUrl = null;
+        if (req.getType() != CertificateType.ROOT) {
+            cdpUrl = crlService.getCrlDistributionPointUrl(req.getIssuerSerialNumber());
+        }
+
+        List<String> sanNames = req.getSanNames() != null
+                ? req.getSanNames()
+                : List.of();
+
         Subject subject;
         if (req.getType() == CertificateType.ROOT) {
             subject = new Subject(issuer.getPublicKey(), issuer.getX500Name());
@@ -291,7 +301,9 @@ public class CertificateService {
                 req.isCRLSign(),
                 req.isDigitalSignature(),
                 req.isKeyEncipherment(),
-                req.isServerAuth()
+                req.isServerAuth(),
+                cdpUrl,
+                sanNames
         );
 
         if (x509Cert == null) {
@@ -576,6 +588,30 @@ public class CertificateService {
         return b.build();
     }
 
+    public Certificate revokeCertificate(String serialNumber, String reason) {
+        Certificate cert = certificateRepository.findBySerialNumber(serialNumber)
+                .orElseThrow(() -> new RuntimeException("Sertifikat nije pronađen: " + serialNumber));
+
+        if (cert.isRevoked()) {
+            throw new RuntimeException("Sertifikat je već povučen.");
+        }
+
+        cert.setRevoked(true);
+        cert.setRevocationReason(reason);
+        cert.setRevokedAt(new Date());
+
+        return certificateRepository.save(cert);
+    }
+
+    public List<CertificateDTO> getRevokedCertificates() {
+        List<Certificate> certs = certificateRepository.findByRevokedTrue();
+        List<CertificateDTO> dtos = new ArrayList<>();
+        for (Certificate cert : certs) {
+            dtos.add(toDto(cert));
+        }
+        return dtos;
+    }
+
     private CertificateDTO toDto(Certificate c) {
         return populateDto(c);
     }
@@ -593,6 +629,8 @@ public class CertificateService {
                 .type(c.getType())
                 .revoked(c.isRevoked())
                 .issuerSerialNumber(c.getIssuerSerialNumber())
+                .revokedAt(c.getRevokedAt())
+                .revocationReason(c.getRevocationReason())
                 .build();
     }
 }

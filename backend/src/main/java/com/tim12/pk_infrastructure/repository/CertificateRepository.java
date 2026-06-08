@@ -29,4 +29,12 @@ public interface CertificateRepository extends JpaRepository<Certificate, Long> 
     Optional<Certificate> findBySerialNumberAndOwner(String serialNumber, User owner);
     List<Certificate> findByTypeInAndRevokedFalse(List<CertificateType> types);
     List<Certificate> findByIssuingOrg_Name(String orgName);
+
+    List<Certificate> findByIssuerSerialNumberAndRevokedTrue(String issuerSerialNumber);
+
+    List<Certificate> findByRevokedTrue();
+
+    List<Certificate> findByTypeAndRevokedFalse(CertificateType type);
+
+    List<Certificate> findByType(CertificateType type);
 }

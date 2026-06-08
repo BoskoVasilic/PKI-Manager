@@ -4,6 +4,7 @@ import com.tim12.pk_infrastructure.model.enums.CertificateType;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 public class IssueCertificateRequest {
@@ -27,4 +28,5 @@ public class IssueCertificateRequest {
     private boolean keyEncipherment;
     private boolean basicConstraintsCA;
     private boolean serverAuth;
+    private List<String> sanNames;
 }
