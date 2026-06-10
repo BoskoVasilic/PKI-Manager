@@ -24,7 +24,7 @@ export interface ChallengeResponse {
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly API_URL = 'http://localhost:8081/api';
+  private readonly API_URL = 'https://localhost:8443/api';
   private readonly TOKEN_KEY = 'access_token';
   private readonly REFRESH_TOKEN_KEY = 'refresh_token';
   private readonly PRE_AUTH_KEY = 'pre_auth_token';
