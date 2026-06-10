@@ -1,0 +1,228 @@
+<div class="min-h-screen bg-[#0b0b18] text-[#e8e8f0] font-['DM_Sans',sans-serif]">
+
+  <header class="border-b border-gray-800 bg-gray-900/60 backdrop-blur-sm sticky top-0 z-40">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center gap-4">
+      <button (click)="goBack()"
+              class="text-gray-500 hover:text-gray-300 transition-colors flex items-center gap-2
+                     text-xs tracking-widest uppercase cursor-pointer">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back
+      </button>
+      <span class="text-gray-700">|</span>
+      <div class="flex items-center gap-2">
+        <div class="w-5 h-5 rounded bg-red-500/20 border border-red-500/40 flex items-center justify-center">
+          <svg class="w-3 h-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+          </svg>
+        </div>
+        <span class="text-xs text-gray-400 tracking-widest uppercase">CRL — Certificate Revocation List</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-5xl mx-auto px-6 py-10">
+
+    <!-- Title + refresh -->
+    <div class="flex items-end justify-between mb-8 gap-4">
+      <div>
+        <p class="text-xs text-red-400 tracking-widest uppercase mb-2">PKI System · Admin</p>
+        <h1 class="text-3xl font-bold text-white tracking-tight">Revocation List</h1>
+      </div>
+      <button (click)="loadData()"
+              class="flex items-center gap-2 px-4 py-2 text-xs tracking-widest uppercase
+                     border border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-200
+                     transition-all rounded cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+             [ngClass]="isLoading ? 'animate-spin' : ''">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+        <p class="text-xs text-gray-500 tracking-widest uppercase mb-1">Total Revoked</p>
+        <p class="text-2xl font-bold text-red-400">{{ revokedCerts.length }}</p>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+        <p class="text-xs text-gray-500 tracking-widest uppercase mb-1">Last Updated</p>
+        <p class="text-sm font-mono text-gray-300">{{ now | date:'dd.MM.yyyy HH:mm' }}</p>
+      </div>
+      <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+        <p class="text-xs text-gray-500 tracking-widest uppercase mb-1">CRL Valid Until</p>
+        <p class="text-sm font-mono text-gray-300">{{ nextUpdate | date:'dd.MM.yyyy HH:mm' }}</p>
+        <p class="text-xs text-gray-600 mt-0.5">Refreshes on every request</p>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    @if (isLoading) {
+      <div class="flex items-center justify-center py-20">
+        <svg class="animate-spin w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      </div>
+    }
+
+    <!-- Empty state -->
+    @if (!isLoading && revokedCerts.length === 0) {
+      <div class="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center">
+        <div class="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <p class="text-gray-400 text-sm font-medium mb-1">No revoked certificates</p>
+        <p class="text-gray-600 text-xs">The CRL list is currently empty. All certificates are valid.</p>
+      </div>
+    }
+
+    <!-- Grouped by issuer -->
+    @if (!isLoading && revokedCerts.length > 0) {
+      <div class="space-y-8">
+
+        @for (issuerSerial of getIssuerSerials(); track issuerSerial) {
+          <div>
+
+            <!-- Issuer header -->
+            <div class="flex items-center justify-between mb-3 gap-4">
+              <div class="flex items-center gap-3 min-w-0">
+                <!-- CA type badge -->
+                <span class="text-xs px-2 py-0.5 rounded border tracking-widest uppercase shrink-0
+                             text-purple-400 border-purple-500/30 bg-purple-500/10">
+                  CA Issuer
+                </span>
+                <!-- Issuer name -->
+                <span class="text-sm text-gray-300 font-medium truncate">
+                  {{ issuerNames[issuerSerial] }}
+                </span>
+                <!-- Serial pill -->
+                <span class="text-xs font-mono text-gray-600 shrink-0 hidden md:block">
+                  {{ issuerSerial | slice:0:20 }}...
+                </span>
+              </div>
+
+              <!-- Download CRL za ovaj issuer -->
+              <button (click)="downloadCrlForIssuer(issuerSerial)"
+                      class="flex items-center gap-1.5 px-3 py-1.5 text-xs tracking-widest uppercase
+                             text-gray-500 hover:text-red-400 border border-gray-700
+                             hover:border-red-500/50 rounded transition-colors shrink-0 cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Download CRL
+              </button>
+            </div>
+
+            <!-- CRL URL za ovaj issuer -->
+            <div class="mb-3 flex items-center gap-2 px-3 py-2 bg-gray-900 border border-gray-800
+                        rounded text-xs font-mono text-gray-600">
+              <svg class="w-3 h-3 text-gray-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+              </svg>
+              <span class="text-gray-600">CDP:</span>
+              <span class="text-emerald-600/70">{{ issuerCrlUrls[issuerSerial] }}</span>
+            </div>
+
+            <!-- Tabela povučenih sertifikata za ovaj issuer -->
+            <div class="bg-gray-900 border border-gray-800 rounded-lg overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                  <tr class="border-b border-gray-800 text-left">
+                    <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">
+                      Serial Number
+                    </th>
+                    <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">
+                      Common Name
+                    </th>
+                    <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">
+                      Organization
+                    </th>
+                    <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">
+                      Type
+                    </th>
+                    <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">
+                      Revoked At
+                    </th>
+                    <th class="px-4 py-3 text-xs text-gray-500 tracking-widest uppercase font-normal">
+                      Reason
+                    </th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                    @for (cert of groupedByIssuer[issuerSerial]; track cert.serialNumber) {
+                      <tr class="border-b border-gray-800/50 hover:bg-gray-800/20 transition-colors">
+
+                        <!-- Serial -->
+                        <td class="px-4 py-3">
+                          <span class="font-mono text-xs text-gray-500">
+                            {{ cert.serialNumber | slice:0:16 }}...
+                          </span>
+                        </td>
+
+                        <!-- CN -->
+                        <td class="px-4 py-3 text-gray-300 text-sm font-medium">
+                          {{ cert.commonName || '—' }}
+                        </td>
+
+                        <!-- Org -->
+                        <td class="px-4 py-3 text-gray-500 text-xs">
+                          {{ cert.organization || '—' }}
+                        </td>
+
+                        <!-- Type -->
+                        <td class="px-4 py-3">
+                          <span class="text-xs px-1.5 py-0.5 rounded border tracking-widest uppercase"
+                                [ngClass]="getTypeClass(cert.type)">
+                            {{ cert.type }}
+                          </span>
+                        </td>
+
+                        <!-- Revoked at -->
+                        <td class="px-4 py-3 text-gray-500 text-xs font-mono">
+                          {{ cert.revokedAt | date:'dd.MM.yyyy HH:mm' }}
+                        </td>
+
+                        <!-- Reason -->
+                        <td class="px-4 py-3">
+                          <span class="text-xs px-2 py-0.5 rounded-full
+                                       bg-red-500/10 border border-red-500/30 text-red-400">
+                            {{ formatReason(cert.revocationReason) }}
+                          </span>
+                        </td>
+
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Footer sa brojem povučenih za ovaj issuer -->
+              <div class="px-4 py-2 border-t border-gray-800 flex items-center justify-between">
+                <span class="text-xs text-gray-600">
+                  {{ groupedByIssuer[issuerSerial].length }}
+                  revoked {{ groupedByIssuer[issuerSerial].length === 1 ? 'certificate' : 'certificates' }}
+                  signed by this CA
+                </span>
+                <span class="text-xs text-gray-700 font-mono">RFC 5280 · X.509</span>
+              </div>
+            </div>
+
+          </div>
+        }
+
+      </div>
+    }
+
+  </div>
+</div>
