@@ -112,7 +112,7 @@ export class CertificateService {
 
   /** CA user: all certificates belonging to the caller's organization */
   getOrgCertificates(): Observable<CertificateDto[]> {
-    return this.http.get<CertificateDto[]>(`${this.API_URL}/org`);
+  return this.http.get<CertificateDto[]>(`${this.API_URL}/org`);
   }
 
   // ── Admin endpoints ─────────────────────────────────────────────────────────

@@ -125,4 +125,10 @@ public class CertificateController {
     public ResponseEntity<List<CertificateDTO>> getRevokedCertificates() {
         return ResponseEntity.ok(certificateService.getRevokedCertificates());
     }
+
+    @GetMapping("/org")
+    @PreAuthorize("hasAnyRole('CA_USER', 'ADMIN')")
+    public ResponseEntity<List<CertificateDTO>> getOrgCertificates() {
+        return ResponseEntity.ok(certificateService.getOrgCertificates());
+    }
 }
