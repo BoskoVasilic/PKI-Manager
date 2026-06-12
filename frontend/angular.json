@@ -57,7 +57,7 @@
           "builder": "@angular/build:dev-server",
           "options": {
             "ssl": true,
-            "sslCert": "certs/certificate-1780781746306.pem",
+            "sslCert": "certs/certificate-1781174961615.pem",
             "sslKey": "certs/root-ca.key"
           },
           "configurations": {

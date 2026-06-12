@@ -16,6 +16,7 @@ import {RegisterComponent} from './components/register/register.component';
 import {ActivateAccountComponent} from './components/activate-account/activate-account.component';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
 import {CrlViewComponent} from './components/crl-view/crl-view.component';
+import { CaCertificatesViewComponent } from './components/ca-certificates-view/ca-certificates-view';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -28,6 +29,7 @@ export const routes: Routes = [
   { path: 'verify-account', component: ActivateAccountComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'certificates/revoked', component: CrlViewComponent },
+  { path: 'ca/certificates', component: CaCertificatesViewComponent, canActivate: [authGuard] },
   {
     path: 'dashboard',
     component: DashboardComponent,

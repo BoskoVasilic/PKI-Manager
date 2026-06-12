@@ -616,6 +616,15 @@ public class CertificateService {
         return populateDto(c);
     }
 
+    public List<CertificateDTO> getOrgCertificates() {
+        User caller = getCurrentUser();
+        return certificateRepository
+                .findByIssuingOrg_Name(caller.getOrganization().getName())
+                .stream()
+                .map(this::toDto)
+                .toList();
+    }
+
     private CertificateDTO populateDto(Certificate c) {
         return CertificateDTO.builder()
                 .serialNumber(c.getSerialNumber())

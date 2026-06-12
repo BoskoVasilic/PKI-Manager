@@ -83,7 +83,7 @@ export class DashboardComponent implements OnInit {
         {
           label: 'My Organization Certs',
           icon: 'list',
-          route: '/certificates',
+          route: '/ca/certificates',
           description: 'View and download certificates from your organization',
         },
         {
