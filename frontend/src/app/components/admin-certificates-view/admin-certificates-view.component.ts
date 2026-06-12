@@ -13,8 +13,7 @@ import {DatePipe, NgClass, SlicePipe, Location} from '@angular/common';
     SlicePipe,
     NgClass
   ],
-  templateUrl: './admin-certificates-view.component.html',
-  styleUrl: './admin-certificates-view.component.css',
+  templateUrl: './admin-certificates-view.component.html'
 })
 export class AdminCertificatesViewComponent {
   certificates: CertificateData[] = [];
@@ -23,6 +22,9 @@ export class AdminCertificatesViewComponent {
   searchQuery = '';
   typeFilter = '';
   statusFilter = '';
+  rotateLoading = false;
+  rotateSuccess = false;
+  rotateError = '';
 
   selectedCert: CertificateData | null = null;
   revokeTarget: CertificateData | null = null;
@@ -172,4 +174,22 @@ export class AdminCertificatesViewComponent {
   goBack(): void {
     this.location.back();
   }
+
+  rotateMasterKey(): void {
+  this.rotateLoading = true;
+  this.rotateSuccess = false;
+  this.rotateError = '';
+  this.certService.rotateMasterKey().subscribe({
+    next: () => {
+      this.rotateLoading = false;
+      this.rotateSuccess = true;
+      setTimeout(() => this.rotateSuccess = false, 4000);
+    },
+    error: (err) => {
+      this.rotateLoading = false;
+      this.rotateError = 'Rotation failed. Check console.';
+      console.error(err);
+    }
+  });
+}
 }

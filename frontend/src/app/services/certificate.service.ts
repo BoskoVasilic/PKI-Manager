@@ -134,4 +134,8 @@ export class CertificateService {
   getRevokedCertificates(): Observable<CertificateData[]> {
     return this.http.get<CertificateData[]>(`${this.API_URL}/revoked`);
   }
+
+  rotateMasterKey(): Observable<string> {
+    return this.http.post('https://localhost:8443/api/admin/master-key/rotate', {}, { responseType: 'text' });
+  }
 }
