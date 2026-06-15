@@ -144,8 +144,7 @@ public class CertificateDownloadController {
                 .type(c.getType())
                 .revoked(c.isRevoked())
                 .issuerSerialNumber(c.getIssuerSerialNumber())
-                .privateKeyAvailable(c.getEncryptedPrivateKey() != null 
-                    && !c.getEncryptedPrivateKey().isBlank())
+                .privateKeyAvailable(c.isPrivateKeyAvailable())
                 .build();
     }
 }

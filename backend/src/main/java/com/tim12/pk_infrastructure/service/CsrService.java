@@ -140,6 +140,7 @@ public class CsrService {
                 .encryptedPrivateKey(null)
                 .owner(currentUser)
                 .issuingOrg(caOrg)
+                .privateKeyAvailable(true)
                 .build();
 
         certificateRepository.save(entity);
@@ -211,6 +212,7 @@ public class CsrService {
                 .encryptedPrivateKey(null)
                 .owner(currentUser)
                 .issuingOrg(ca.getIssuingOrg())
+                .privateKeyAvailable(false)
                 .build();
 
         certificateRepository.save(entity);
@@ -426,6 +428,7 @@ public class CsrService {
                 .type(c.getType())
                 .revoked(c.isRevoked())
                 .issuerSerialNumber(c.getIssuerSerialNumber())
+                .privateKeyAvailable(c.isPrivateKeyAvailable())
                 .build();
     }
 }
