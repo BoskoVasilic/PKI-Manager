@@ -48,6 +48,8 @@ export class CertificateDownloadComponent implements OnInit {
       : this.certificates();
   });
 
+  canDownloadWithKey = computed(() => this.selected()?.privateKeyAvailable ?? true);
+
   // ── Download state ───────────────────────────────────────────────────────
   dl: DownloadState = {
     inProgress: false,

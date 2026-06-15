@@ -28,4 +28,5 @@ public class CertificateDTO {
     private boolean revoked;
     private Date revokedAt;
     private String revocationReason;
+    private boolean privateKeyAvailable;
 }

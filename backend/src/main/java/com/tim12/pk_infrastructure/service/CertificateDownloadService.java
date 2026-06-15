@@ -188,12 +188,24 @@ public class CertificateDownloadService {
 
     public byte[] downloadAsP12(String serialNumber, char[] exportPassword) {
         Certificate cert = loadAndAuthorize(serialNumber);
+        checkPrivateKeyAvailable(cert);
         return buildKeyStore("PKCS12", serialNumber, cert, exportPassword);
     }
 
     public byte[] downloadAsJks(String serialNumber, char[] exportPassword) {
         Certificate cert = loadAndAuthorize(serialNumber);
+        checkPrivateKeyAvailable(cert);
         return buildKeyStore("JKS", serialNumber, cert, exportPassword);
+    }
+
+    private void checkPrivateKeyAvailable(Certificate cert) {
+        if (cert.getEncryptedPrivateKey() == null || cert.getEncryptedPrivateKey().isBlank()) {
+            throw new IllegalStateException(
+                    "Private key is not available for certificate '" + cert.getSerialNumber() + "'. " +
+                            "CSR-uploaded certificates never store a private key. " +
+                            "Download in .pem or .cer format instead."
+            );
+        }
     }
 
     private byte[] buildKeyStore(String ksType, String serialNumber,

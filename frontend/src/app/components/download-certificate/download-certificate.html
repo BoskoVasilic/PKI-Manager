@@ -225,15 +225,31 @@
                 </button>
                 <button
                   type="button"
-                  (click)="setTab('withPrivateKey')"
+                  (click)="!canDownloadWithKey() ? null : setTab('withPrivateKey')"
+                  [disabled]="!canDownloadWithKey()"
+                  [title]="!canDownloadWithKey() ? 'Private key not available — CSR-uploaded certificates cannot be downloaded with a private key' : ''"
                   class="rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150"
                   [class]="activeTab() === 'withPrivateKey'
                     ? 'bg-[#6c63ff]/15 text-white border border-[#6c63ff]/25 shadow-[0_0_0_1px_rgba(108,99,255,0.12)]'
-                    : 'text-white/35 hover:text-white/60'">
+                    : !canDownloadWithKey()
+                      ? 'text-white/20 cursor-not-allowed'
+                      : 'text-white/35 hover:text-white/60'">
                   With private key
                 </button>
               </div>
             </div>
+
+            @if (selected() && !canDownloadWithKey()) {
+              <div class="mx-5 mt-3 flex items-center gap-2 px-3.5 py-2.5 bg-yellow-400/8
+                          border border-yellow-400/20 rounded-xl text-yellow-400/70 text-xs">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                Private key unavailable. This certificate was issued via CSR upload - the private key was never stored.
+              </div>
+            }
 
             @if (activeTab() === 'withoutPrivateKey') {
               <!-- Download options -->
