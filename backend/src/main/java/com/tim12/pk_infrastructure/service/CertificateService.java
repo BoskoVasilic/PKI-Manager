@@ -642,7 +642,7 @@ public class CertificateService {
                 .issuerSerialNumber(c.getIssuerSerialNumber())
                 .revokedAt(c.getRevokedAt())
                 .revocationReason(c.getRevocationReason())
-                .privateKeyAvailable(true)
+                .privateKeyAvailable(c.isPrivateKeyAvailable())
                 .build();
     }
 }

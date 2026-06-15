@@ -140,7 +140,7 @@ public class CsrService {
                 .encryptedPrivateKey(null)
                 .owner(currentUser)
                 .issuingOrg(caOrg)
-                .privateKeyAvailable(true)
+                .privateKeyAvailable(false)
                 .build();
 
         certificateRepository.save(entity);

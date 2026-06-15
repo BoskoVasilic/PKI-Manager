@@ -19,7 +19,6 @@ import java.security.cert.X509Certificate;
 
 import java.io.File;
 import java.io.StringWriter;
-import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.List;
 
@@ -188,23 +187,36 @@ public class CertificateDownloadService {
 
     public byte[] downloadAsP12(String serialNumber, char[] exportPassword) {
         Certificate cert = loadAndAuthorize(serialNumber);
-        checkPrivateKeyAvailable(cert);
         return buildKeyStore("PKCS12", serialNumber, cert, exportPassword);
     }
 
     public byte[] downloadAsJks(String serialNumber, char[] exportPassword) {
         Certificate cert = loadAndAuthorize(serialNumber);
-        checkPrivateKeyAvailable(cert);
         return buildKeyStore("JKS", serialNumber, cert, exportPassword);
     }
 
-    private void checkPrivateKeyAvailable(Certificate cert) {
-        if (cert.getEncryptedPrivateKey() == null || cert.getEncryptedPrivateKey().isBlank()) {
+    private void checkPrivateKeyAvailable(Certificate cert, String ksPath, char[] ksPass) {
+        if (!cert.isPrivateKeyAvailable()) {
             throw new IllegalStateException(
                     "Private key is not available for certificate '" + cert.getSerialNumber() + "'. " +
-                            "CSR-uploaded certificates never store a private key. " +
+                            "It was either never generated (CSR upload) or has already been downloaded once. " +
                             "Download in .pem or .cer format instead."
             );
+        }
+
+        // Defensive check: confirm the key actually exists in the keystore
+        PrivateKey pk;
+        try {
+            pk = keyStoreReader.readPrivateKey(ksPath, cert.getAlias(), ksPass, ksPass);
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed to read private key from keystore for certificate '" + cert.getSerialNumber() + "'.", e);
+        }
+
+        if (pk == null) {
+            throw new RuntimeException(
+                    "Inconsistent state: certificate '" + cert.getSerialNumber() +
+                            "' is marked privateKeyAvailable=true but no key entry exists in the keystore.");
         }
     }
 
@@ -218,16 +230,12 @@ public class CertificateDownloadService {
         String ksPath = resolveKeyStorePath(org);
         char[] ksPass = resolveOrgKeyStorePassword(org);
 
-        // Read the X509 certificate and private key from the org keystore
+        checkPrivateKeyAvailable(cert, ksPath, ksPass);
+
         X509Certificate x509 = keyStoreReader.readX509Certificate(ksPath, cert.getAlias(), ksPass);
         PrivateKey privateKey = keyStoreReader.readPrivateKey(ksPath, cert.getAlias(), ksPass, ksPass);
 
-        if (privateKey == null) {
-            throw new RuntimeException("Private key not found for certificate: " + serialNumber);
-        }
-
         try {
-            // Build a fresh keystore of the requested type containing only this cert+key
             KeyStore exportKs = KeyStore.getInstance(ksType);
             exportKs.load(null, exportPassword);
             exportKs.setKeyEntry(
