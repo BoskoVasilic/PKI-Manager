@@ -194,6 +194,7 @@ public class CertificateService {
                 .certificatePem(toPem(signedCert))
                 .owner(userRepository.findByEmail(req.getEmail()).get())
                 .issuingOrg(issuerRecord.getIssuingOrg())
+                .privateKeyAvailable(true)
                 .build();
 
         return toDto(certificateRepository.save(saved));
@@ -341,6 +342,7 @@ public class CertificateService {
                 .certificatePem(toPem(x509Cert))
                 .issuingOrg(subjectOrg)
                 .owner(userRepository.findByEmail(req.getEmail()).get())
+                .privateKeyAvailable(true)
                 .build();
 
         return certificateRepository.save(certData);
@@ -640,6 +642,7 @@ public class CertificateService {
                 .issuerSerialNumber(c.getIssuerSerialNumber())
                 .revokedAt(c.getRevokedAt())
                 .revocationReason(c.getRevocationReason())
+                .privateKeyAvailable(c.isPrivateKeyAvailable())
                 .build();
     }
 }

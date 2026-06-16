@@ -19,6 +19,7 @@ export interface CertificateDto {
   revoked: boolean;
   revokedAt: Date | null;
   revocationReason: string | null;
+  privateKeyAvailable: boolean;
 }
 
 export type CertificateData = CertificateDto;
