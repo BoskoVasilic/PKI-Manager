@@ -72,8 +72,30 @@ export class CrlViewComponent implements OnInit{
     return Object.keys(this.groupedByIssuer);
   }
 
+  crlErrorMessage: Record<string, string> = {};
+
   downloadCrlForIssuer(issuerSerial: string): void {
-    window.open(this.issuerCrlUrls[issuerSerial], '_blank');
+    this.crlErrorMessage[issuerSerial] = '';
+
+    this.certService.downloadCrlForIssuer(issuerSerial).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${issuerSerial}.crl`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        if (err.status === 403) {
+          this.crlErrorMessage[issuerSerial] =
+            'This CA does not have the cRLSign extension enabled. Its private key cannot sign a CRL.';
+        } else {
+          this.crlErrorMessage[issuerSerial] =
+            err?.error?.message || 'Failed to download CRL.';
+        }
+      }
+    });
   }
 
   getTypeClass(type: string): string {
