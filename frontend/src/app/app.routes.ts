@@ -19,6 +19,7 @@ import {CrlViewComponent} from './components/crl-view/crl-view.component';
 import { CaCertificatesViewComponent } from './components/ca-certificates-view/ca-certificates-view';
 import {adminGuard} from './guards/admin.guard';
 import {userGuard} from './guards/user.guard';
+import {caGuard} from './guards/ca.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -30,7 +31,7 @@ export const routes: Routes = [
   { path: 'verify-account', component: ActivateAccountComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'certificates/revoked', component: CrlViewComponent, canActivate: [authGuard, adminGuard] },
-  { path: 'ca/certificates', component: CaCertificatesViewComponent, canActivate: [authGuard] },
+  { path: 'ca/certificates', component: CaCertificatesViewComponent, canActivate: [authGuard, caGuard] },
   {
     path: 'dashboard',
     component: DashboardComponent,
