@@ -7,7 +7,7 @@ export type DownloadFormat = 'pem' | 'cer' | 'p12' | 'jks';
 
 @Injectable({ providedIn: 'root' })
 export class CertificateDownloadService {
-  private readonly API_URL = 'http://localhost:8081/api/certificates';
+  private readonly API_URL = 'https://localhost:8443/api/certificates';
 
   constructor(private http: HttpClient) {}
 
@@ -17,7 +17,7 @@ export class CertificateDownloadService {
     });
   }
 
- 
+
   downloadAsCer(serialNumber: string): Observable<Blob> {
     return this.http.get(`${this.API_URL}/${serialNumber}/download/cer`, {
       responseType: 'blob',

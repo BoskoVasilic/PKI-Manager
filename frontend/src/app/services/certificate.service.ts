@@ -17,6 +17,9 @@ export interface CertificateDto {
   type: 'ROOT' | 'INTERMEDIATE' | 'END_ENTITY';
   issuerSerialNumber: string | null;
   revoked: boolean;
+  revokedAt: Date | null;
+  revocationReason: string | null;
+  privateKeyAvailable: boolean;
 }
 
 export type CertificateData = CertificateDto;
@@ -65,7 +68,7 @@ export interface CsrResponse {
 
 @Injectable({ providedIn: 'root' })
 export class CertificateService {
-  private readonly API_URL = 'http://localhost:8081/api/certificates';
+  private readonly API_URL = 'https://localhost:8443/api/certificates';
 
   constructor(private http: HttpClient) {}
 
@@ -108,6 +111,11 @@ export class CertificateService {
     return this.http.get<CertificateDto[]>(`${this.API_URL}/my/issuers`);
   }
 
+  /** CA user: all certificates belonging to the caller's organization */
+  getOrgCertificates(): Observable<CertificateDto[]> {
+  return this.http.get<CertificateDto[]>(`${this.API_URL}/org`);
+  }
+
   // ── Admin endpoints ─────────────────────────────────────────────────────────
   getAvailableIssuersAdmin(): Observable<CertificateDto[]> {
     return this.http.get<CertificateDto[]>(`${this.API_URL}/issuers`);
@@ -127,5 +135,20 @@ export class CertificateService {
 
   revokeCertificate(serialNumber: string, reason: string): Observable<void> {
     return this.http.put<void>(`${this.API_URL}/${serialNumber}/revoke`, { reason });
+  }
+
+  getRevokedCertificates(): Observable<CertificateData[]> {
+    return this.http.get<CertificateData[]>(`${this.API_URL}/revoked`);
+  }
+
+  downloadCrlForIssuer(issuerSerialNumber: string): Observable<Blob> {
+    return this.http.get(
+      `https://localhost:8443/api/crl/${issuerSerialNumber}/crl.crl`,
+      { responseType: 'blob' }
+    );
+  }
+
+  rotateMasterKey(): Observable<string> {
+    return this.http.post('https://localhost:8443/api/admin/master-key/rotate', {}, { responseType: 'text' });
   }
 }

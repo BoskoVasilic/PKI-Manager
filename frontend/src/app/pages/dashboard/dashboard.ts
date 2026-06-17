@@ -83,7 +83,7 @@ export class DashboardComponent implements OnInit {
         {
           label: 'My Organization Certs',
           icon: 'list',
-          route: '/certificates',
+          route: '/ca/certificates',
           description: 'View and download certificates from your organization',
         },
         {
@@ -116,12 +116,6 @@ export class DashboardComponent implements OnInit {
           icon: 'list',
           route: '/certificates',
           description: 'View and download your End-Entity certificates',
-        },
-        {
-          label: 'Revoke Certificate',
-          icon: 'revoke',
-          route: '/certificates/revoke',
-          description: 'Revoke one of your certificates with an X.509 reason',
         },
         {
           label: 'Download Certificate',

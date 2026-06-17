@@ -4,6 +4,7 @@ import com.tim12.pk_infrastructure.model.Certificate;
 import com.tim12.pk_infrastructure.model.dtos.CertificateDTO;
 import com.tim12.pk_infrastructure.model.dtos.IssueCertificateRequest;
 import com.tim12.pk_infrastructure.model.dtos.IssueCertificateRequestCA;
+import com.tim12.pk_infrastructure.model.dtos.RevokeRequestDTO;
 import com.tim12.pk_infrastructure.security.CustomUserDetails;
 import com.tim12.pk_infrastructure.service.CertificateService;
 import lombok.RequiredArgsConstructor;
@@ -104,5 +105,30 @@ public class CertificateController {
 
         CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
         return userDetails.getOrganization();
+    }
+
+    @PutMapping("/{serialNumber}/revoke")
+    public ResponseEntity<?> revokeCertificate(
+            @PathVariable String serialNumber,
+            @RequestBody RevokeRequestDTO revokeRequest) {
+        try {
+            Certificate revoked = certificateService.revokeCertificate(
+                    serialNumber, String.valueOf(revokeRequest.getReason()));
+            return ResponseEntity.ok(revoked);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/revoked")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<CertificateDTO>> getRevokedCertificates() {
+        return ResponseEntity.ok(certificateService.getRevokedCertificates());
+    }
+
+    @GetMapping("/org")
+    @PreAuthorize("hasAnyRole('CA_USER', 'ADMIN')")
+    public ResponseEntity<List<CertificateDTO>> getOrgCertificates() {
+        return ResponseEntity.ok(certificateService.getOrgCertificates());
     }
 }

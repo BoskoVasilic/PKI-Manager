@@ -55,6 +55,11 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "ssl": true,
+            "sslCert": "certs/certificate-1781174961615.pem",
+            "sslKey": "certs/root-ca.key"
+          },
           "configurations": {
             "production": {
               "buildTarget": "pk-infrastructure:build:production"

@@ -1,45 +1,44 @@
-import { Component } from '@angular/core';
-import {CertificateData, CertificateService} from '../../services/certificate.service';
-import {AuthService} from '../../services/auth.service';
-import {Router} from '@angular/router';
-import {FormsModule} from '@angular/forms';
-import {DatePipe, NgClass, SlicePipe, Location} from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { CertificateData, CertificateService } from '../../services/certificate.service';
+import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { DatePipe, NgClass, SlicePipe, Location } from '@angular/common';
 
 @Component({
-  selector: 'app-admin-certificates-view',
+  selector: 'app-ca-certificates-view',
   imports: [
     FormsModule,
     DatePipe,
     SlicePipe,
-    NgClass
+    NgClass,
   ],
-  templateUrl: './admin-certificates-view.component.html'
+  templateUrl: './ca-certificates-view.html',
 })
-export class AdminCertificatesViewComponent {
+export class CaCertificatesViewComponent implements OnInit {
   certificates: CertificateData[] = [];
   filteredCertificates: CertificateData[] = [];
 
   searchQuery = '';
   typeFilter = '';
   statusFilter = '';
-  rotateLoading = false;
-  rotateSuccess = false;
-  rotateError = '';
 
   selectedCert: CertificateData | null = null;
   revokeTarget: CertificateData | null = null;
   revokeReason = '';
 
   get currentUser(): string {
-    return this.authService.getCurrentUserEmail() || 'Admin';
+    return this.authService.getCurrentUserEmail() || 'CA User';
   }
 
   get activeCertCount(): number {
     return this.certificates.filter(c => !c.revoked && !this.isExpired(c)).length;
   }
+
   get expiredCertCount(): number {
     return this.certificates.filter(c => !c.revoked && this.isExpired(c)).length;
   }
+
   get revokedCertCount(): number {
     return this.certificates.filter(c => c.revoked).length;
   }
@@ -56,12 +55,13 @@ export class AdminCertificatesViewComponent {
   }
 
   loadCertificates(): void {
-    this.certService.getAllCertificates().subscribe({
+    // CA user endpoint — returns only certificates belonging to the caller's organization
+    this.certService.getOrgCertificates().subscribe({
       next: (certs) => {
         this.certificates = certs;
         this.applyFilters();
       },
-      error: (err) => console.error('Error loading certificates.', err)
+      error: (err) => console.error('Error loading certificates.', err),
     });
   }
 
@@ -73,7 +73,7 @@ export class AdminCertificatesViewComponent {
       result = result.filter(c =>
         c.commonName.toLowerCase().includes(q) ||
         c.organization.toLowerCase().includes(q) ||
-        c.serialNumber.toLowerCase().includes(q)
+        c.serialNumber.toLowerCase().includes(q),
       );
     }
 
@@ -116,29 +116,29 @@ export class AdminCertificatesViewComponent {
 
   getTypeClass(type: string): string {
     switch (type) {
-      case 'ROOT': return 'text-purple-400 border-purple-500/30 bg-purple-500/10';
+      case 'ROOT':         return 'text-purple-400 border-purple-500/30 bg-purple-500/10';
       case 'INTERMEDIATE': return 'text-blue-400 border-blue-500/30 bg-blue-500/10';
-      default: return 'text-gray-400 border-gray-600/30 bg-gray-500/10';
+      default:             return 'text-gray-400 border-gray-600/30 bg-gray-500/10';
     }
   }
 
   getCertFields(cert: CertificateData): { label: string; value: string }[] {
     return [
-      { label: 'Serial Number', value: cert.serialNumber },
-      { label: 'Common Name', value: cert.commonName },
-      { label: 'Organizacija', value: cert.organization },
-      { label: 'Org. Jedinica', value: cert.organizationUnit || '—' },
-      { label: 'Država', value: cert.country },
-      { label: 'Email', value: cert.email || '—' },
-      { label: 'Tip', value: cert.type },
-      { label: 'Važi od', value: new Date(cert.validFrom).toLocaleDateString('sr') },
-      { label: 'Važi do', value: new Date(cert.validTo).toLocaleDateString('sr') },
-      { label: 'Izdavač Serial', value: cert.issuerSerialNumber || 'Self-signed' },
-      { label: 'Status', value: this.getStatusLabel(cert) },
+      { label: 'Serial Number',  value: cert.serialNumber },
+      { label: 'Common Name',    value: cert.commonName },
+      { label: 'Organization',   value: cert.organization },
+      { label: 'Org. Unit',      value: cert.organizationUnit || '—' },
+      { label: 'Country',        value: cert.country },
+      { label: 'Email',          value: cert.email || '—' },
+      { label: 'Type',           value: cert.type },
+      { label: 'Valid From',     value: new Date(cert.validFrom).toLocaleDateString('sr') },
+      { label: 'Valid To',       value: new Date(cert.validTo).toLocaleDateString('sr') },
+      { label: 'Issuer Serial',  value: cert.issuerSerialNumber || 'Self-signed' },
+      { label: 'Status',         value: this.getStatusLabel(cert) },
     ];
   }
 
-  trackById(index: number, cert: CertificateData): number {
+  trackById(_index: number, cert: CertificateData): number {
     return cert.id;
   }
 
@@ -153,43 +153,22 @@ export class AdminCertificatesViewComponent {
 
   confirmRevoke(): void {
     if (!this.revokeTarget || !this.revokeReason) return;
+
     this.certService.revokeCertificate(this.revokeTarget.serialNumber, this.revokeReason).subscribe({
       next: () => {
         this.revokeTarget!.revoked = true;
         this.applyFilters();
         this.revokeTarget = null;
       },
-      error: (err) => console.error('Error while revoking certificate.', err)
+      error: (err) => console.error('Error while revoking certificate.', err),
     });
   }
 
   openIssueCertificate(): void {
-    this.router.navigate(['/admin/certificates/new']);
-  }
-
-  openCreateCaUser(): void {
-    this.router.navigate(['/admin/ca-users/new']);
+    this.router.navigate(['/ca/certificates/new']);
   }
 
   goBack(): void {
     this.location.back();
   }
-
-  rotateMasterKey(): void {
-  this.rotateLoading = true;
-  this.rotateSuccess = false;
-  this.rotateError = '';
-  this.certService.rotateMasterKey().subscribe({
-    next: () => {
-      this.rotateLoading = false;
-      this.rotateSuccess = true;
-      setTimeout(() => this.rotateSuccess = false, 4000);
-    },
-    error: (err) => {
-      this.rotateLoading = false;
-      this.rotateError = 'Rotation failed. Check console.';
-      console.error(err);
-    }
-  });
-}
 }

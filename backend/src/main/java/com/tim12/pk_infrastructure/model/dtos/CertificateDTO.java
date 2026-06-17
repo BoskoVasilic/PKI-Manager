@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -24,4 +26,7 @@ public class CertificateDTO {
     private CertificateType type;
     private String issuerSerialNumber;
     private boolean revoked;
+    private Date revokedAt;
+    private String revocationReason;
+    private boolean privateKeyAvailable;
 }

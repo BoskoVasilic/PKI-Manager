@@ -15,17 +15,23 @@ import { CertificateDownloadComponent } from './components/download-certificate/
 import {RegisterComponent} from './components/register/register.component';
 import {ActivateAccountComponent} from './components/activate-account/activate-account.component';
 import {ForgotPasswordComponent} from './components/forgot-password/forgot-password.component';
+import {CrlViewComponent} from './components/crl-view/crl-view.component';
+import { CaCertificatesViewComponent } from './components/ca-certificates-view/ca-certificates-view';
+import {adminGuard} from './guards/admin.guard';
+import {userGuard} from './guards/user.guard';
+import {caGuard} from './guards/ca.guard';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'activate', component: ChangePasswordComponent },
-  { path: 'admin/ca-users', component: CaUserRegisterComponent, canActivate: [authGuard] },
-  { path: 'admin/issue-certificate', component: IssueCertificateAdminComponent, canActivate: [authGuard] },
-  { path: 'admin/certificates', component: AdminCertificatesViewComponent, canActivate: [authGuard] },
-  { path: 'admin/register-ca', component: CaUserRegisterComponent },
+  { path: 'admin/ca-users', component: CaUserRegisterComponent, canActivate: [authGuard, adminGuard] },
+  { path: 'admin/issue-certificate', component: IssueCertificateAdminComponent, canActivate: [authGuard, adminGuard] },
+  { path: 'admin/certificates', component: AdminCertificatesViewComponent, canActivate: [authGuard, adminGuard] },
   { path: 'register', component: RegisterComponent },
   { path: 'verify-account', component: ActivateAccountComponent },
   { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'certificates/revoked', component: CrlViewComponent, canActivate: [authGuard, adminGuard] },
+  { path: 'ca/certificates', component: CaCertificatesViewComponent, canActivate: [authGuard, caGuard] },
   {
     path: 'dashboard',
     component: DashboardComponent,
@@ -49,12 +55,12 @@ export const routes: Routes = [
   {
     path: 'certificates/generate',
     component: GenerateCertificateComponent,
-    canActivate: [authGuard],
+    canActivate: [userGuard],
   },
   {
     path: 'certificates/csr',
     component: UploadCsrComponent,
-    canActivate: [authGuard],
+    canActivate: [userGuard],
   },
   {
     path: 'certificates/download',

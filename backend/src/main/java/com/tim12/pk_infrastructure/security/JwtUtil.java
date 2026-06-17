@@ -13,8 +13,11 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
-    private String secret;
+    @Value("${jwt.access-secret}")
+    private String accessSecret;
+
+    @Value("${jwt.refresh-secret}")
+    private String refreshSecret;
 
     @Value("${jwt.access-token-expiration-ms}")
     private long accessTokenExpirationMs;
@@ -22,8 +25,12 @@ public class JwtUtil {
     @Value("${jwt.refresh-token-expiration-ms}")
     private long refreshTokenExpirationMs;
 
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+    private SecretKey accessKey() {
+        return Keys.hmacShaKeyFor(accessSecret.getBytes());
+    }
+
+    private SecretKey refreshKey() {
+        return Keys.hmacShaKeyFor(refreshSecret.getBytes());
     }
 
     public String generateAccessToken(User user) {
@@ -35,17 +42,18 @@ public class JwtUtil {
                 .claim("twoFaEnabled", user.isTwoFactorEnabled())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessTokenExpirationMs))
-                .signWith(getSigningKey())
+                .signWith(accessKey())
                 .compact();
     }
 
     public String generatePreAuthToken(User user) {
+        // Pre-auth is short-lived and access-scoped, so access key is fine here
         return Jwts.builder()
                 .subject(user.getEmail())
                 .claim("twoFaRequired", true)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 5 * 60 * 1000L))
-                .signWith(getSigningKey())
+                .signWith(accessKey())
                 .compact();
     }
 
@@ -55,22 +63,23 @@ public class JwtUtil {
                 .claim("tokenType", "refresh")
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshTokenExpirationMs))
-                .signWith(getSigningKey())
+                .signWith(refreshKey())
                 .compact();
     }
 
-    public boolean isRefreshToken(String token) {
-        try {
-            String type = extractAllClaims(token).get("tokenType", String.class);
-            return "refresh".equals(type);
-        } catch (Exception e) {
-            return false;
-        }
+    // Used only on /auth/refresh endpoint
+    public Claims extractRefreshClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(refreshKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
+    // Used for access + pre-auth tokens everywhere else
     public Claims extractAllClaims(String token) {
         return Jwts.parser()
-                .verifyWith(getSigningKey())
+                .verifyWith(accessKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -80,6 +89,10 @@ public class JwtUtil {
         return extractAllClaims(token).getSubject();
     }
 
+    public String extractEmailFromRefreshToken(String token) {
+        return extractRefreshClaims(token).getSubject();
+    }
+
     public String extractRole(String token) {
         return extractAllClaims(token).get("role", String.class);
     }
@@ -87,6 +100,16 @@ public class JwtUtil {
     public boolean isTokenValid(String token) {
         try {
             return extractAllClaims(token).getExpiration().after(new Date());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isRefreshTokenValid(String token) {
+        try {
+            Claims claims = extractRefreshClaims(token);
+            return claims.getExpiration().after(new Date())
+                    && "refresh".equals(claims.get("tokenType", String.class));
         } catch (Exception e) {
             return false;
         }

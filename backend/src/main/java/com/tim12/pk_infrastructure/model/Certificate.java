@@ -63,4 +63,7 @@ public class Certificate {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "organization_id", referencedColumnName = "id")
     private Organization issuingOrg;
+
+    @Column
+    private boolean privateKeyAvailable = true;
 }

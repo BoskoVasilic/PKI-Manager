@@ -13,6 +13,7 @@ interface CertExtensions {
   serverAuth: boolean;
   /** null = unlimited (omit pathLen from BasicConstraints); number = cap depth */
   pathLenConstraint: number | null;
+  sanNames: string[];
 }
 
 interface CertForm {
@@ -65,6 +66,7 @@ export class IssueCertificateAdminComponent {
       basicConstraintsCA: false,
       serverAuth: false,
       pathLenConstraint: null,
+      sanNames: [],
     }
   };
 
@@ -96,18 +98,44 @@ export class IssueCertificateAdminComponent {
     this.selectedIssuer = null;
 
     if (this.form.type === 'ROOT' || this.form.type === 'INTERMEDIATE') {
-      // CA certs: auto-enable signing extensions, clear EE-only ones
       this.form.extensions.keyCertSign = true;
       this.form.extensions.basicConstraintsCA = true;
-      this.form.extensions.serverAuth = false;     // serverAuth is for EE (TLS servers), not CAs
-      this.form.extensions.keyEncipherment = false; // not meaningful for CA certs
+      this.form.extensions.serverAuth = false;
+      this.form.extensions.keyEncipherment = false;
+      this.form.extensions.sanNames = [];
     } else {
-      // END_ENTITY: disable CA-only extensions and clear pathLen
       this.form.extensions.keyCertSign = false;
       this.form.extensions.basicConstraintsCA = false;
       this.form.extensions.pathLenConstraint = null;
-      // sensible EE defaults
       this.form.extensions.digitalSignature = true;
+      this.form.extensions.sanNames = [];
+    }
+  }
+
+  onServerAuthChange(): void {
+    if (this.form.extensions.serverAuth && this.form.extensions.sanNames.length === 0) {
+      this.form.extensions.sanNames = ['localhost', '127.0.0.1'];
+    }
+  }
+
+  newSanEntry = '';
+
+  addSan(): void {
+    const val = this.newSanEntry.trim();
+    if (!val) return;
+    if (this.form.extensions.sanNames.includes(val)) return;
+    this.form.extensions.sanNames = [...this.form.extensions.sanNames, val];
+    this.newSanEntry = '';
+  }
+
+  removeSan(san: string): void {
+    this.form.extensions.sanNames = this.form.extensions.sanNames.filter(s => s !== san);
+  }
+
+  onSanKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault();
+      this.addSan();
     }
   }
 
@@ -160,10 +188,14 @@ export class IssueCertificateAdminComponent {
       email: this.form.email,
       validFrom: this.form.validFrom,
       validTo: this.form.validTo,
-      extensions: {
-        ...this.form.extensions,
-        pathLenConstraint,
-      },
+      keyCertSign:        this.form.extensions.keyCertSign,
+      cRLSign:            this.form.extensions.cRLSign,
+      digitalSignature:   this.form.extensions.digitalSignature,
+      keyEncipherment:    this.form.extensions.keyEncipherment,
+      basicConstraintsCA: this.form.extensions.basicConstraintsCA,
+      serverAuth:         this.form.extensions.serverAuth,
+      pathLenConstraint:  pathLenConstraint,
+      sanNames:           this.form.extensions.sanNames,
     };
 
     this.certService.issueCertificateAdmin(payload).subscribe({

@@ -14,7 +14,7 @@ public class EmailService {
     @Value("${app.mail.from}")
     private String from;
 
-    @Value("${app.base-url:http://localhost:4200}")
+    @Value("${app.base-url:https://localhost:4200}")
     private String baseUrl;
 
     public EmailService(JavaMailSender mailSender) {
