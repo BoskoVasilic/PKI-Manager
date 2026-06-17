@@ -50,47 +50,59 @@ public class CrlService {
 
     public byte[] generateCrl(String issuerSerialNumber) {
         try {
-            Certificate issuerData = certRepo.findBySerialNumber(issuerSerialNumber)
-                    .orElseThrow(() -> new RuntimeException("Issuer not found: " + issuerSerialNumber));
+        Certificate issuerData = certRepo.findBySerialNumber(issuerSerialNumber)
+                .orElseThrow(() -> new RuntimeException("Issuer not found: " + issuerSerialNumber));
 
-            String keystoreFilepath = keystorePath + issuerData.getIssuingOrg().getKeyStoreFileName();
-            char[] keystorePassword = keyEncryptionService.decrypt(issuerData.getIssuingOrg().getKeyStorePassword()).toCharArray();
+        String keystoreFilepath = keystorePath + issuerData.getIssuingOrg().getKeyStoreFileName();
+        char[] keystorePassword = keyEncryptionService.decrypt(issuerData.getIssuingOrg().getKeyStorePassword()).toCharArray();
 
-            X509Certificate issuerCert = (X509Certificate) keyStoreReader.readCertificate(
-                    keystoreFilepath, issuerData.getAlias(), keystorePassword
+        X509Certificate issuerCert = (X509Certificate) keyStoreReader.readCertificate(
+                keystoreFilepath, issuerData.getAlias(), keystorePassword
+        );
+
+        boolean[] keyUsage = issuerCert.getKeyUsage();
+
+        if (keyUsage == null || keyUsage.length < 7 || !keyUsage[6]) {
+            throw new SecurityException(
+                    "Certificate does not have the cRLSign bit set in its KeyUsage extension. " +
+                            "Its private key cannot be used to sign a CRL."
             );
-            PrivateKey issuerKey = keyStoreReader.readPrivateKey(
-                    keystoreFilepath, issuerData.getAlias(), keystorePassword, keystorePassword
+        }
+
+        PrivateKey issuerKey = keyStoreReader.readPrivateKey(
+                keystoreFilepath, issuerData.getAlias(), keystorePassword, keystorePassword
+        );
+
+        X500Name issuerName = new JcaX509CertificateHolder(issuerCert).getSubject();
+
+        Date now = new Date();
+        Date nextUpdate = new Date(now.getTime() + 24L * 60 * 60 * 1000);
+
+        X509v2CRLBuilder crlBuilder = new X509v2CRLBuilder(issuerName, now);
+        crlBuilder.setNextUpdate(nextUpdate);
+
+        List<Certificate> revokedCerts = certRepo.findByIssuerSerialNumberAndRevokedTrue(issuerSerialNumber);
+
+        for (Certificate revoked : revokedCerts) {
+            int reasonCode = mapRevocationReason(revoked.getRevocationReason());
+            crlBuilder.addCRLEntry(
+                    new BigInteger(revoked.getSerialNumber()),
+                    revoked.getRevokedAt() != null ? revoked.getRevokedAt() : now,
+                    reasonCode
             );
+        }
 
-            X500Name issuerName = new JcaX509CertificateHolder(issuerCert).getSubject();
+        ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSAEncryption")
+                .setProvider("BC")
+                .build(issuerKey);
 
-            Date now = new Date();
-            Date nextUpdate = new Date(now.getTime() + 24L * 60 * 60 * 1000);
+        X509CRLHolder crlHolder = crlBuilder.build(signer);
+        X509CRL crl = new JcaX509CRLConverter().setProvider("BC").getCRL(crlHolder);
 
-            X509v2CRLBuilder crlBuilder = new X509v2CRLBuilder(issuerName, now);
-            crlBuilder.setNextUpdate(nextUpdate);
+        return crl.getEncoded();
 
-            List<Certificate> revokedCerts = certRepo.findByIssuerSerialNumberAndRevokedTrue(issuerSerialNumber);
-
-            for (Certificate revoked : revokedCerts) {
-                int reasonCode = mapRevocationReason(revoked.getRevocationReason());
-                crlBuilder.addCRLEntry(
-                        new BigInteger(revoked.getSerialNumber()),
-                        revoked.getRevokedAt() != null ? revoked.getRevokedAt() : now,
-                        reasonCode
-                );
-            }
-
-            ContentSigner signer = new JcaContentSignerBuilder("SHA256WithRSAEncryption")
-                    .setProvider("BC")
-                    .build(issuerKey);
-
-            X509CRLHolder crlHolder = crlBuilder.build(signer);
-            X509CRL crl = new JcaX509CRLConverter().setProvider("BC").getCRL(crlHolder);
-
-            return crl.getEncoded();
-
+        } catch (SecurityException e) {
+            throw new SecurityException(e.getMessage(), e);
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate CRL: " + e.getMessage(), e);
         }

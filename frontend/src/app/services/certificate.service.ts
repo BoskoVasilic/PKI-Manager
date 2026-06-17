@@ -141,6 +141,13 @@ export class CertificateService {
     return this.http.get<CertificateData[]>(`${this.API_URL}/revoked`);
   }
 
+  downloadCrlForIssuer(issuerSerialNumber: string): Observable<Blob> {
+    return this.http.get(
+      `https://localhost:8443/api/crl/${issuerSerialNumber}/crl.crl`,
+      { responseType: 'blob' }
+    );
+  }
+
   rotateMasterKey(): Observable<string> {
     return this.http.post('https://localhost:8443/api/admin/master-key/rotate', {}, { responseType: 'text' });
   }
